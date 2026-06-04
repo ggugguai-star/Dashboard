@@ -4966,12 +4966,28 @@ function buildCatPanels(){
         : (item.ic || '📄');
       row.innerHTML=`<span class="item-ico">${icoHtml}</span><span class="item-lbl">${item.lbl}</span><span class="item-tag" style="background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}">${item.tag}</span>`;
 
-      // 클릭 열기
-      row.onclick = async () => {
-        if (!item.path) { showToast('❌ 경로가 없어요. 항목을 다시 드래그해서 추가해 주세요.'); return; }
-        const r = await openPath(item.path);
-        if (r?.error) showToast('❌ 열기 실패: ' + String(r.error).slice(0, 60));
+      // 클릭 열기 (더블클릭 rename과 충돌 방지: 250ms 디바운스)
+      let rowClickTimer = null;
+      row.onclick = () => {
+        if (rowClickTimer) clearTimeout(rowClickTimer);
+        rowClickTimer = setTimeout(async () => {
+          rowClickTimer = null;
+          if (!item.path) { showToast('❌ 경로가 없어요. 항목을 다시 드래그해서 추가해 주세요.'); return; }
+          const r = await openPath(item.path);
+          if (r?.error) showToast('❌ 열기 실패: ' + String(r.error).slice(0, 60));
+        }, 250);
       };
+      const lblEl = row.querySelector('.item-lbl');
+      if (lblEl) {
+        lblEl.addEventListener('dblclick', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (rowClickTimer) { clearTimeout(rowClickTimer); rowClickTimer = null; }
+          _ctxCat = cat;
+          _ctxItem = item;
+          showRenamePopup(e.clientX, e.clientY);
+        });
+      }
       // 우클릭 컨텍스트 메뉴
       row.addEventListener('contextmenu',e=>{ e.preventDefault(); showCtx(e.clientX,e.clientY,cat,item); });
 
