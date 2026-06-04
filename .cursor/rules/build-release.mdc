@@ -1,0 +1,28 @@
+---
+description: 빌드/자동배포(CD) 규칙. 자동 업데이트 로직 기본 탑재, build.bat 작성, Final.md 버전·릴리즈노트 형식.
+globs: build.bat,**/Final.md,**/build.*,**/release.*
+alwaysApply: false
+---
+
+# 빌드 및 자동 배포(CD) 규칙
+
+## 자동 업데이트 로직 (기본 탑재)
+- 모든 프로그램은 사용 언어에 맞는 **'GitHub 릴리즈 기반 자동 업데이트 로직'** 을 기본 탑재한다.
+- 최신 릴리즈 태그를 조회 → 현재 버전과 비교 → 신버전 시 다운로드/안내하는 흐름을 포함한다.
+
+## build.bat
+- `build.bat` 은 **'작성'만** 한다. 직접 실행하거나 빌드 결과를 검증하지 않는다.
+  (실제 빌드는 오케스트레이터가 로컬에서 수행한다.)
+- **Tauri v2 프로젝트**: `build.bat` 안에서 `npm install` 후 `npm run tauri build`
+  (또는 `cargo tauri build`)를 호출하도록 작성한다. 산출물(.exe/설치파일)은
+  `src-tauri/target/release/` 아래에 생성된다.
+- **Python 폴백 프로젝트**: 기존처럼 PyInstaller 등으로 .exe 를 만드는 스크립트를 작성한다.
+
+## Final.md (최종 단계)
+build.bat 작성이 끝나면 `./MDs/Final.md` 생성 시 아래 형식을 **반드시** 포함한다.
+버전 규칙: 버그 수정 `+0.0.1`, 기능 추가 `+0.1.0`.
+
+```
+[VERSION]: v1.x.x
+[RELEASE_NOTES]: (수정/추가 기능 3~4줄 요약)
+```
