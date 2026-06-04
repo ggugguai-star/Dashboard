@@ -1,6 +1,6 @@
 [package]
 name        = "work-dashboard"
-version     = "2.0.0"
+version     = "2.1.0"
 edition     = "2021"
 description = "업무 대시보드 — Tauri v2 앱"
 authors     = ["dashboard"]

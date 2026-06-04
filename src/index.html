@@ -890,16 +890,40 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   display:flex;align-items:center;gap:8px;
   padding:7px 9px;border-radius:11px;cursor:pointer;
   border:1px solid transparent;
+  -webkit-user-drag:none;
+  user-select:none;
   transition: background var(--dur-liquid) var(--ease-liquid),
               border-color var(--dur-liquid) var(--ease-liquid),
               transform var(--dur-liquid) var(--ease-liquid);
   will-change: transform;
 }
+.item .item-lbl{user-select:text}
 .item:hover{
   background:rgba(255,255,255,0.72);border-color:rgba(255,255,255,0.85);
   transform:translateY(-2px) scale(1.012);
 }
-.item.dragging{opacity:0.35;pointer-events:none}
+.item.item-ptr-dragging{opacity:0.4;pointer-events:none;transform:none}
+.item[title]{cursor:pointer}
+.item-grip{
+  flex-shrink:0;width:22px;min-width:22px;text-align:center;
+  font-size:12px;line-height:1;letter-spacing:-2px;
+  color:var(--text3);cursor:grab;user-select:none;touch-action:none;
+  opacity:0.7;padding:2px 3px;border-radius:6px;
+  background:rgba(139,92,246,0.06);
+}
+.item-grip:hover{opacity:1;color:#7c3aed;background:rgba(139,92,246,0.14)}
+.item-grip:active,.item.item-ptr-dragging .item-grip{cursor:grabbing}
+body.item-reorder-active{cursor:grabbing !important}
+body.item-reorder-active .item-grip{cursor:grabbing}
+.item-drag-ghost{
+  position:fixed;z-index:9997;pointer-events:none;
+  padding:8px 14px;border-radius:12px;
+  background:rgba(255,255,255,0.96);
+  border:1.5px solid rgba(139,92,246,0.35);
+  box-shadow:0 10px 28px rgba(80,50,180,0.22);
+  font-size:12px;font-weight:600;color:#334155;
+  max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .item.drag-above{border-top:2px solid #7c3aed !important;border-radius:0 0 11px 11px}
 .item.drag-below{border-bottom:2px solid #7c3aed !important;border-radius:11px 11px 0 0}
 .cp-body.body-drop-over{background:rgba(196,181,253,0.10);outline:1.5px dashed rgba(124,58,237,0.35);outline-offset:-4px;border-radius:10px}
@@ -923,12 +947,28 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .cp-dbtn:hover{background:rgba(255,255,255,0.9);color:var(--text1)}
 
-/* ── 링크 추가 인라인 입력 ── */
+/* ── 링크 추가 (1줄 버튼 → 클릭 시 폼) ── */
+.link-toggle-btn {
+  width: 100%; box-sizing: border-box;
+  padding: 7px 10px; border-radius: 9px;
+  border: 1px solid rgba(196,181,253,0.38);
+  background: rgba(255,255,255,0.52);
+  font-size: 11.5px; font-weight: 500; color: var(--text2);
+  cursor: pointer; text-align: center;
+  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.link-toggle-btn:hover {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(139,92,246,0.35);
+  color: var(--text1);
+}
 .link-input-row {
   display: flex; flex-direction: column; gap: 5px;
-  padding: 0 9px 8px;
+  padding: 0 0 4px;
   animation: fadeIn .15s ease;
 }
+.link-input-row.is-hidden { display: none; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 .link-url-input {
   width: 100%; box-sizing: border-box;
@@ -1085,7 +1125,9 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border:1px solid rgba(196,181,253,0.35);
   border-radius:20px;
   box-shadow:0 16px 50px rgba(80,50,180,0.22),0 2px 8px rgba(0,0,0,0.06);
-  width:308px;overflow:hidden;
+  width:min(480px, calc(100vw - 24px));overflow:hidden;
+  max-height:min(90vh, 780px);
+  display:flex;flex-direction:column;
 }
 .icp-header {
   display:flex;align-items:center;gap:10px;
@@ -1117,9 +1159,9 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   background:rgba(139,92,246,0.12);color:#7c3aed;
 }
 .icp-grid {
-  display:grid;grid-template-columns:repeat(7,1fr);
-  gap:3px;padding:8px 10px;
-  max-height:188px;overflow-y:auto;
+  display:grid;grid-template-columns:repeat(9,1fr);
+  gap:4px;padding:8px 12px;
+  flex:1;min-height:240px;max-height:min(62vh, 460px);overflow-y:auto;
   scrollbar-width:thin;scrollbar-color:rgba(196,181,253,0.5) transparent;
 }
 .icp-grid::-webkit-scrollbar{width:4px}
@@ -1562,13 +1604,14 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   -webkit-backdrop-filter: none;
   border: 1px solid rgba(255,255,255,0.9);
   border-radius: 20px;
-  padding: 18px 20px 16px;
-  width: 300px;
-  max-width: calc(100vw - 40px);
+  padding: 18px 22px 16px;
+  width: min(520px, calc(100vw - 28px));
+  max-height: min(92vh, 820px);
   box-shadow: 0 12px 48px rgba(100,80,200,0.2), inset 0 1px 0 rgba(255,255,255,1);
   display: flex; flex-direction: column; gap: 12px;
   animation: ctxIn .22s cubic-bezier(0.34,1.4,0.64,1);
   transform-origin: center center;
+  overflow: hidden;
 }
 
 .cep-title {
@@ -1602,8 +1645,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 
 /* 아이콘 선택 그리드 */
 .cep-icon-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
-  max-height: 132px; overflow-y: auto;
+  display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px;
+  flex: 1; min-height: 240px; max-height: min(62vh, 480px); overflow-y: auto;
   scrollbar-width: thin; scrollbar-color: rgba(196,181,253,0.4) transparent;
 }
 .cep-icon-btn {
@@ -2190,6 +2233,32 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   background: rgba(139,92,246,0.14); border-color: #8b5cf6;
   box-shadow: 0 0 0 2.5px rgba(139,92,246,0.15);
 }
+/* 알림 등 — 날짜·시간 한 줄 pill (각각 클릭) */
+.dt-chip-unified {
+  display: flex; align-items: stretch; width: 100%;
+  border-radius: 12px;
+  background: rgba(139,92,246,0.07);
+  border: 1.5px solid rgba(139,92,246,0.18);
+  overflow: hidden; margin-bottom: 10px;
+}
+.dt-chip-unified .evd-date-chip,
+.dt-chip-unified .evd-time-chip {
+  flex: 1; min-width: 0; justify-content: center;
+  border: none; border-radius: 0; background: transparent;
+  padding: 8px 10px; font-size: 12.5px;
+}
+.dt-chip-unified .evd-date-chip {
+  border-right: 1px solid rgba(139,92,246,0.16);
+}
+.dt-chip-unified .evd-date-chip:hover,
+.dt-chip-unified .evd-time-chip:hover {
+  background: rgba(139,92,246,0.12);
+}
+.dt-chip-unified .evd-date-chip.chip-open,
+.dt-chip-unified .evd-time-chip.chip-open {
+  background: rgba(139,92,246,0.14);
+  box-shadow: inset 0 0 0 1.5px rgba(139,92,246,0.35);
+}
 /* 날짜 피커 팝업 */
 .evd-date-picker {
   position: fixed; z-index: 9998; display: none;
@@ -2230,7 +2299,24 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   width:148px; max-height:220px; overflow-y:auto;
   scrollbar-width:thin; scrollbar-color:rgba(196,181,253,0.5) transparent;
 }
-.evd-time-picker.tp-open { display:block; }
+.evd-time-picker.tp-dual {
+  display:none; width:auto; max-height:260px; overflow:hidden;
+  flex-direction:row; gap:0;
+}
+.evd-tp-col {
+  flex:1; min-width:96px; max-height:260px; overflow-y:auto;
+  border-right:1px solid rgba(196,181,253,0.25);
+  scrollbar-width:thin; scrollbar-color:rgba(196,181,253,0.5) transparent;
+}
+.evd-tp-col:last-child { border-right:none; }
+.evd-tp-col-hdr {
+  position:sticky; top:0; z-index:1;
+  padding:6px 10px; font-size:10px; font-weight:700; color:var(--text4);
+  text-align:center; background:rgba(255,255,255,0.95);
+  border-bottom:1px solid rgba(196,181,253,0.2);
+}
+.evd-time-picker.tp-open:not(.tp-dual) { display:block; }
+.evd-time-picker.tp-dual.tp-open { display:flex; }
 .evd-tp-item {
   padding:9px 18px; font-size:13px; font-weight:500; color:var(--text2);
   cursor:pointer; transition:background .1s; font-family:inherit;
@@ -2967,7 +3053,10 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
       <span class="evd-field-icon">🔔</span>
       <span class="evd-field-label">알림</span>
       <input type="checkbox" class="evd-alarm-chk" id="evdAlarmChk" onchange="evdToggleAlarm()">
-      <button class="evd-time-chip" id="evdAlarmChip" type="button" style="display:none">날짜/시간 선택</button>
+      <div class="dt-chip-unified" id="evdAlarmDtWrap" style="display:none;flex:1;min-width:0;margin-bottom:0">
+        <button class="evd-date-chip" id="evdAlarmDateChip" type="button">날짜 선택</button>
+        <button class="evd-time-chip" id="evdAlarmTimeChip" type="button">시간 선택</button>
+      </div>
       <input type="hidden" id="evdAlarmDT">
     </div>
 
@@ -3009,7 +3098,10 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 <div class="alarm-mini-popup" id="alarmMiniPopup">
   <div class="amp-title">🔔 알림 설정</div>
   <div class="amp-item-text" id="ampItemText"></div>
-  <button class="evd-date-chip" id="ampDtChip" type="button" style="width:100%;justify-content:center;border-radius:12px">날짜/시간 선택</button>
+  <div class="dt-chip-unified" id="ampDtWrap">
+    <button class="evd-date-chip" id="ampDateChip" type="button">날짜 선택</button>
+    <button class="evd-time-chip" id="ampTimeChip" type="button">시간 선택</button>
+  </div>
   <input type="hidden" id="ampDtInput">
   <div class="amp-btns">
     <button class="amp-btn-save" onclick="saveAlarmMiniPopup()">저장</button>
@@ -3085,6 +3177,237 @@ const tListen = (evt, cb)         => window.__TAURI__.event.listen(evt, cb);
 async function openPath(url) {
   try   { return await tInvoke('plugin:shell|open', { path: url }); }
   catch (e) { console.error('[openPath]', e); return { error: e.message }; }
+}
+
+function isWebUrl(p) {
+  return /^https?:\/\//i.test(p) || /^mailto:/i.test(p) || /^tel:/i.test(p);
+}
+
+/** 카테고리 항목(로컬 경로·URL) — 탐색기/기본 앱으로 열기 */
+async function openItemPath(item) {
+  if (!item?.path) return { error: 'no path' };
+  let p = String(item.path).trim();
+  if (isWebUrl(p)) return openPath(p);
+  if (/^file:\/\//i.test(p)) {
+    try {
+      p = decodeURIComponent(p.replace(/^file:\/\/\/?/i, ''));
+    } catch {}
+  }
+  return openPath(p);
+}
+
+/** 카테고리 아이템 순서 변경 (같은/다른 패널, 특정 행 기준) */
+function reorderCatItem(srcCat, srcItem, dstCat, dstItem, insertAbove) {
+  const srcIdx = srcCat.items.indexOf(srcItem);
+  if (srcIdx < 0) return false;
+  srcCat.items.splice(srcIdx, 1);
+  let dstIdx = dstCat.items.indexOf(dstItem);
+  if (dstIdx < 0) return false;
+  if (srcCat === dstCat && srcIdx < dstIdx) dstIdx--;
+  dstCat.items.splice(insertAbove ? dstIdx : dstIdx + 1, 0, srcItem);
+  return true;
+}
+
+/** 카테고리 맨 끝으로 이동 (다른 패널 빈 영역에 놓을 때) */
+function moveItemToCatEnd(srcCat, srcItem, dstCat) {
+  if (!dstCat) return false;
+  const srcIdx = srcCat.items.indexOf(srcItem);
+  if (srcIdx < 0) return false;
+  srcCat.items.splice(srcIdx, 1);
+  dstCat.items.push(srcItem);
+  return true;
+}
+
+function catFromBodyElement(bodyEl) {
+  const panel = bodyEl?.closest?.('.cat-panel');
+  if (!panel) return null;
+  const idx = parseInt(panel.dataset.catIdx, 10);
+  if (Number.isNaN(idx) || idx < 0 || idx >= CATS.length) return null;
+  return CATS[idx];
+}
+
+function clearItemReorderHighlights() {
+  document.querySelectorAll('.item.drag-above,.item.drag-below').forEach(el => {
+    el.classList.remove('drag-above', 'drag-below');
+  });
+  document.querySelectorAll('.cp-body.body-drop-over').forEach(el => {
+    el.classList.remove('body-drop-over');
+  });
+}
+
+let _ptrItemReorder = null;
+
+/** WebView2: elementFromPoint 대신 좌표·getBoundingClientRect 히트 (설정 패널 DnD와 동일) */
+function findItemDropTarget(clientX, clientY, srcRow) {
+  const zone = document.getElementById('catZone');
+  if (!zone) return null;
+
+  for (const it of zone.querySelectorAll('.item')) {
+    if (it === srcRow || !it.__catRef || !it.__itemRef) continue;
+    const r = it.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      const above = clientY < r.top + r.height / 2;
+      return { kind: 'item', targetRow: it, insertAbove: above };
+    }
+  }
+
+  for (const body of zone.querySelectorAll('.cp-body')) {
+    const r = body.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      const dstCat = catFromBodyElement(body);
+      if (dstCat) return { kind: 'body', dropCat: dstCat, bodyEl: body };
+    }
+  }
+  return null;
+}
+
+function updateItemPointerDropTarget(clientX, clientY, srcRow) {
+  if (!_ptrItemReorder) return;
+  clearItemReorderHighlights();
+  _ptrItemReorder.targetRow = null;
+  _ptrItemReorder.dropCat = null;
+
+  const hit = findItemDropTarget(clientX, clientY, srcRow);
+  if (!hit) return;
+
+  if (hit.kind === 'item') {
+    hit.targetRow.classList.toggle('drag-above', hit.insertAbove);
+    hit.targetRow.classList.toggle('drag-below', !hit.insertAbove);
+    _ptrItemReorder.targetRow = hit.targetRow;
+    _ptrItemReorder.insertAbove = hit.insertAbove;
+    return;
+  }
+
+  if (hit.kind === 'body') {
+    hit.bodyEl.classList.add('body-drop-over');
+    _ptrItemReorder.dropCat = hit.dropCat;
+  }
+}
+
+function commitItemPointerReorder() {
+  const pr = _ptrItemReorder;
+  _ptrItemReorder = null;
+  if (!pr?.moved) return false;
+
+  let ok = false;
+  if (pr.targetRow) {
+    ok = reorderCatItem(
+      pr.srcCat, pr.srcItem,
+      pr.targetRow.__catRef, pr.targetRow.__itemRef,
+      pr.insertAbove
+    );
+  } else if (pr.dropCat) {
+    ok = moveItemToCatEnd(pr.srcCat, pr.srcItem, pr.dropCat);
+  }
+  if (ok) {
+    saveState();
+    buildCatPanels();
+  }
+  return ok;
+}
+
+let _itemReorderDidMove = false;
+
+/** Tauri WebView2: pointer capture + rect 히트로 순서·카테고리 이동 (행 전체 또는 ⋮⋮) */
+function beginItemReorder(row, cat, item, startEvent) {
+  if (_ptrItemReorder) return;
+  const pid = startEvent.pointerId ?? 1;
+  const sx = startEvent.clientX;
+  const sy = startEvent.clientY;
+  let moved = false;
+  let ghost = null;
+  _itemReorderDidMove = false;
+
+  const captureEl = startEvent.target?.closest?.('.item-grip') || row;
+  try { captureEl.setPointerCapture(pid); } catch (_) {}
+
+  _ptrItemReorder = {
+    srcCat: cat,
+    srcItem: item,
+    row,
+    targetRow: null,
+    dropCat: null,
+    insertAbove: true,
+    moved: false,
+  };
+
+  const onMove = ev => {
+    if (ev.pointerId !== pid || !_ptrItemReorder) return;
+    if (!moved) {
+      if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 6) return;
+      moved = true;
+      _itemReorderDidMove = true;
+      _ptrItemReorder.moved = true;
+      ev.preventDefault();
+      row.classList.add('item-ptr-dragging');
+      document.body.classList.add('item-reorder-active');
+      ghost = document.createElement('div');
+      ghost.className = 'item-drag-ghost';
+      ghost.textContent = item.lbl || '항목';
+      ghost.style.left = (ev.clientX + 12) + 'px';
+      ghost.style.top = (ev.clientY + 10) + 'px';
+      document.body.appendChild(ghost);
+    }
+    if (ghost) {
+      ghost.style.left = (ev.clientX + 12) + 'px';
+      ghost.style.top = (ev.clientY + 10) + 'px';
+    }
+    updateItemPointerDropTarget(ev.clientX, ev.clientY, row);
+  };
+
+  const endDrag = ev => {
+    if (ev.pointerId !== pid) return;
+    document.removeEventListener('pointermove', onMove, true);
+    document.removeEventListener('pointerup', endDrag, true);
+    document.removeEventListener('pointercancel', endDrag, true);
+    try { captureEl.releasePointerCapture(pid); } catch (_) {}
+    if (ghost) { ghost.remove(); ghost = null; }
+    row.classList.remove('item-ptr-dragging');
+    document.body.classList.remove('item-reorder-active');
+    clearItemReorderHighlights();
+    if (_ptrItemReorder) _ptrItemReorder.moved = moved;
+    commitItemPointerReorder();
+  };
+
+  document.addEventListener('pointermove', onMove, true);
+  document.addEventListener('pointerup', endDrag, true);
+  document.addEventListener('pointercancel', endDrag, true);
+}
+
+function installItemRowInteractions(row, cat, item) {
+  row.__catRef = cat;
+  row.__itemRef = item;
+  row.draggable = false;
+  const openHint = item.path ? ' — 클릭하여 열기' : '';
+  row.title = (item.lbl || '') + openHint;
+
+  row.addEventListener('click', async e => {
+    if (e.target.closest('.item-grip')) return;
+    if (_itemReorderDidMove) {
+      _itemReorderDidMove = false;
+      return;
+    }
+    if (!item.path) { showToast('❌ 경로가 없어요. 항목을 다시 드래그해서 추가해 주세요.'); return; }
+    const r = await openItemPath(item);
+    if (r?.error) showToast('❌ 열기 실패: ' + String(r.error).slice(0, 80));
+  });
+
+  const lblEl = row.querySelector('.item-lbl');
+  if (lblEl) {
+    lblEl.addEventListener('dblclick', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      _ctxCat = cat;
+      _ctxItem = item;
+      showRenamePopup(e.clientX, e.clientY);
+    });
+  }
+
+  row.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || _driveDragFile) return;
+    if (e.target.closest('.item-lbl') && e.detail > 1) return;
+    beginItemReorder(row, cat, item, e);
+  });
 }
 
 /* ── plugin-process: 앱 완전 종료 (트레이 메뉴 "종료"에서 호출) ── */
@@ -4055,6 +4378,14 @@ function formatDateTimeKor(dtStr){
   return formatDateKor(ymd) + '  ' + formatTimeKor(hhmm ? hhmm.slice(0,5) : '');
 }
 
+/** `YYYY-MM-DDTHH:mm` 로컬 시각 → epoch (브라우저별 Date 파싱 차이 방지) */
+function parseLocalDateTime(dtStr) {
+  if (!dtStr) return NaN;
+  const m = String(dtStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return NaN;
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0, 0).getTime();
+}
+
 // ─── Setters (hidden input + chip 텍스트 동시 갱신) ───
 function setEvDate(ymd){
   document.getElementById('evdDate').value = ymd;
@@ -4065,13 +4396,30 @@ function setEvTime(inputId, hhmm){
   const chipId = inputId==='evdStartTime' ? 'evdStartChip' : 'evdEndChip';
   document.getElementById(chipId).textContent = formatTimeKor(hhmm);
 }
+function splitDtStr(dtStr) {
+  if (!dtStr) return { ymd: '', hm: '09:00' };
+  const [ymd, rest] = String(dtStr).split('T');
+  return { ymd: ymd || '', hm: (rest || '09:00').slice(0, 5) };
+}
+function updateDtChipPair(dateChipId, timeChipId, dtStr) {
+  const { ymd, hm } = splitDtStr(dtStr);
+  const dateEl = document.getElementById(dateChipId);
+  const timeEl = document.getElementById(timeChipId);
+  if (dateEl) dateEl.textContent = ymd ? formatDateKor(ymd) : '날짜 선택';
+  if (timeEl) timeEl.textContent = hm ? formatTimeKor(hm) : '시간 선택';
+}
 function setEvAlarmDT(dtStr){
   document.getElementById('evdAlarmDT').value = dtStr;
-  document.getElementById('evdAlarmChip').textContent = formatDateTimeKor(dtStr);
+  updateDtChipPair('evdAlarmDateChip', 'evdAlarmTimeChip', dtStr);
 }
 function setAmpDt(dtStr){
   document.getElementById('ampDtInput').value = dtStr;
-  document.getElementById('ampDtChip').textContent = formatDateTimeKor(dtStr);
+  updateDtChipPair('ampDateChip', 'ampTimeChip', dtStr);
+}
+function mergeDtYmdHm(ymd, hm) {
+  const y = ymd || new Date().toISOString().slice(0, 10);
+  const t = hm || '09:00';
+  return `${y}T${t}`;
 }
 
 // ─── 날짜 피커 ───
@@ -4182,61 +4530,143 @@ document.addEventListener('DOMContentLoaded', ()=>{
       setEvTime('evdEndTime', hhmm);
     });
   };
-  document.getElementById('evdAlarmChip').onclick = function(){
-    const chip = this;
-    const curDT = document.getElementById('evdAlarmDT').value || '';
-    const curYmd = curDT.slice(0,10) || document.getElementById('evdDate').value || '';
-    const curHm  = curDT.slice(11,16) || document.getElementById('evdStartTime').value || '09:00';
-    openChipDatePicker(chip, curYmd, ymd=>{
-      openChipTimePicker(chip, curHm, hhmm=>{ setEvAlarmDT(`${ymd}T${hhmm}`); });
+  document.getElementById('evdAlarmDateChip').onclick = function(){
+    const cur = splitDtStr(document.getElementById('evdAlarmDT').value);
+    const curYmd = cur.ymd || document.getElementById('evdDate').value || '';
+    openChipDatePicker(this, curYmd, ymd => {
+      setEvAlarmDT(mergeDtYmdHm(ymd, cur.hm));
     });
   };
-  document.getElementById('ampDtChip').onclick = function(){
-    const chip = this;
-    const curDT  = document.getElementById('ampDtInput').value || '';
-    const curYmd = curDT.slice(0,10) || new Date().toISOString().slice(0,10);
-    const curHm  = curDT.slice(11,16) || '09:00';
-    openChipDatePicker(chip, curYmd, ymd=>{
-      openChipTimePicker(chip, curHm, hhmm=>{ setAmpDt(`${ymd}T${hhmm}`); });
+  document.getElementById('evdAlarmTimeChip').onclick = function(){
+    const cur = splitDtStr(document.getElementById('evdAlarmDT').value);
+    const curHm = cur.hm || document.getElementById('evdStartTime').value || '09:00';
+    const curYmd = cur.ymd || document.getElementById('evdDate').value || '';
+    openChipTimePicker(this, curHm, hhmm => {
+      setEvAlarmDT(mergeDtYmdHm(curYmd, hhmm));
+    }, { minuteStep: 1 });
+  };
+  document.getElementById('ampDateChip').onclick = function(){
+    const cur = splitDtStr(document.getElementById('ampDtInput').value);
+    const curYmd = cur.ymd || new Date().toISOString().slice(0, 10);
+    openChipDatePicker(this, curYmd, ymd => {
+      setAmpDt(mergeDtYmdHm(ymd, cur.hm));
     });
+  };
+  document.getElementById('ampTimeChip').onclick = function(){
+    const cur = splitDtStr(document.getElementById('ampDtInput').value);
+    openChipTimePicker(this, cur.hm || '09:00', hhmm => {
+      setAmpDt(mergeDtYmdHm(cur.ymd, hhmm));
+    }, { minuteStep: 1 });
   };
 });
 
-// ─── 시간 피커 ───
-function openChipTimePicker(chipEl, curHhmm, callback){
-  // alarmMiniOverlay 일시 비활성
+// ─── 시간 피커 (options.minuteStep: 1=알림, 30=일정 시작/종료 기본) ───
+function openChipTimePicker(chipEl, curHhmm, callback, options = {}){
+  const minuteStep = options.minuteStep ?? 30;
   const ov = document.getElementById('alarmMiniOverlay');
   if(ov && ov.style.display !== 'none') ov.style.pointerEvents = 'none';
   closeChipDatePicker(false);
   _tpCb = callback; _tpChipEl = chipEl;
-  const picker = document.getElementById('evdTimePicker'); picker.innerHTML = '';
-  const [ch,cm] = (curHhmm||'09:00').split(':').map(Number);
+  const picker = document.getElementById('evdTimePicker');
+  picker.innerHTML = '';
+  picker.classList.remove('tp-dual');
+  const [ch, cm] = (curHhmm || '09:00').split(':').map(Number);
   let selEl = null;
-  for(let h=0; h<24; h++){
-    for(const m of [0,30]){
-      const hhmm = `${_p2(h)}:${_p2(m)}`;
-      const item = document.createElement('div'); item.className='evd-tp-item';
-      item.textContent = formatTimeKor(hhmm);
-      if(h===ch && m===cm){ item.classList.add('tp-sel'); selEl=item; }
-      item.addEventListener('mousedown', ev=>{
-        ev.stopPropagation();
-        const cb=_tpCb, chip=_tpChipEl;
-        closeChipTimePicker();
-        if(chip) chip.classList.remove('chip-open');
-        if(cb) cb(hhmm);
+
+  if (minuteStep === 1) {
+    picker.classList.add('tp-dual');
+    let selH = Number.isFinite(ch) ? ch : 9;
+    let selM = Number.isFinite(cm) ? cm : 0;
+
+    const colH = document.createElement('div');
+    colH.className = 'evd-tp-col';
+    colH.innerHTML = '<div class="evd-tp-col-hdr">시</div>';
+    const colM = document.createElement('div');
+    colM.className = 'evd-tp-col';
+    colM.innerHTML = '<div class="evd-tp-col-hdr">분</div>';
+
+    const paintSel = () => {
+      colH.querySelectorAll('.evd-tp-item').forEach(el => {
+        el.classList.toggle('tp-sel', parseInt(el.dataset.h, 10) === selH);
       });
-      picker.appendChild(item);
+      colM.querySelectorAll('.evd-tp-item').forEach(el => {
+        el.classList.toggle('tp-sel', parseInt(el.dataset.m, 10) === selM);
+      });
+    };
+
+    for (let h = 0; h < 24; h++) {
+      const hhmm = `${_p2(h)}:00`;
+      const item = document.createElement('div');
+      item.className = 'evd-tp-item';
+      item.dataset.h = String(h);
+      item.textContent = formatTimeKor(hhmm);
+      if (h === selH) { item.classList.add('tp-sel'); selEl = item; }
+      item.addEventListener('mousedown', ev => {
+        ev.stopPropagation();
+        selH = h;
+        paintSel();
+      });
+      colH.appendChild(item);
+    }
+
+    for (let m = 0; m < 60; m++) {
+      const item = document.createElement('div');
+      item.className = 'evd-tp-item';
+      item.dataset.m = String(m);
+      item.textContent = `${m}분`;
+      if (m === selM) {
+        item.classList.add('tp-sel');
+        if (!selEl) selEl = item;
+      }
+      item.addEventListener('mousedown', ev => {
+        ev.stopPropagation();
+        selM = m;
+        const hhmm = `${_p2(selH)}:${_p2(selM)}`;
+        const cb = _tpCb;
+        const chip = _tpChipEl;
+        closeChipTimePicker();
+        if (chip) chip.classList.remove('chip-open');
+        if (cb) cb(hhmm);
+      });
+      colM.appendChild(item);
+    }
+
+    picker.appendChild(colH);
+    picker.appendChild(colM);
+  } else {
+    for (let h = 0; h < 24; h++) {
+      for (const m of [0, 30]) {
+        const hhmm = `${_p2(h)}:${_p2(m)}`;
+        const item = document.createElement('div');
+        item.className = 'evd-tp-item';
+        item.textContent = formatTimeKor(hhmm);
+        if (h === ch && m === cm) { item.classList.add('tp-sel'); selEl = item; }
+        item.addEventListener('mousedown', ev => {
+          ev.stopPropagation();
+          const cb = _tpCb;
+          const chip = _tpChipEl;
+          closeChipTimePicker();
+          if (chip) chip.classList.remove('chip-open');
+          if (cb) cb(hhmm);
+        });
+        picker.appendChild(item);
+      }
     }
   }
+
   const r = chipEl.getBoundingClientRect();
-  let top = r.bottom+4, left = r.left;
-  if(left+152 > window.innerWidth)  left = window.innerWidth -156;
-  if(top +222 > window.innerHeight) top  = r.top - 226;
-  picker.style.top=top+'px'; picker.style.left=left+'px';
+  let top = r.bottom + 4;
+  let left = r.left;
+  const pickerW = minuteStep === 1 ? 200 : 152;
+  const pickerH = minuteStep === 1 ? 260 : 222;
+  if (left + pickerW > window.innerWidth) left = window.innerWidth - pickerW - 6;
+  if (top + pickerH > window.innerHeight) top = r.top - pickerH - 4;
+  picker.style.top = top + 'px';
+  picker.style.left = left + 'px';
   picker.classList.add('tp-open');
   chipEl.classList.add('chip-open');
-  if(selEl) setTimeout(()=> selEl.scrollIntoView({block:'center',behavior:'instant'}), 0);
-  setTimeout(()=> document.addEventListener('mousedown', _tpOutside), 0);
+  if (selEl) setTimeout(() => selEl.scrollIntoView({ block: 'center', behavior: 'instant' }), 0);
+  setTimeout(() => document.addEventListener('mousedown', _tpOutside), 0);
 }
 function _tpOutside(e){
   const p = document.getElementById('evdTimePicker');
@@ -4245,7 +4675,7 @@ function _tpOutside(e){
 }
 function closeChipTimePicker(){
   const p = document.getElementById('evdTimePicker');
-  p.classList.remove('tp-open');
+  p.classList.remove('tp-open', 'tp-dual');
   document.removeEventListener('mousedown', _tpOutside);
   if(_tpChipEl) _tpChipEl.classList.remove('chip-open');
   _tpCb=null; _tpChipEl=null;
@@ -4295,11 +4725,11 @@ function openEvDialog(year, month, day, existingEv){
   if(isEdit && calAlarms[existingEv.id]){
     alarmChkEl.checked = true;
     setEvAlarmDT(calAlarms[existingEv.id].alarmDT.slice(0,16));
-    document.getElementById('evdAlarmChip').style.display = '';
+    document.getElementById('evdAlarmDtWrap').style.display = '';
   } else {
     alarmChkEl.checked = false;
     document.getElementById('evdAlarmDT').value = '';
-    document.getElementById('evdAlarmChip').style.display = 'none';
+    document.getElementById('evdAlarmDtWrap').style.display = 'none';
   }
 
   document.getElementById('evdSaveBtn').disabled = false;
@@ -4371,7 +4801,7 @@ async function saveEvDialog(){
       const savedEventId = result.id || evdEditingId;
       if(evdEditingId) delete calAlarms[evdEditingId];   // 기존 알림 제거
       if(alarmChecked && alarmDtVal && savedEventId){
-        if(new Date(alarmDtVal) > new Date()){
+        if(parseLocalDateTime(alarmDtVal) > Date.now()){
           calAlarms[savedEventId] = { alarmDT: alarmDtVal, title };
         }
       }
@@ -4905,11 +5335,19 @@ function clearFileDropHover() {
 }
 
 async function dropPositionToLogical(position) {
+  if (!position) return null;
   let factor = window.devicePixelRatio || 1;
   try {
     factor = await window.__TAURI__.window.getCurrentWindow().scaleFactor();
   } catch {}
-  return { x: position.x / factor, y: position.y / factor };
+  if (typeof position.toLogical === 'function') {
+    const logical = position.toLogical(factor);
+    return { x: logical.x, y: logical.y };
+  }
+  const x = position.x ?? position.Physical?.x;
+  const y = position.y ?? position.Physical?.y;
+  if (x == null || y == null) return null;
+  return { x: x / factor, y: y / factor };
 }
 
 function catFromDropPoint(x, y) {
@@ -4947,52 +5385,92 @@ async function addPathsToCat(paths, cat) {
   }
   if (added > 0) {
     buildCatPanels();
+    saveState();
     showToast(`✅ ${added}개 항목 추가됨`);
   }
   return added;
 }
 
 let _tauriFileDropReady = false;
+
+async function handleTauriDragDropPayload(payload) {
+  if (!payload?.type) return;
+
+  if (payload.type === 'leave') {
+    clearFileDropHover();
+    return;
+  }
+
+  if (payload.type === 'enter' || payload.type === 'over') {
+    if (!payload.position) return;
+    const pos = await dropPositionToLogical(payload.position);
+    if (pos) setFileDropHover(catFromDropPoint(pos.x, pos.y));
+    return;
+  }
+
+  if (payload.type === 'drop') {
+    clearFileDropHover();
+    const paths = payload.paths || [];
+    if (!paths.length) return;
+
+    let cat = null;
+    if (payload.position) {
+      const pos = await dropPositionToLogical(payload.position);
+      if (pos) cat = catFromDropPoint(pos.x, pos.y);
+    }
+    if (!cat && CATS.length) {
+      cat = CATS[0];
+      showToast('📂 카테고리를 특정하지 못해 첫 번째 패널에 추가했습니다');
+    }
+    if (!cat) {
+      showToast('❌ 카테고리를 찾을 수 없습니다');
+      return;
+    }
+    await addPathsToCat(paths, cat);
+  }
+}
+
 async function setupTauriFileDrop() {
   if (_tauriFileDropReady) return;
   _tauriFileDropReady = true;
-  await tListen('tauri://drag-drop', async (ev) => {
-    const payload = ev.payload;
-    if (!payload) return;
 
-    if (payload.type === 'leave') {
-      clearFileDropHover();
+  /* Tauri v2: onDragDropEvent가 enter/over/drop/leave를 통합 (권장) */
+  try {
+    const wv =
+      window.__TAURI__?.webview?.getCurrentWebview?.() ||
+      window.__TAURI__?.webviewWindow?.getCurrentWebviewWindow?.();
+    if (wv?.onDragDropEvent) {
+      await wv.onDragDropEvent((ev) => handleTauriDragDropPayload(ev.payload));
       return;
     }
+  } catch (e) {
+    console.warn('[TauriFileDrop] onDragDropEvent:', e);
+  }
 
-    if (payload.type === 'enter' || payload.type === 'over') {
-      if (!payload.position) return;
-      const { x, y } = await dropPositionToLogical(payload.position);
-      setFileDropHover(catFromDropPoint(x, y));
-      return;
-    }
-
-    if (payload.type === 'drop') {
-      clearFileDropHover();
-      const paths = payload.paths || [];
-      if (!paths.length) return;
-
-      let cat = null;
-      if (payload.position) {
-        const { x, y } = await dropPositionToLogical(payload.position);
-        cat = catFromDropPoint(x, y);
-      }
-      if (!cat && CATS.length) {
-        cat = CATS[0];
-        showToast('📂 카테고리를 특정하지 못해 첫 번째 패널에 추가했습니다');
-      }
-      if (!cat) {
-        showToast('❌ 카테고리를 찾을 수 없습니다');
-        return;
-      }
-      await addPathsToCat(paths, cat);
-    }
-  });
+  /* 폴백: 이벤트별 listen (raw payload에는 type 없음) */
+  await tListen('tauri://drag-enter', (ev) =>
+    handleTauriDragDropPayload({
+      type: 'enter',
+      paths: ev.payload?.paths || [],
+      position: ev.payload?.position,
+    })
+  );
+  await tListen('tauri://drag-over', (ev) =>
+    handleTauriDragDropPayload({
+      type: 'over',
+      position: ev.payload?.position,
+    })
+  );
+  await tListen('tauri://drag-drop', (ev) =>
+    handleTauriDragDropPayload({
+      type: 'drop',
+      paths: ev.payload?.paths || [],
+      position: ev.payload?.position,
+    })
+  );
+  await tListen('tauri://drag-leave', () =>
+    handleTauriDragDropPayload({ type: 'leave' })
+  );
 }
 
 function buildCatPanels(){
@@ -5039,30 +5517,10 @@ function buildCatPanels(){
       const icoHtml = item.ic?.startsWith('data:')
         ? `<img src="${item.ic}" style="width:20px;height:20px;object-fit:cover;border-radius:4px;vertical-align:middle">`
         : (item.ic || '📄');
-      row.innerHTML=`<span class="item-ico">${icoHtml}</span><span class="item-lbl">${item.lbl}</span><span class="item-tag" style="background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}">${item.tag}</span>`;
+      row.innerHTML=`<span class="item-grip" title="잡고 끌어 순서·다른 카테고리로 이동">⋮⋮</span><span class="item-ico">${icoHtml}</span><span class="item-lbl">${item.lbl}</span><span class="item-tag" style="background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}">${item.tag}</span>`;
 
-      // 클릭 열기 (더블클릭 rename과 충돌 방지: 250ms 디바운스)
-      let rowClickTimer = null;
-      row.onclick = () => {
-        if (rowClickTimer) clearTimeout(rowClickTimer);
-        rowClickTimer = setTimeout(async () => {
-          rowClickTimer = null;
-          if (!item.path) { showToast('❌ 경로가 없어요. 항목을 다시 드래그해서 추가해 주세요.'); return; }
-          const r = await openPath(item.path);
-          if (r?.error) showToast('❌ 열기 실패: ' + String(r.error).slice(0, 60));
-        }, 250);
-      };
-      const lblEl = row.querySelector('.item-lbl');
-      if (lblEl) {
-        lblEl.addEventListener('dblclick', e => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (rowClickTimer) { clearTimeout(rowClickTimer); rowClickTimer = null; }
-          _ctxCat = cat;
-          _ctxItem = item;
-          showRenamePopup(e.clientX, e.clientY);
-        });
-      }
+      installItemRowInteractions(row, cat, item);
+
       // 우클릭 컨텍스트 메뉴
       row.addEventListener('contextmenu',e=>{ e.preventDefault(); showCtx(e.clientX,e.clientY,cat,item); });
 
@@ -5088,52 +5546,6 @@ function buildCatPanels(){
         const result = await driveDownloadFile(fileId, fileName, mimeType, item.path);
         if (result?.error) showToast('❌ ' + result.error);
         else showToast(`✅ 다운로드 완료 → ${item.lbl}`);
-      });
-
-      // ── 드래그 시작 ──
-      row.draggable = true;
-      row.addEventListener('dragstart', e=>{
-        _dragSrc = { cat, item };
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain',''); // Firefox 필수
-        requestAnimationFrame(()=> row.classList.add('dragging'));
-      });
-      row.addEventListener('dragend', ()=>{
-        row.classList.remove('dragging');
-        _dragSrc = null;
-        document.querySelectorAll('.drag-above,.drag-below').forEach(el=>el.classList.remove('drag-above','drag-below'));
-        document.querySelectorAll('.body-drop-over').forEach(el=>el.classList.remove('body-drop-over'));
-      });
-
-      // ── 이 행 위로 드래그 (위치 삽입 표시) ──
-      row.addEventListener('dragover', e=>{
-        if (!_dragSrc) return;
-        e.preventDefault(); e.stopPropagation();
-        e.dataTransfer.dropEffect = 'move';
-        const above = e.clientY < row.getBoundingClientRect().top + row.getBoundingClientRect().height/2;
-        row.classList.toggle('drag-above', above);
-        row.classList.toggle('drag-below', !above);
-      });
-      row.addEventListener('dragleave', e=>{
-        if (!row.contains(e.relatedTarget)) row.classList.remove('drag-above','drag-below');
-      });
-
-      // ── 이 행에 드롭 → 위/아래 삽입 ──
-      row.addEventListener('drop', e=>{
-        if (!_dragSrc) return;
-        e.preventDefault(); e.stopPropagation();
-        row.classList.remove('drag-above','drag-below');
-        const above = e.clientY < row.getBoundingClientRect().top + row.getBoundingClientRect().height/2;
-        const srcCat  = _dragSrc.cat;
-        const srcItem = _dragSrc.item;
-        const srcIdx  = srcCat.items.indexOf(srcItem);
-        if (srcIdx < 0) { _dragSrc=null; return; }
-        srcCat.items.splice(srcIdx, 1);               // 원래 위치에서 제거
-        let dstIdx = cat.items.indexOf(item);
-        if (srcCat === cat && srcIdx <= dstIdx) dstIdx--; // 같은 카테고리면 인덱스 보정
-        cat.items.splice(above ? dstIdx : dstIdx+1, 0, srcItem);
-        _dragSrc = null;
-        buildCatPanels();
       });
 
       return row;
@@ -5163,6 +5575,7 @@ function buildCatPanels(){
             cat.items.push(_dragSrc.item);
           }
           _dragSrc = null;
+          saveState();
           buildCatPanels();
         }
       }
@@ -5180,14 +5593,21 @@ function buildCatPanels(){
         const srcIdx = _dragSrc.cat.items.indexOf(_dragSrc.item);
         if (srcIdx >= 0) { _dragSrc.cat.items.splice(srcIdx,1); cat.items.push(_dragSrc.item); }
         _dragSrc = null;
+        saveState();
         buildCatPanels();
       }
     });
 
-    // 링크 추가 — 인라인 폼 항상 표시 (개선-3: lb 토글 제거)
+    // 링크 추가 — 1줄 버튼 클릭 시 입력 폼 표시
     const acts=document.createElement('div'); acts.className='cp-drop-btns';
+
+    const linkToggleBtn = document.createElement('button');
+    linkToggleBtn.type = 'button';
+    linkToggleBtn.className = 'link-toggle-btn';
+    linkToggleBtn.textContent = '🔗 링크 추가';
+
     const row = document.createElement('div');
-    row.className = 'link-input-row';
+    row.className = 'link-input-row is-hidden';
 
     const titleInp = document.createElement('input');
     titleInp.className = 'link-url-input';
@@ -5211,10 +5631,17 @@ function buildCatPanels(){
     cancelBtn.className = 'link-cancel-btn';
     cancelBtn.textContent = '취소';
 
-    function clearLinkInputs(){
+    function showLinkForm(){
+      row.classList.remove('is-hidden');
+      linkToggleBtn.style.display = 'none';
+      titleInp.focus();
+    }
+
+    function hideLinkForm(){
       titleInp.value = '';
       urlInp.value = '';
-      titleInp.focus();
+      row.classList.add('is-hidden');
+      linkToggleBtn.style.display = '';
     }
 
     function submitLink(){
@@ -5224,19 +5651,21 @@ function buildCatPanels(){
       let lbl = titleInp.value.trim();
       if(!lbl){ try { lbl = new URL(url).hostname.replace(/^www\./,''); } catch{ lbl = url; } }
       cat.items.push({ ic:'🔗', lbl, tag:'URL', path: url });
+      saveState();
       buildCatPanels();
       showToast('✅ 링크 추가됨');
     }
 
-    cancelBtn.onclick = clearLinkInputs;
+    linkToggleBtn.addEventListener('click', showLinkForm);
+    cancelBtn.addEventListener('click', hideLinkForm);
 
     titleInp.addEventListener('keydown', e=>{
       if(e.key==='Enter'){ e.preventDefault(); urlInp.focus(); }
-      if(e.key==='Escape'){ e.preventDefault(); clearLinkInputs(); }
+      if(e.key==='Escape'){ e.preventDefault(); hideLinkForm(); }
     });
     urlInp.addEventListener('keydown', e=>{
       if(e.key==='Enter'){ e.preventDefault(); submitLink(); }
-      if(e.key==='Escape'){ e.preventDefault(); clearLinkInputs(); }
+      if(e.key==='Escape'){ e.preventDefault(); hideLinkForm(); }
     });
     addBtn2.addEventListener('click', submitLink);
 
@@ -5245,6 +5674,7 @@ function buildCatPanels(){
     row.appendChild(titleInp);
     row.appendChild(urlInp);
     row.appendChild(btnRow);
+    acts.appendChild(linkToggleBtn);
     acts.appendChild(row);
 
     // ── 노트 영역 — 줄노트 배경 + 태그 방식 ──
@@ -5830,8 +6260,8 @@ let _renameX=0, _renameY=0;
     ctx.classList.remove('show');
     if (!_ctxItem) return;
     if (!_ctxItem.path) { showToast('❌ 경로가 없어요. 항목을 다시 드래그해서 추가해 주세요.'); return; }
-    const r = await openPath(_ctxItem.path);
-    if (r?.error) showToast('❌ 열기 실패: ' + String(r.error).slice(0, 60));
+    const r = await openItemPath(_ctxItem);
+    if (r?.error) showToast('❌ 열기 실패: ' + String(r.error).slice(0, 80));
   });
   btnCopy.addEventListener('click',e=>{
     e.stopPropagation();
@@ -6006,13 +6436,15 @@ function showIconPicker(x, y) {
   }
   _icpRenderTab(startTab);
 
-  // 팝업 위치 보정
   const popup = document.getElementById('icpPopup');
-  const pw = 308, ph = 360;
+  popup.style.visibility = 'hidden';
+  popup.style.display = 'flex';
+  const pw = popup.offsetWidth  || 480;
+  const ph = popup.offsetHeight || 520;
   popup.style.left = Math.min(x, window.innerWidth  - pw - 8) + 'px';
   popup.style.top  = Math.min(y, window.innerHeight - ph - 8) + 'px';
+  popup.style.visibility = '';
   document.getElementById('icpOverlay').classList.add('icp-open');
-  popup.style.display = 'block';
 }
 
 function closeIconPicker() {
@@ -7106,41 +7538,44 @@ function saveCalAlarms(){
   try { localStorage.setItem('calAlarms', JSON.stringify(calAlarms)); } catch(e){}
 }
 
-/* 알림 워처 시작 — initDashboard()에서 호출 */
+let _alarmWatchTimer = null;
+
+/* 알림 워처 시작 — initDashboard()에서 호출 (앱이 켜져 있는 동안만 동작) */
 function startAlarmWatcher(){
-  checkAlarms();                      // 앱 시작 직후 즉시 체크
-  setInterval(checkAlarms, 15000);    // 이후 15초마다 체크
+  if (_alarmWatchTimer) clearInterval(_alarmWatchTimer);
+  checkAlarms();
+  _alarmWatchTimer = setInterval(checkAlarms, 10000);
 }
 
-/* 알림 발화 여부 체크 */
+/* 알림 발화 여부 체크 — 로컬 투두·캘린더 일정 알림 (Google 서버 푸시 아님) */
 function checkAlarms(){
   const now = Date.now();
-  const STALE = 5 * 60 * 1000; // 5분 넘게 지난 알림은 조용히 폐기
+  const STALE = 5 * 60 * 1000;
 
-  // 투두 알림 체크
   let todoDirty = false;
   todoItems.forEach(item => {
-    if(!item.alarmDT) return;
-    const t = new Date(item.alarmDT).getTime();
-    if(now >= t){
-      if(now - t < STALE) queueAlarmNotif({ type:'todo', label: item.text, dt: item.alarmDT });
-      item.alarmDT = '';   // 한 번 발화 후 제거
+    if (!item.alarmDT) return;
+    const t = parseLocalDateTime(item.alarmDT);
+    if (!Number.isFinite(t)) return;
+    if (now >= t) {
+      if (now - t < STALE) queueAlarmNotif({ type: 'todo', label: item.text, dt: item.alarmDT });
+      item.alarmDT = '';
       todoDirty = true;
     }
   });
-  if(todoDirty){ saveState(); renderTodoList(); }
+  if (todoDirty) { saveState(); renderTodoList(); }
 
-  // 캘린더 알림 체크
   let calDirty = false;
   Object.entries(calAlarms).forEach(([evId, al]) => {
-    const t = new Date(al.alarmDT).getTime();
-    if(now >= t){
-      if(now - t < STALE) queueAlarmNotif({ type:'cal', label: al.title, dt: al.alarmDT });
+    const t = parseLocalDateTime(al.alarmDT);
+    if (!Number.isFinite(t)) { delete calAlarms[evId]; calDirty = true; return; }
+    if (now >= t) {
+      if (now - t < STALE) queueAlarmNotif({ type: 'cal', label: al.title, dt: al.alarmDT });
       delete calAlarms[evId];
       calDirty = true;
     }
   });
-  if(calDirty) saveCalAlarms();
+  if (calDirty) saveCalAlarms();
 }
 
 function queueAlarmNotif(alarm){
@@ -7230,7 +7665,7 @@ function saveAlarmMiniPopup(){
   const dt = document.getElementById('ampDtInput').value;
   if(!id || !dt){ showToast('⚠️ 알림 시간을 선택해주세요'); return; }
   // datetime-local은 분 단위 — 60초 이상 과거만 거부 (현재 분은 허용)
-  if(new Date(dt).getTime() < Date.now() - 60000){ showToast('⚠️ 이미 지난 시간이에요'); return; }
+  if (parseLocalDateTime(dt) < Date.now() - 60000) { showToast('⚠️ 이미 지난 시간이에요'); return; }
 
   const item = todoItems.find(t => t.id === id);
   if(!item) return;
@@ -7253,19 +7688,19 @@ function clearAlarmMiniPopup(){
 /* ── 캘린더 이벤트 다이얼로그 — 알림 토글 ── */
 function evdToggleAlarm(){
   const chk  = document.getElementById('evdAlarmChk');
-  const chip = document.getElementById('evdAlarmChip');
+  const wrap = document.getElementById('evdAlarmDtWrap');
   const dtEl = document.getElementById('evdAlarmDT');
   if(chk.checked){
-    chip.style.display = '';
+    wrap.style.display = '';
     if(!dtEl.value){
       const dateStr = document.getElementById('evdDate').value;
       const timeStr = document.getElementById('evdStartTime').value || '09:00';
       if(dateStr) setEvAlarmDT(`${dateStr}T${timeStr}`);
     }
   } else {
-    chip.style.display = 'none';
+    wrap.style.display = 'none';
     dtEl.value = '';
-    chip.textContent = '날짜/시간 선택';
+    updateDtChipPair('evdAlarmDateChip', 'evdAlarmTimeChip', '');
   }
 }
 
