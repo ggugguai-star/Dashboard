@@ -3032,10 +3032,14 @@ async function selectDownloadFolder() {
 
 /* ── Electron 호환 심 — 파일 경로 / stat ── */
 function getFilePath(f) { return f?.path || ''; }
-function statPath(p) {
-  if (!p) return Promise.resolve({ isDir: false });
+async function statPath(p) {
+  if (!p) return { isDir: false };
+  try {
+    const info = await tInvoke('plugin:fs|stat', { path: p });
+    if (info && typeof info.isDirectory === 'boolean') return { isDir: info.isDirectory };
+  } catch {}
   const name = String(p).split(/[\\/]/).pop();
-  return Promise.resolve({ isDir: !name.includes('.') || p.endsWith('\\') || p.endsWith('/') });
+  return { isDir: !name.includes('.') || p.endsWith('\\') || p.endsWith('/') };
 }
 
 /* ── 창 포커스 (알람 팝업 등에서 호출) ─────────────────────────
@@ -4465,6 +4469,7 @@ function initDashboard(){
   startClock();
   buildCalendar();
   buildCatPanels();
+  setupTauriFileDrop().catch(e => console.warn('[TauriFileDrop]', e));
   renderTodoList();       // 투두 리스트 초기화
   checkGoogleAuth();      // 인증 상태 확인 → 자동 동기화 + Drive 이미지
   startAlarmWatcher();    // 알림 워처 시작
@@ -4801,30 +4806,105 @@ let _drvMove = null; // { file, currentParentId, reloadFn, navStack:[{id,name}],
 /* 아이템 드래그 상태 */
 let _dragSrc = null; // { cat, item }
 
-/* 파일 드롭 공통 처리 */
-async function handleFileDrop(e, cat) {
-  const files = Array.from(e.dataTransfer.files);
-  if (!files.length) return;
-  for (const f of files) {
-    // Electron 32+ 권장 API로 경로 취득, 없으면 구형 f.path 폴백
-    let filePath = '';
-    try {
-      filePath = getFilePath(f) || '';
-    } catch {}
-    if (!filePath) filePath = f.path || '';
+/* Tauri 네이티브 파일 드롭 — hover 표시용 */
+let _fileDropHoverBody = null;
 
-    let isDir = false;
-    if (filePath) {
-      const r = await statPath(filePath);
-      isDir = r.isDir;
-    } else {
-      isDir = !f.name.includes('.');
-    }
-    const { ic, tag } = isDir ? { ic: '📁', tag: '폴더' } : getFileStyle(f.name);
-    cat.items.push({ ic, lbl: f.name, tag, path: filePath });
+function clearFileDropHover() {
+  if (_fileDropHoverBody) {
+    _fileDropHoverBody.classList.remove('body-drop-over');
+    _fileDropHoverBody = null;
   }
-  buildCatPanels();
-  showToast(`✅ ${files.length}개 항목 추가됨`);
+}
+
+async function dropPositionToLogical(position) {
+  let factor = window.devicePixelRatio || 1;
+  try {
+    factor = await window.__TAURI__.window.getCurrentWindow().scaleFactor();
+  } catch {}
+  return { x: position.x / factor, y: position.y / factor };
+}
+
+function catFromDropPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const panel = el?.closest?.('.cat-panel');
+  if (!panel) return null;
+  const idx = parseInt(panel.dataset.catIdx, 10);
+  if (Number.isNaN(idx) || idx < 0 || idx >= CATS.length) return null;
+  return CATS[idx];
+}
+
+function setFileDropHover(cat) {
+  clearFileDropHover();
+  if (!cat) return;
+  const idx = CATS.indexOf(cat);
+  const panel = document.querySelector(`.cat-panel[data-cat-idx="${idx}"]`);
+  const body = panel?.querySelector('.cp-body');
+  if (body) {
+    body.classList.add('body-drop-over');
+    _fileDropHoverBody = body;
+  }
+}
+
+/** OS 경로 배열 → 카테고리 아이템 추가 (Tauri drag-drop) */
+async function addPathsToCat(paths, cat) {
+  if (!paths?.length || !cat) return 0;
+  let added = 0;
+  for (const filePath of paths) {
+    if (!filePath) continue;
+    const lbl = String(filePath).split(/[\\/]/).pop() || filePath;
+    const { isDir } = await statPath(filePath);
+    const { ic, tag } = isDir ? { ic: '📁', tag: '폴더' } : getFileStyle(lbl);
+    cat.items.push({ ic, lbl, tag, path: filePath });
+    added++;
+  }
+  if (added > 0) {
+    buildCatPanels();
+    showToast(`✅ ${added}개 항목 추가됨`);
+  }
+  return added;
+}
+
+let _tauriFileDropReady = false;
+async function setupTauriFileDrop() {
+  if (_tauriFileDropReady) return;
+  _tauriFileDropReady = true;
+  await tListen('tauri://drag-drop', async (ev) => {
+    const payload = ev.payload;
+    if (!payload) return;
+
+    if (payload.type === 'leave') {
+      clearFileDropHover();
+      return;
+    }
+
+    if (payload.type === 'enter' || payload.type === 'over') {
+      if (!payload.position) return;
+      const { x, y } = await dropPositionToLogical(payload.position);
+      setFileDropHover(catFromDropPoint(x, y));
+      return;
+    }
+
+    if (payload.type === 'drop') {
+      clearFileDropHover();
+      const paths = payload.paths || [];
+      if (!paths.length) return;
+
+      let cat = null;
+      if (payload.position) {
+        const { x, y } = await dropPositionToLogical(payload.position);
+        cat = catFromDropPoint(x, y);
+      }
+      if (!cat && CATS.length) {
+        cat = CATS[0];
+        showToast('📂 카테고리를 특정하지 못해 첫 번째 패널에 추가했습니다');
+      }
+      if (!cat) {
+        showToast('❌ 카테고리를 찾을 수 없습니다');
+        return;
+      }
+      await addPathsToCat(paths, cat);
+    }
+  });
 }
 
 function buildCatPanels(){
@@ -4832,7 +4912,9 @@ function buildCatPanels(){
   // 카테고리 수에 맞춰 그리드 열 수 갱신 (초기 로드 / 재렌더 모두 처리)
   zone.style.gridTemplateColumns = `repeat(${CATS.length}, 1fr)`;
   CATS.forEach(cat=>{
+    const catIdx = CATS.indexOf(cat);
     const panel=document.createElement('div'); panel.className='cat-panel';
+    panel.dataset.catIdx = String(catIdx);
     panel.style.setProperty('--pc',cat.color);
 
     // 드래그 핸들 바 (상단 컬러 바)
@@ -4958,10 +5040,9 @@ function buildCatPanels(){
     // body 전체를 드롭 대상으로 (빈 공간 + 다른 카테고리로 이동)
     body.addEventListener('dragenter', e=>{
       if (_dragSrc && _dragSrc.cat !== cat) { e.preventDefault(); body.classList.add('body-drop-over'); }
-      else if (!_dragSrc && e.dataTransfer.types.includes('Files')) { e.preventDefault(); body.classList.add('body-drop-over'); }
     });
     body.addEventListener('dragover', e=>{
-      if (_dragSrc || e.dataTransfer.types.includes('Files')) e.preventDefault();
+      if (_dragSrc) e.preventDefault();
     });
     body.addEventListener('dragleave', e=>{
       if (!body.contains(e.relatedTarget)) body.classList.remove('body-drop-over');
@@ -4980,13 +5061,10 @@ function buildCatPanels(){
           _dragSrc = null;
           buildCatPanels();
         }
-      } else if (e.dataTransfer.files.length > 0) {
-        e.preventDefault();
-        await handleFileDrop(e, cat);
       }
     });
 
-    // 드롭존 (body 아래 시각적 힌트 — 파일만 처리)
+    // 드롭존 (body 아래 시각적 힌트 — OS 파일은 Tauri drag-drop 처리)
     const dz=document.createElement('div'); dz.className='cp-drop';
     dz.textContent='📂 파일·폴더를 드래그하여 추가';
     dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.style.background='rgba(196,181,253,0.18)'; });
@@ -4999,8 +5077,6 @@ function buildCatPanels(){
         if (srcIdx >= 0) { _dragSrc.cat.items.splice(srcIdx,1); cat.items.push(_dragSrc.item); }
         _dragSrc = null;
         buildCatPanels();
-      } else if (e.dataTransfer.files.length > 0) {
-        await handleFileDrop(e, cat);
       }
     });
 
