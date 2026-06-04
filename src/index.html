@@ -893,7 +893,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border-radius:11px;padding:9px;
   text-align:center;font-size:11px;color:var(--text4);flex-shrink:0;
 }
-.cp-drop-btns{display:flex;gap:5px;padding:5px 9px 9px;}
+.cp-drop-btns{display:flex;flex-direction:column;gap:0;padding:5px 9px 9px;}
 .cp-dbtn{
   flex:1;padding:6px 0;border-radius:9px;
   background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.7);
@@ -5093,76 +5093,68 @@ function buildCatPanels(){
       }
     });
 
-    // 액션
+    // 링크 추가 — 인라인 폼 항상 표시 (개선-3: lb 토글 제거)
     const acts=document.createElement('div'); acts.className='cp-drop-btns';
-    const lb=document.createElement('button'); lb.className='cp-dbtn'; lb.innerHTML='🔗 링크 추가';
-    lb.onclick=()=>{
-      // 이미 열려 있으면 닫기
-      const existing = acts.querySelector('.link-input-row');
-      if(existing){ existing.remove(); return; }
+    const row = document.createElement('div');
+    row.className = 'link-input-row';
 
-      const row = document.createElement('div');
-      row.className = 'link-input-row';
+    const titleInp = document.createElement('input');
+    titleInp.className = 'link-url-input';
+    titleInp.type = 'text';
+    titleInp.placeholder = '제목 (예: 네이버)';
+    titleInp.maxLength = 40;
 
-      // 제목 입력
-      const titleInp = document.createElement('input');
-      titleInp.className = 'link-url-input';
-      titleInp.type = 'text';
-      titleInp.placeholder = '제목 (예: 네이버)';
-      titleInp.maxLength = 40;
+    const urlInp = document.createElement('input');
+    urlInp.className = 'link-url-input';
+    urlInp.type = 'url';
+    urlInp.placeholder = 'URL (예: www.naver.com)';
 
-      // URL 입력
-      const urlInp = document.createElement('input');
-      urlInp.className = 'link-url-input';
-      urlInp.type = 'url';
-      urlInp.placeholder = 'URL (예: www.naver.com)';
+    const btnRow = document.createElement('div');
+    btnRow.className = 'link-input-btns';
 
-      // 버튼 행
-      const btnRow = document.createElement('div');
-      btnRow.className = 'link-input-btns';
+    const addBtn2 = document.createElement('button');
+    addBtn2.className = 'link-add-btn';
+    addBtn2.textContent = '✓ 추가';
 
-      const addBtn2 = document.createElement('button');
-      addBtn2.className = 'link-add-btn';
-      addBtn2.textContent = '✓ 추가';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'link-cancel-btn';
+    cancelBtn.textContent = '취소';
 
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'link-cancel-btn';
-      cancelBtn.textContent = '취소';
-      cancelBtn.onclick = () => row.remove();
+    function clearLinkInputs(){
+      titleInp.value = '';
+      urlInp.value = '';
+      titleInp.focus();
+    }
 
-      function submitLink(){
-        let url = urlInp.value.trim();
-        if(!url){ urlInp.focus(); return; }
-        if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
-        // 제목이 없으면 hostname으로 자동 설정
-        let lbl = titleInp.value.trim();
-        if(!lbl){ try { lbl = new URL(url).hostname.replace(/^www\./,''); } catch{ lbl = url; } }
-        cat.items.push({ ic:'🔗', lbl, tag:'URL', path: url });
-        row.remove();
-        buildCatPanels();
-        showToast('✅ 링크 추가됨');
-      }
+    function submitLink(){
+      let url = urlInp.value.trim();
+      if(!url){ urlInp.focus(); return; }
+      if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      let lbl = titleInp.value.trim();
+      if(!lbl){ try { lbl = new URL(url).hostname.replace(/^www\./,''); } catch{ lbl = url; } }
+      cat.items.push({ ic:'🔗', lbl, tag:'URL', path: url });
+      buildCatPanels();
+      showToast('✅ 링크 추가됨');
+    }
 
-      // Tab: 제목 → URL 이동
-      titleInp.addEventListener('keydown', e=>{
-        if(e.key==='Enter'){ e.preventDefault(); urlInp.focus(); }
-        if(e.key==='Escape') row.remove();
-      });
-      urlInp.addEventListener('keydown', e=>{
-        if(e.key==='Enter'){ e.preventDefault(); submitLink(); }
-        if(e.key==='Escape') row.remove();
-      });
-      addBtn2.addEventListener('click', submitLink);
+    cancelBtn.onclick = clearLinkInputs;
 
-      btnRow.appendChild(addBtn2);
-      btnRow.appendChild(cancelBtn);
-      row.appendChild(titleInp);
-      row.appendChild(urlInp);
-      row.appendChild(btnRow);
-      acts.appendChild(row);
-      setTimeout(()=>titleInp.focus(), 50);
-    };
-    acts.appendChild(lb);
+    titleInp.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); urlInp.focus(); }
+      if(e.key==='Escape'){ e.preventDefault(); clearLinkInputs(); }
+    });
+    urlInp.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); submitLink(); }
+      if(e.key==='Escape'){ e.preventDefault(); clearLinkInputs(); }
+    });
+    addBtn2.addEventListener('click', submitLink);
+
+    btnRow.appendChild(addBtn2);
+    btnRow.appendChild(cancelBtn);
+    row.appendChild(titleInp);
+    row.appendChild(urlInp);
+    row.appendChild(btnRow);
+    acts.appendChild(row);
 
     // ── 노트 영역 — 줄노트 배경 + 태그 방식 ──
     const noteArea = document.createElement('div');
