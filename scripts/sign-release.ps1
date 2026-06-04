@@ -29,9 +29,13 @@ $sigFile = "$exe.sig"
 if (-not (Test-Path $sigFile)) { throw "No .sig produced: $sigFile" }
 
 $signature = (Get-Content $sigFile -Raw).Trim()
+$notesText = $env:RELEASE_NOTES
+if (-not $notesText) {
+  $notesText = "v$Version — 항목 드래그 정렬, 알림 날짜/시간 분리, 아이콘 편집 확대, 클릭 실행·OS 드롭 개선"
+}
 $latest = @{
   version = "v$Version"
-  notes = "Tauri v2 P3: diag-p3, updater, screen capture QA"
+  notes = $notesText
   pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
   platforms = @{
     "windows-x86_64" = @{
