@@ -1576,9 +1576,35 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   letter-spacing: 0.07em; text-transform: uppercase;
 }
 
+/* 카테고리 편집 — 아이콘 탭·검색 (icp 패턴) */
+.cep-tabs {
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+}
+.cep-tabs::-webkit-scrollbar { display: none; }
+.cep-tab {
+  flex-shrink: 0; padding: 4px 9px; border-radius: 16px;
+  font-size: 11px; font-weight: 600; color: #64748b;
+  background: transparent; border: none; cursor: pointer;
+  white-space: nowrap; font-family: inherit;
+  transition: background .15s, color .15s;
+}
+.cep-tab:hover { background: rgba(196,181,253,0.18); color: #5b21b6; }
+.cep-tab.cep-tab-active { background: rgba(139,92,246,0.12); color: #7c3aed; }
+.cep-icon-search, .icp-search {
+  width: 100%; box-sizing: border-box;
+  padding: 6px 10px; border-radius: 9px; font-size: 11.5px;
+  border: 1.5px solid rgba(230,225,255,0.85);
+  background: rgba(255,255,255,0.72); color: var(--text1);
+  font-family: 'DM Sans','Noto Sans KR',sans-serif; outline: none;
+}
+.cep-icon-search:focus, .icp-search:focus { border-color: rgba(139,92,246,0.45); }
+.icp-search { margin: 0 10px 4px; width: calc(100% - 20px); }
+
 /* 아이콘 선택 그리드 */
 .cep-icon-grid {
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+  max-height: 132px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(196,181,253,0.4) transparent;
 }
 .cep-icon-btn {
   width: 32px; height: 32px; border-radius: 9px; font-size: 17px;
@@ -2595,6 +2621,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
       <div class="icp-header-sub" id="icpHeaderSub">카테고리를 선택하세요</div>
     </div>
   </div>
+  <input type="text" class="icp-search" id="icpSearch" placeholder="탭·이모지 검색" maxlength="32" autocomplete="off">
   <div class="icp-tabs" id="icpTabs"></div>
   <div class="icp-grid"  id="icpGrid"></div>
   <div class="icp-footer">
@@ -2816,6 +2843,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
              placeholder="폴더 ID 또는 비워두면 내 드라이브 루트" maxlength="120">
       <span class="cep-drive-root-hint">비워두면 내 드라이브 전체에서 시작해요</span>
     </div>
+    <div class="cep-tabs" id="cepTabs"></div>
+    <input type="text" class="cep-icon-search" id="cepIconSearch" placeholder="탭·이모지 검색" maxlength="32" autocomplete="off">
     <div class="cep-icon-grid" id="cepIconGrid"></div>
     <div class="cep-name-wrap">
       <span class="cep-preview-icon" id="cepPreviewIcon">📚</span>
@@ -5840,31 +5869,56 @@ const ITEM_ICON_SETS = [
   { label:'📁 파일/문서', icons:[
     '📁','📂','🗂️','📄','📝','📋','📊','📈','📉','📃','📜','📑',
     '🗒️','🗓️','📌','📍','📎','🖇️','✂️','🖊️','✏️','🖋️','🔖','📬',
+    '📰','📧','📨','📩','✉️','🗃️','🗄️','📦','📫','📪','📭','📮',
+    '🗞️','📇','📅','📆','🗑️','🗳️','🪪','📔','📕','📗','📘','📙',
   ]},
   { label:'🎓 교육/학습', icons:[
     '📚','🎓','🔬','🔭','📐','📏','🧪','🧫','🧬','🏫','🏛️','💡',
     '⭐','🌟','🏆','🎯','🥇','🎖️','🔍','🔎','💬','📢','📣','🗣️',
+    '📖','🧮','🔢','🧠','🤔','✍️','🎒','🏅','🥈','🥉','🎺','🎻',
+    '🎼','🎹','🧑‍🏫','👨‍🎓','👩‍🎓','📯','🎪','🎭','🖍️','🪶','🗺️','🌍',
   ]},
   { label:'💼 업무/비즈니스', icons:[
     '💼','🏢','🏗️','📊','📈','💰','💵','💳','🤝','📞','☎️','📠',
-    '📧','📨','📩','📬','✉️','🗳️','🗺️','📋','🖥️','🖨️','📋','⚖️',
+    '📧','📨','📩','📬','✉️','🗳️','🗺️','📋','🖥️','🖨️','⚖️','🧾',
+    '💹','🏦','🏧','💴','💶','💷','🪙','📉','🗂️','🔑','🗝️','🏛️',
+    '🏬','🏪','🏭','👔','👨‍💼','👩‍💼','🧑‍💼','📟','🖊️','✒️','📎','📌',
   ]},
   { label:'💻 기술/IT', icons:[
     '💻','🖥️','🖨️','⌨️','🖱️','📱','📲','📡','🔌','💾','💿','📀',
     '🔋','🔧','🔩','⚙️','🛠️','🔐','🔑','🗝️','🔒','🛡️','🧲','🔗',
+    '🤖','🦾','🖲️','💽','📟','☁️','🌐','🧩','⚡','🔥','💡','🎮',
+    '🕹️','📶','🛰️','🗜️','⚗️','🔭','📷','🎥','🧑‍💻','👨‍💻','👩‍💻','🖧',
   ]},
   { label:'🎨 크리에이티브', icons:[
     '🎨','🖼️','🖌️','✒️','🎭','🎬','🎵','🎶','🎸','🎹','🎤','🎧',
     '📷','📸','📹','🎥','🎞️','📽️','🎙️','🎪','🎊','🎁','🎀','🃏',
+    '🎺','🥁','🪕','🎻','🎼','🪗','🎷','🪘','🧵','🪡','🧶','🖍️',
+    '🗿','🎡','🎢','🎠','🩰','🎫','🎟️','🪩','🎇','🎆','🧨','🎈',
   ]},
   { label:'🌟 기타/심볼', icons:[
     '⭐','🌟','💫','✨','🔥','💥','❄️','🌊','🌈','☀️','🌙','⚡',
     '🌱','🌿','🍀','🌸','🚀','🛸','🔮','💎','❤️','💜','🧡','💛',
+    '💚','💙','🖤','🤍','💔','❣️','💕','💞','💓','💗','💖','💘',
+    '💝','☮️','✝️','☪️','🕉️','☯️','♈','♉','♊','♋','♌','♍',
+  ]},
+  { label:'🏠 생활/장소', icons:[
+    '🏠','🏡','🏘️','🏚️','🏗️','🏭','🏢','🏬','🏪','🏫','🏥','🏦',
+    '🏨','🏩','💒','⛪','🕌','🛕','⛩️','🗼','🗽','⛲','🏰','🏯',
+    '🌆','🌃','🌉','🌁','🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑',
+    '🚒','🚐','🛻','🚚','🚛','🚜','🛵','🏍️','🚲','🛴','🚏','🗺️',
+  ]},
+  { label:'😀 감정/사람', icons:[
+    '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊',
+    '😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛',
+    '😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑',
+    '😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','🧑',
   ]},
 ];
 
 let _icpSelected = '';
 let _icpTabIdx   = 0;
+let _icpFilter   = '';
 
 function _icpRenderPreview(ic) {
   const box = document.getElementById('icpPreviewBox');
@@ -5876,6 +5930,13 @@ function _icpRenderPreview(ic) {
   }
 }
 
+function _iconSetFilter(set, q) {
+  if (!q) return set.icons;
+  const ql = q.toLowerCase();
+  if (set.label.toLowerCase().includes(ql)) return set.icons;
+  return set.icons.filter(ic => ic.includes(q));
+}
+
 function _icpRenderTab(tabIdx) {
   _icpTabIdx = tabIdx;
   const set  = ITEM_ICON_SETS[tabIdx];
@@ -5883,7 +5944,16 @@ function _icpRenderTab(tabIdx) {
   const sub  = document.getElementById('icpHeaderSub');
   if (sub) sub.textContent = set.label;
   grid.innerHTML = '';
-  set.icons.forEach(ic => {
+  const q = (_icpFilter || '').trim();
+  const icons = _iconSetFilter(set, q);
+  if (!icons.length) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'grid-column:1/-1;padding:12px;text-align:center;font-size:11.5px;color:var(--text4)';
+    empty.textContent = '검색 결과 없음';
+    grid.appendChild(empty);
+    return;
+  }
+  icons.forEach(ic => {
     const btn = document.createElement('button');
     btn.className = 'icp-icon-btn' + (ic === _icpSelected ? ' icp-sel' : '');
     btn.textContent = ic;
@@ -5903,6 +5973,18 @@ function _icpRenderTab(tabIdx) {
 
 function showIconPicker(x, y) {
   _icpSelected = _ctxItem?.ic || '';
+  _icpFilter = '';
+  const searchEl = document.getElementById('icpSearch');
+  if (searchEl) {
+    searchEl.value = '';
+    if (!searchEl._icpBound) {
+      searchEl._icpBound = true;
+      searchEl.addEventListener('input', () => {
+        _icpFilter = searchEl.value;
+        _icpRenderTab(_icpTabIdx);
+      });
+    }
+  }
   // 탭 생성 (최초 1회)
   const tabsEl = document.getElementById('icpTabs');
   if (!tabsEl.children.length) {
@@ -6299,11 +6381,31 @@ function renderIcon(container, iconValue, svgSize) {
   }
 }
 
-const CAT_ICONS = [
-  '__gdrive__',
-  '📚','📊','🗂️','🔬','📅','📝','📁','🎯','💡','🏫',
-  '✏️','📌','🖥️','📎','🗓','⭐','🔖','💼','📋','🔍',
-  '🎨','🧪','📐','🧩','🏆','💬','🔔','⚡','🌱','🎓',
+const CAT_ICON_SETS = [
+  { label:'☁️ Drive/클라우드', icons:[
+    '__gdrive__','☁️','🌐','💾','🔗','📡','🔌','📲','💻','🖥️',
+    '📱','🔐','🔒','🛡️','📧','📨','📩','✉️','📬','📂',
+  ]},
+  { label:'📚 교육/학교', icons:[
+    '📚','🎓','🏫','🏛️','🔬','🧪','📐','📏','📖','✏️',
+    '📝','📋','📌','🔖','🎯','🏆','⭐','💡','🔍','🧩',
+    '📅','🗓️','📆','🗒️','🧑‍🏫','👨‍🎓','👩‍🎓','🎒','🏅','🥇',
+  ]},
+  { label:'💼 업무/문서', icons:[
+    '💼','📊','📈','📁','🗂️','📄','📃','📑','📎','🖇️',
+    '💰','💵','💳','🤝','📞','☎️','📠','🗺️','📋','⚖️',
+    '🖥️','🖨️','🏢','🏗️','🧾','📌','🔑','🗝️','👔','📟',
+  ]},
+  { label:'🎯 심볼/알림', icons:[
+    '⭐','🌟','💫','✨','🔥','⚡','🔔','📢','📣','💬',
+    '🎯','💡','🔮','💎','❤️','💜','🧡','💛','🌱','🚀',
+    '🏆','🥇','🎖️','🔍','📌','🔖','⚠️','✅','❌','⭕',
+  ]},
+  { label:'🎨 취미/생활', icons:[
+    '🎨','🎭','🎬','🎵','🎶','🎸','📷','📸','☕','🍵',
+    '🏠','🏡','🚗','✈️','🌍','🗺️','🌸','🍀','🎁','🎪',
+    '🖼️','🎧','🎤','🏃','⚽','🎮','🧩','🌈','🌙','🍕',
+  ]},
 ];
 
 const CEP_COLORS = [
@@ -6316,6 +6418,41 @@ var cepCatIdx = -1;
 var cepSelectedIcon = '';
 var cepSelectedColor = '';
 var cepSelectedType = 'normal';
+let _cepTabIdx = 0;
+let _cepFilter = '';
+
+function _cepRenderTab(tabIdx) {
+  _cepTabIdx = tabIdx;
+  const set = CAT_ICON_SETS[tabIdx];
+  const grid = document.getElementById('cepIconGrid');
+  if (!grid || !set) return;
+  grid.innerHTML = '';
+  const q = (_cepFilter || '').trim();
+  const icons = _iconSetFilter(set, q);
+  if (!icons.length) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'grid-column:1/-1;padding:10px;text-align:center;font-size:11px;color:var(--text4)';
+    empty.textContent = '검색 결과 없음';
+    grid.appendChild(empty);
+    return;
+  }
+  icons.forEach(ico => {
+    const btn = document.createElement('button');
+    btn.className = 'cep-icon-btn' + (ico === cepSelectedIcon ? ' cep-sel' : '');
+    btn.title = ico === GDRIVE_ICON_MARKER ? 'Google Drive' : ico;
+    renderIcon(btn, ico, 18);
+    btn.onclick = () => {
+      cepSelectedIcon = ico;
+      grid.querySelectorAll('.cep-icon-btn').forEach(b => b.classList.remove('cep-sel'));
+      btn.classList.add('cep-sel');
+      renderIcon(document.getElementById('cepPreviewIcon'), ico, 22);
+    };
+    grid.appendChild(btn);
+  });
+  document.getElementById('cepTabs')?.querySelectorAll('.cep-tab').forEach((t, i) => {
+    t.classList.toggle('cep-tab-active', i === tabIdx);
+  });
+}
 
 function setCepType(type) {
   cepSelectedType = type;
@@ -6330,22 +6467,36 @@ function openCatEditPopup(e, catIdx) {
   cepSelectedIcon  = cat.icon;
   cepSelectedColor = cat.color;
 
-  // 아이콘 그리드
-  const grid = document.getElementById('cepIconGrid');
-  grid.innerHTML = '';
-  CAT_ICONS.forEach(ico => {
-    const btn = document.createElement('button');
-    btn.className = 'cep-icon-btn' + (ico === cat.icon ? ' cep-sel' : '');
-    btn.title = ico === GDRIVE_ICON_MARKER ? 'Google Drive' : ico;
-    renderIcon(btn, ico, 18);
-    btn.onclick = () => {
-      cepSelectedIcon = ico;
-      grid.querySelectorAll('.cep-icon-btn').forEach(b => b.classList.remove('cep-sel'));
-      btn.classList.add('cep-sel');
-      renderIcon(document.getElementById('cepPreviewIcon'), ico, 22);
-    };
-    grid.appendChild(btn);
-  });
+  // 아이콘 탭 피커
+  _cepFilter = '';
+  const searchEl = document.getElementById('cepIconSearch');
+  if (searchEl) {
+    searchEl.value = '';
+    if (!searchEl._cepBound) {
+      searchEl._cepBound = true;
+      searchEl.addEventListener('input', () => {
+        _cepFilter = searchEl.value;
+        _cepRenderTab(_cepTabIdx);
+      });
+    }
+  }
+  const tabsEl = document.getElementById('cepTabs');
+  if (tabsEl && !tabsEl.children.length) {
+    CAT_ICON_SETS.forEach((set, i) => {
+      const t = document.createElement('button');
+      t.className = 'cep-tab';
+      t.textContent = set.label;
+      t.onclick = () => _cepRenderTab(i);
+      tabsEl.appendChild(t);
+    });
+  }
+  let startTab = 0;
+  if (cepSelectedIcon) {
+    CAT_ICON_SETS.forEach((set, i) => {
+      if (set.icons.includes(cepSelectedIcon)) startTab = i;
+    });
+  }
+  _cepRenderTab(startTab);
 
   // 색상 팔레트
   const colorRow = document.getElementById('cepColorRow');
