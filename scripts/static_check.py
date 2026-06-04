@@ -47,8 +47,27 @@ results: "list[tuple[str, str, str]]" = []
 blocking_failures: "list[str]" = []   # 차단 사유 요약(맨 끝 출력용)
 
 
+def _configure_stdio():
+    """Windows cp949 등 narrow 콘솔에서 UnicodeEncodeError 방지."""
+    for stream in (sys.stdout, sys.stderr):
+        if stream is None or not hasattr(stream, "reconfigure"):
+            continue
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
 def log(msg=""):
-    print(msg, flush=True)
+    try:
+        print(msg, flush=True)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+        safe = msg.encode(enc, errors="replace").decode(enc, errors="replace")
+        print(safe, flush=True)
+
+
+_configure_stdio()
 
 
 def _excluded(path: Path) -> bool:
@@ -323,6 +342,7 @@ def main():
 
 
 if __name__ == "__main__":
+    _configure_stdio()
     try:
         main()
     except Exception as e:

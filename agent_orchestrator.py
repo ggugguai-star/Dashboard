@@ -1182,8 +1182,8 @@ class CursorOrchestrator(FileSystemEventHandler):
             project_root = os.path.dirname(os.path.abspath(__file__))
 
             result = subprocess.run(
-                STATIC_CHECK_CMD,
-                shell=True,
+                [sys.executable, "scripts/static_check.py"],
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=300,

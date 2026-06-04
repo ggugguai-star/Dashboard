@@ -1,0 +1,6 @@
+# 1차 정적 검증(scripts/static_check.py)이 사용하는 도구
+# 한 번만 설치하면 됨:  py -m pip install -r requirements-dev.txt
+ruff>=0.6
+bandit>=1.7
+mypy>=1.10
+pytest>=8.0
