@@ -1,6 +1,6 @@
 const {
   app, BrowserWindow, ipcMain, shell,
-  Tray, Menu, nativeImage, screen, globalShortcut, dialog,
+  Tray, Menu, nativeImage, screen, globalShortcut, dialog, clipboard,
 } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
@@ -126,6 +126,7 @@ function refreshAccessToken(tokens) {
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -180,6 +181,7 @@ async function createCalendarEventAPI(eventData) {
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -213,6 +215,7 @@ async function updateCalendarEventAPI(eventId, eventData) {
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -243,6 +246,7 @@ async function deleteCalendarEventAPI(eventId) {
     }, (res) => {
       // 204 No Content = 성공
       if (res.statusCode === 204) { resolve({ success: true }); return; }
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -278,6 +282,7 @@ async function listDriveFolderAPI(folderId) {
       method: 'GET',
       headers: { Authorization: `Bearer ${accessToken}` },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -310,6 +315,7 @@ async function driveTrashFileAPI(fileId) {
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', d => data += d);
       res.on('end', () => {
@@ -347,6 +353,7 @@ async function driveMoveFileAPI(fileId, newParentId, oldParentId) {
         'Content-Length': 2,
       },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', d => data += d);
       res.on('end', () => {
@@ -438,6 +445,7 @@ async function listDriveImagesAPI(folderId) {
       method: 'GET',
       headers: { Authorization: `Bearer ${accessToken}` },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -503,6 +511,7 @@ async function fetchCalendarEventsFromAPI(timeMin, timeMax) {
       method: 'GET',
       headers: { Authorization: `Bearer ${accessToken}` },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -518,19 +527,48 @@ async function fetchCalendarEventsFromAPI(timeMin, timeMax) {
   });
 }
 
+/* ══════════════════════════════════════════
+   창 위치 저장/복원 (멀티모니터 지원)
+══════════════════════════════════════════ */
+const BOUNDS_FILE = path.join(app.getPath('userData'), 'window-bounds.json');
+
+function loadSavedBounds() {
+  try { return JSON.parse(fs.readFileSync(BOUNDS_FILE, 'utf8')); } catch { return null; }
+}
+
+function saveBounds(bounds) {
+  try { fs.writeFileSync(BOUNDS_FILE, JSON.stringify(bounds), 'utf8'); } catch {}
+}
+
+/** 저장된 디스플레이가 여전히 연결돼 있으면 복원, 없으면 커서 위치 디스플레이로 fallback */
+function getInitialBounds() {
+  const saved = loadSavedBounds();
+  if (saved && saved.displayId) {
+    const match = screen.getAllDisplays().find(d => d.id === saved.displayId);
+    if (match) return { ...match.workArea, displayId: match.id };
+  }
+  // fallback: 커서가 있는 디스플레이 작업 영역 전체
+  const cursor  = screen.getCursorScreenPoint();
+  const display = screen.getDisplayNearestPoint(cursor);
+  return { ...display.workArea, displayId: display.id };
+}
+
 /* ── 창 생성 ── */
 let win, tray, oauthServer = null;
 
 function createWindow() {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const initBounds = getInitialBounds();
 
   win = new BrowserWindow({
-    x: 0, y: 0, width, height,
+    x: initBounds.x,
+    y: initBounds.y,
+    width:  initBounds.width,
+    height: initBounds.height,
     frame: false,
     transparent: false,
     skipTaskbar: true,
     resizable: false,
-    movable: false,
+    movable: true,          // 상단 바 드래그로 모니터 이동 허용
     alwaysOnTop: false,
     focusable: true,
     hasShadow: false,
@@ -550,6 +588,17 @@ function createWindow() {
     setTimeout(() => {
       autoUpdater.checkForUpdates().catch(e => console.error('[업데이트] 확인 실패:', e.message));
     }, 3000);
+  });
+
+  // 드래그 완료 → 현재 디스플레이 작업 영역 전체로 스냅 + 위치 저장
+  win.on('moved', () => {
+    const b  = win.getBounds();
+    const cx = b.x + b.width  / 2;
+    const cy = b.y + b.height / 2;
+    const display = screen.getDisplayNearestPoint({ x: cx, y: cy });
+    const wa = display.workArea;
+    win.setBounds({ x: wa.x, y: wa.y, width: wa.width, height: wa.height }, true);
+    saveBounds({ x: wa.x, y: wa.y, width: wa.width, height: wa.height, displayId: display.id });
   });
 
   win.on('close', (e) => { e.preventDefault(); win.hide(); });
@@ -623,9 +672,60 @@ ipcMain.handle('quit-app', () => {
   app.quit();
 });
 
-/* 업데이트 설치 (다운로드 완료 후 재시작) */
+/* 창 최소화 */
+ipcMain.handle('minimize-window', () => { if (win) win.minimize(); });
+
+/* 스크린 캡처 — 캡처 도구 실행 + 클립보드 폴링 → 이미지 감지 시 자동 복귀 */
+ipcMain.handle('start-screen-capture', async () => {
+  // 현재 클립보드 상태 저장 (비교용)
+  const prevImg  = clipboard.readImage();
+  const prevHash = prevImg.isEmpty() ? '' : prevImg.toDataURL().slice(0, 120);
+
+  // 창 최소화 후 Windows 캡처 도구 실행
+  if (win) win.minimize();
+  shell.openExternal('ms-screenclip:').catch(() => {
+    // ms-screenclip 불가 시 Snipping Tool 직접 실행
+    require('child_process').exec('SnippingTool.exe /clip');
+  });
+
+  // 클립보드 폴링 (300ms 간격, 최대 60초)
+  return new Promise(resolve => {
+    let elapsed = 0;
+    const poll = setInterval(() => {
+      elapsed += 300;
+      if (elapsed > 60000) { clearInterval(poll); resolve(null); return; }
+
+      const img = clipboard.readImage();
+      if (img.isEmpty()) return;
+      const hash = img.toDataURL().slice(0, 120);
+      if (hash === prevHash) return;
+
+      clearInterval(poll);
+
+      // 64×64 center-crop (NativeImage API)
+      const size = img.getSize();
+      const s  = Math.min(size.width, size.height);
+      const sx = Math.floor((size.width  - s) / 2);
+      const sy = Math.floor((size.height - s) / 2);
+      const cropped = img.crop({ x: sx, y: sy, width: s, height: s });
+      const resized = cropped.resize({ width: 64, height: 64 });
+      const dataURL = resized.toDataURL();
+
+      // 창 복귀 후 렌더러에 전달
+      if (win) { win.restore(); win.show(); win.focus(); }
+      setTimeout(() => {
+        if (win && !win.isDestroyed()) win.webContents.send('capture-image-ready', dataURL);
+      }, 350);
+      resolve(dataURL);
+    }, 300);
+  });
+});
+
+/* 업데이트 설치 (다운로드 완료 후 재시작 — NSIS silent 모드) */
 ipcMain.handle('install-update', () => {
-  autoUpdater.quitAndInstall();
+  // isSilent=true  : NSIS 설치 창 없이 백그라운드 설치
+  // isForceRunAfter=true : 설치 후 앱 자동 재시작
+  autoUpdater.quitAndInstall(true, true);
 });
 
 /* 수동 업데이트 확인 */
@@ -680,12 +780,18 @@ function googleTasksRequest(method, path, body, accessToken) {
       method,
       headers,
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
         if (res.statusCode === 204) { resolve({ success: true }); return; }
         if (res.statusCode === 401 || res.statusCode === 403) {
-          resolve({ error: 'tasks_auth_required', status: res.statusCode }); return;
+          try {
+            const body = JSON.parse(data);
+            const msg  = body?.error?.message || body?.error || data.slice(0, 200);
+            console.error('[Tasks API] ' + res.statusCode + ':', msg);
+            resolve({ error: 'tasks_auth_required', status: res.statusCode, detail: msg }); return;
+          } catch { resolve({ error: 'tasks_auth_required', status: res.statusCode }); return; }
         }
         try {
           const json = JSON.parse(data);
@@ -914,6 +1020,7 @@ function exchangeCode(code, clientId, clientSecret, port) {
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
+      res.setEncoding('utf8');
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {

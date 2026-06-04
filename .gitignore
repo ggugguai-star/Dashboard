@@ -1,0 +1,5 @@
+node_modules/
+*.exe
+sign-log.txt
+src-tauri/target/
+__pycache__/
