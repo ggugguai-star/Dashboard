@@ -8,7 +8,7 @@
  *  [Cal]     getCalendarList · getCalendarEvents · createCalendarEvent · updateCalendarEvent · deleteCalendarEvent
  *  [Drive]   listDriveFolder · listDriveImages · getDriveImageData
  *            driveTrashFile · driveMoveFile · driveDownloadFile
- *  [Tasks]   tasksGetDefaultList · tasksListTasks · tasksCreateTask
+ *  [Tasks]   getTaskLists · tasksGetDefaultList · tasksListTasks · tasksCreateTask
  *            tasksPatchTask · tasksDeleteTask
  *
  * ── import 방법 (index.html 에서) ──────────────────────────────────────
@@ -505,6 +505,23 @@ export async function driveDownloadFile(fileId, fileName, mimeType, destPath) {
 // ══════════════════════════════════════════════════════════════════════
 //  Tasks
 // ══════════════════════════════════════════════════════════════════════
+
+/**
+ * 사용자 Tasks 목록 전체를 조회한다.
+ *
+ * @returns {Promise<{lists:{id:string,title:string}[]}|{error:string}>}
+ */
+export async function getTaskLists() {
+  const json = await _apiFetch(
+    'https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=100',
+  );
+  if (json.error) return json;
+  const lists = (json.items ?? []).map((item) => ({
+    id: item.id,
+    title: item.title,
+  }));
+  return { lists };
+}
 
 /**
  * 기본 Tasks 목록('My Tasks' / '내 할 일') 의 ID 를 반환한다.

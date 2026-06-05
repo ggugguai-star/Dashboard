@@ -712,10 +712,60 @@ export function renderGrid(container, state, options = {}) {
   return metrics;
 }
 
-/** DOM에서 기존 4종 패널 앵커 수집 (buildCatPanels 이후 호출) */
-export function collectPanelAnchors() {
+function ensureEditActionButtons(canvas, options = {}) {
+  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    if (shell.querySelector(':scope > .widget-edit-actions')) return;
+    const bar = document.createElement('div');
+    bar.className = 'widget-edit-actions';
+    const wid = shell.dataset.widgetId;
+    const settingsBtn = document.createElement('button');
+    settingsBtn.type = 'button';
+    settingsBtn.className = 'widget-action-btn widget-action-settings';
+    settingsBtn.title = '소스 설정';
+    settingsBtn.textContent = '⚙';
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof options.onSettings === 'function') options.onSettings(wid);
+    });
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'widget-action-btn widget-action-delete';
+    delBtn.title = '위젯 삭제';
+    delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof options.onDelete === 'function') options.onDelete(wid);
+    });
+    bar.appendChild(settingsBtn);
+    bar.appendChild(delBtn);
+    shell.appendChild(bar);
+  });
+}
+
+function removeEditActionButtons(canvas) {
+  canvas.querySelectorAll('.widget-edit-actions').forEach((el) => el.remove());
+}
+
+/** DOM에서 기존 4종 패널 앵커 수집 (buildCatPanels·syncWidgetAnchors 이후 호출) */
+export function collectPanelAnchors(state = null) {
   if (typeof document === 'undefined') {
     return { calendar: [], drive: [], todo: [], catZone: null, categoryPanels: [] };
+  }
+  const pool = document.getElementById('widgetAnchorPool');
+  if (pool && state?.widgets) {
+    const calendar = [];
+    const drive = [];
+    const todo = [];
+    for (const w of state.widgets) {
+      const node = pool.querySelector(`[data-widget-id="${w.id}"]`);
+      if (!node) continue;
+      if (w.type === 'calendar') calendar.push(node);
+      else if (w.type === 'drive') drive.push(node);
+      else if (w.type === 'todo') todo.push(node);
+    }
+    const catZone = document.getElementById('catZone');
+    const categoryPanels = catZone ? [...catZone.querySelectorAll(':scope > .cat-panel')] : [];
+    return { calendar, drive, todo, catZone, categoryPanels };
   }
   const sideL = document.querySelector('.side-l');
   const gcs = sideL ? [...sideL.querySelectorAll(':scope > .gc')] : [];
@@ -789,7 +839,19 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
 /**
  * @param {HTMLElement} rootEl
  * @param {object} state
- * @param {{ onEsc?: () => void }} [options]
+ * @param {object} [anchors]
+ * @param {() => void} [prevTeardown]
+ * @returns {() => void}
+ */
+export function remountWidgetGrid(rootEl, state, anchors = null, prevTeardown = null) {
+  if (typeof prevTeardown === 'function') prevTeardown();
+  return mountWidgetGrid(rootEl, state, anchors);
+}
+
+/**
+ * @param {HTMLElement} rootEl
+ * @param {object} state
+ * @param {{ onEsc?: () => void, onSettings?: (id:string)=>void, onDelete?: (id:string)=>void }} [options]
  */
 export function enterEditMode(rootEl, state, options = {}) {
   if (_editMode) return state;
@@ -800,6 +862,7 @@ export function enterEditMode(rootEl, state, options = {}) {
   setContentSyncPaused(true);
   ensureDragHandles(canvas);
   ensureResizeHandles(canvas);
+  ensureEditActionButtons(canvas, options);
 
   const dashboard = typeof document !== 'undefined'
     ? document.getElementById('dashboard')
@@ -859,6 +922,7 @@ export function exitEditMode(rootEl, state) {
     clearResizeVisuals(canvas);
     removeDragHandles(canvas);
     removeResizeHandles(canvas);
+    removeEditActionButtons(canvas);
     updateAllShellGeometry(rootEl, state, renderGrid(rootEl, state, { layoutOnly: true }));
   }
 

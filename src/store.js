@@ -30,6 +30,49 @@ const WIDGET_DEFAULTS = {
 
 const TYPE_ORDER = { calendar: 0, drive: 1, todo: 2, category: 3 };
 
+const TYPE_PREFIX = { calendar: 'cal', drive: 'wk', todo: 'memo', category: 'cat' };
+
+const WIDGET_TITLES = {
+  calendar: '내 캘린더',
+  drive: 'Weekly Plan',
+  todo: '메모 · 할 일',
+  category: '카테고리',
+};
+
+function stateWidgetsToLayout(widgets) {
+  if (!Array.isArray(widgets)) return [];
+  return widgets.map((w) => ({
+    i: w.id,
+    x: w.x ?? 0,
+    y: w.y ?? 0,
+    w: w.w ?? 2,
+    h: w.h ?? 2,
+    minW: w.minW ?? 1,
+    minH: w.minH ?? 1,
+  }));
+}
+
+function applyLayoutToStateWidgets(widgets, layout) {
+  if (!Array.isArray(widgets) || !Array.isArray(layout)) return widgets;
+  const byId = new Map(layout.map((el) => [el.i, el]));
+  return widgets.map((w) => {
+    const el = byId.get(w.id);
+    if (!el) return { ...w };
+    return { ...w, x: el.x, y: el.y, w: el.w, h: el.h };
+  });
+}
+
+function enrichWidget(widget) {
+  const d = WIDGET_DEFAULTS[widget.type] || { w: 2, h: 2, minW: 2, minH: 2 };
+  return {
+    ...widget,
+    w: widget.w ?? d.w,
+    h: widget.h ?? d.h,
+    minW: widget.minW ?? d.minW,
+    minH: widget.minH ?? d.minH,
+  };
+}
+
 let saveTimer = null;
 const SAVE_DEBOUNCE_MS = 300;
 
@@ -427,6 +470,88 @@ export function exportState(state, { includeKeys = true } = {}) {
     out.secrets = {};
   }
   return JSON.stringify(out, null, 2);
+}
+
+/** 기존 ID와 충돌 없는 위젯 ID 생성 */
+export function generateWidgetId(type, widgets) {
+  const prefix = TYPE_PREFIX[type] || 'w';
+  const ids = new Set((widgets || []).map((w) => w.id));
+  let n = 1;
+  while (ids.has(`${prefix}-${n}`)) n += 1;
+  return `${prefix}-${n}`;
+}
+
+/** 타입별 기본 골격 위젯 객체 */
+export function createWidget(type, widgets) {
+  const id = generateWidgetId(type, widgets);
+  const base = { id, type };
+  if (type === 'calendar') {
+    return { ...base, title: WIDGET_TITLES.calendar, source: { calendarId: 'primary' } };
+  }
+  if (type === 'drive') {
+    return { ...base, title: WIDGET_TITLES.drive, source: { folderId: '' } };
+  }
+  if (type === 'todo') {
+    return { ...base, title: WIDGET_TITLES.todo, source: { taskListId: '' }, items: [] };
+  }
+  if (type === 'category') {
+    const n = parseInt(String(id).replace('cat-', ''), 10) || 1;
+    const colors = ['#ffb3b3', '#ffc998', '#ffe08a', '#a7f3c0', '#93c5fd'];
+    const color = colors[(n - 1) % colors.length];
+    return {
+      ...base,
+      title: `카테고리 ${n}`,
+      color,
+      icon: '📚',
+      items: [],
+      note: '',
+      driveRootId: '',
+      catType: 'normal',
+    };
+  }
+  throw new Error(`Unknown widget type: ${type}`);
+}
+
+/** 위젯 추가 + 하단 배치 후 compactVertical */
+export function addWidget(state, type) {
+  const next = cloneState(state);
+  const widget = enrichWidget(createWidget(type, next.widgets));
+  const layout = stateWidgetsToLayout(next.widgets);
+  const maxY = layout.reduce((m, el) => Math.max(m, el.y + el.h), 0);
+  widget.x = 0;
+  widget.y = maxY;
+  next.widgets.push(widget);
+  const packed = compactVertical(stateWidgetsToLayout(next.widgets));
+  next.widgets = applyLayoutToStateWidgets(next.widgets, packed);
+  return next;
+}
+
+/** 위젯 삭제 + compactVertical 재배치 (빈 그리드 허용) */
+export function removeWidget(state, widgetId) {
+  const next = cloneState(state);
+  next.widgets = next.widgets.filter((w) => w.id !== widgetId);
+  if (next.widgets.length > 0) {
+    const packed = compactVertical(stateWidgetsToLayout(next.widgets));
+    next.widgets = applyLayoutToStateWidgets(next.widgets, packed);
+  }
+  return next;
+}
+
+/** 위젯 제목·소스 등 부분 갱신 */
+export function updateWidgetSource(state, widgetId, patch) {
+  const next = cloneState(state);
+  next.widgets = next.widgets.map((w) => {
+    if (w.id !== widgetId) return w;
+    const updated = { ...w };
+    if (patch.title !== undefined) updated.title = patch.title;
+    if (patch.source !== undefined) {
+      updated.source = { ...(w.source || {}), ...patch.source };
+    }
+    if (patch.color !== undefined) updated.color = patch.color;
+    if (patch.icon !== undefined) updated.icon = patch.icon;
+    return updated;
+  });
+  return next;
 }
 
 /** version 호환 검사 후 상태 반환 (미래 버전 거부) */

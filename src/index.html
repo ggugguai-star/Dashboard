@@ -505,6 +505,100 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   color: var(--primary);
   border-color: rgba(110,91,242,0.35);
 }
+.widget-add-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(110,91,242,0.45);
+  background: rgba(110,91,242,0.08);
+  color: var(--primary);
+  cursor: pointer;
+  display: none;
+}
+#dashboard.widget-grid-editing .widget-add-btn { display: inline-block; }
+.widget-edit-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 6;
+}
+.widget-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.92);
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.widget-action-btn:hover { background: #fff; }
+.widget-type-picker, .widget-source-dialog {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30,20,60,0.35);
+  backdrop-filter: blur(6px);
+}
+.widget-type-picker.open, .widget-source-dialog.open { display: flex; }
+.widget-type-panel, .widget-source-panel {
+  background: rgba(255,255,255,0.97);
+  border: 1px solid rgba(196,181,253,0.35);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(80,50,180,0.18);
+  padding: 18px 20px;
+  min-width: 280px;
+  max-width: 92vw;
+}
+.widget-type-panel h3, .widget-source-panel h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--text1);
+}
+.widget-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.widget-type-opt {
+  padding: 12px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+}
+.widget-type-opt:hover { background: var(--primary-soft); border-color: rgba(110,91,242,0.35); }
+.widget-source-field { margin-bottom: 12px; }
+.widget-source-field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.widget-source-field input, .widget-source-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  font-size: 13px;
+  background: #fff;
+}
+.widget-source-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+#widgetAnchorPool, #widgetAnchorTemplates { display: none !important; }
 .widget-grid-mount {
   flex: 1;
   min-height: 0;
@@ -2747,7 +2841,10 @@ body.item-reorder-active .item{cursor:grabbing !important}
     <div class="widget-grid-root" id="widgetGridRoot">
       <div class="widget-edit-toolbar" id="widgetEditToolbar">
         <button type="button" class="widget-edit-btn" id="widgetEditBtn">편집</button>
+        <button type="button" class="widget-add-btn" id="widgetAddBtn">+ 위젯</button>
       </div>
+      <div id="widgetAnchorTemplates" aria-hidden="true"></div>
+      <div id="widgetAnchorPool" aria-hidden="true"></div>
       <div class="widget-grid-mount" id="widgetGridMount"></div>
     </div>
 
@@ -2758,7 +2855,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <div class="side-l">
 
         <!-- ① 월 달력 -->
-        <div class="gc">
+        <div class="gc" data-widget-template="calendar">
           <div class="ch">
             <span class="ch-icon ch-icon-gcal" onclick="openGoogleCalendar()" title="Google 캘린더 열기">📅</span>
             <span class="ch-title" id="calTitle2"></span>
@@ -2779,7 +2876,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
         </div>
 
         <!-- ② Weekly Plan -->
-        <div class="gc">
+        <div class="gc" data-widget-template="drive">
           <div class="ch">
             <span class="ch-icon ch-icon-drive" id="weeklyDriveIcon"
                   onclick="openWeeklyDriveFolder()" title="Google Drive 폴더 열기">🗓</span>
@@ -2811,7 +2908,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
         </div>
 
         <!-- ③ 메모 · 할 일 (투두리스트) -->
-        <div class="gc" style="display:flex;flex-direction:column">
+        <div class="gc" data-widget-template="todo" style="display:flex;flex-direction:column">
           <div class="ch">
             <span class="ch-icon ch-icon-gtask" onclick="openPath('https://tasks.google.com')" title="Google Tasks 열기">✅</span>
             <span class="ch-title">메모 · 할 일</span>
@@ -3098,6 +3195,49 @@ body.item-reorder-active .item{cursor:grabbing !important}
   </div>
 </div><!-- /settingsOverlay -->
 
+<!-- 위젯 타입 선택 (편집 모드) -->
+<div class="widget-type-picker" id="widgetTypePicker">
+  <div class="widget-type-panel">
+    <h3>위젯 추가</h3>
+    <div class="widget-type-grid">
+      <button type="button" class="widget-type-opt" data-widget-type="calendar">📅 달력</button>
+      <button type="button" class="widget-type-opt" data-widget-type="drive">🗓 Drive</button>
+      <button type="button" class="widget-type-opt" data-widget-type="todo">✅ 할 일</button>
+      <button type="button" class="widget-type-opt" data-widget-type="category">📚 카테고리</button>
+    </div>
+    <div class="widget-source-actions" style="margin-top:14px">
+      <button type="button" class="widget-edit-btn" id="widgetTypeCancel">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 위젯 소스 설정 -->
+<div class="widget-source-dialog" id="widgetSourceDialog">
+  <div class="widget-source-panel">
+    <h3 id="widgetSourceTitle">위젯 설정</h3>
+    <div class="widget-source-field" id="wsfTitleWrap">
+      <label for="wsfTitle">제목</label>
+      <input type="text" id="wsfTitle" maxlength="40">
+    </div>
+    <div class="widget-source-field" id="wsfCalendarWrap" style="display:none">
+      <label for="wsfCalendar">캘린더</label>
+      <select id="wsfCalendar"></select>
+    </div>
+    <div class="widget-source-field" id="wsfTaskListWrap" style="display:none">
+      <label for="wsfTaskList">Tasks 목록</label>
+      <select id="wsfTaskList"></select>
+    </div>
+    <div class="widget-source-field" id="wsfFolderWrap" style="display:none">
+      <label for="wsfFolder">Drive 폴더 ID</label>
+      <input type="text" id="wsfFolder" maxlength="120" placeholder="폴더 ID">
+    </div>
+    <div class="widget-source-actions">
+      <button type="button" class="widget-edit-btn" id="widgetSourceCancel">취소</button>
+      <button type="button" class="widget-edit-btn is-active" id="widgetSourceSave">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 카테고리 헤드 편집 팝업 (풀스크린 오버레이) -->
 <div class="cat-edit-popup" id="catEditPopup">
   <div class="cep-panel">
@@ -3351,18 +3491,23 @@ import {
   getCalendarList, getCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
   listDriveFolder, listDriveImages, getDriveImageData,
   driveTrashFile, driveMoveFile, driveDownloadFile,
-  tasksGetDefaultList, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
+  tasksGetDefaultList, getTaskLists, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
 } from './google-api.js';
 import {
   createGoogleCache,
   fetchCached,
   buildCalendarEventsKey,
+  buildCalendarListKey,
   invalidateCache,
   DEFAULT_EVENTS_TTL_MS,
+  DEFAULT_LIST_TTL_MS,
 } from './google-cache.js';
-import { loadState, saveState } from './store.js';
+import {
+  loadState, saveState, addWidget, removeWidget, updateWidgetSource,
+} from './store.js';
 import {
   mountWidgetGrid,
+  remountWidgetGrid,
   isWidgetGridEnabled,
   collectPanelAnchors,
   enterEditMode,
@@ -3377,13 +3522,28 @@ import {
 const _gcalCache = createGoogleCache();
 const GCAL_EVENTS_TTL_MS = DEFAULT_EVENTS_TTL_MS;
 
+let _activeCalendarWidgetId = null;
+const _calWidgetState = new Map();
+
 function resolvePrimaryCalendarId() {
+  if (isWidgetGridEnabled() && _widgetGridState?.widgets) {
+    const wid = _activeCalendarWidgetId
+      || _widgetGridState.widgets.find((w) => w.type === 'calendar')?.id;
+    const w = _widgetGridState.widgets.find((x) => x.id === wid);
+    if (w?.source?.calendarId) return w.source.calendarId;
+    const first = _widgetGridState.widgets.find((x) => x.type === 'calendar');
+    if (first?.source?.calendarId) return first.source.calendarId;
+  }
   const widgets = _widgetGridState?.widgets;
   if (Array.isArray(widgets)) {
     const cal = widgets.find((w) => w.type === 'calendar');
     if (cal?.source?.calendarId) return cal.source.calendarId;
   }
   return 'primary';
+}
+
+function setActiveCalendarWidget(widgetId) {
+  _activeCalendarWidgetId = widgetId;
 }
 
 function invalidateCalendarEventsCache(calendarId) {
@@ -5052,8 +5212,13 @@ async function saveEvDialog(){
       invalidateCalendarEventsCache(calId);
       closeEvDialog();
       showToast(evdEditingId ? '✅ 일정이 수정됐어요!' : '✅ 일정이 추가됐어요!');
-      await syncCalendarSilent();
-      renderCal();
+      if (isWidgetGridEnabled() && _widgetGridState) {
+        await syncAllCalendarWidgets();
+        if (_activeCalendarWidgetId) renderCalForWidget(_activeCalendarWidgetId);
+      } else {
+        await syncCalendarSilent();
+        renderCal();
+      }
     }
   } catch(e){
     showToast('❌ ' + e.message);
@@ -5102,7 +5267,14 @@ async function cevCtxDelete(){
       // 연결된 알림도 함께 제거
       if(calAlarms[ev.id]){ delete calAlarms[ev.id]; saveCalAlarms(); }
       invalidateCalendarEventsCache(calId);
-      showToast('✅ 일정이 삭제됐어요!'); await syncCalendarSilent(); renderCal();
+      showToast('✅ 일정이 삭제됐어요!');
+      if (isWidgetGridEnabled() && _widgetGridState) {
+        await syncAllCalendarWidgets();
+        if (_activeCalendarWidgetId) renderCalForWidget(_activeCalendarWidgetId);
+      } else {
+        await syncCalendarSilent();
+        renderCal();
+      }
     }
   } catch(e){ showToast('❌ ' + e.message); }
 }
@@ -5192,7 +5364,13 @@ async function doSync(){
     return;
   }
 
-  // 현재 달 기준 앞뒤 1개월 범위로 조회
+  if (isWidgetGridEnabled() && _widgetGridState) {
+    await syncAllCalendarWidgets();
+    btn.classList.remove('spinning');
+    showToast('✅ 동기화 완료');
+    return;
+  }
+
   const from = new Date(CY, CM - 1, 1).toISOString();
   const to   = new Date(CY, CM + 2, 0, 23, 59, 59).toISOString();
 
@@ -5228,9 +5406,11 @@ function launchDashboard(){
 
 /* checkSetupDone — window 전역 노출(Object.assign) 이후 맨 아래에서 실행 */
 
-/* ── 위젯 그리드 (단계 5: 정적 렌더 + 편집 드래그) ── */
+/* ── 위젯 그리드 (단계 9: 추가/삭제 + 소스 바인딩 + 다중 인스턴스) ── */
 let _widgetGridTeardown = null;
 let _widgetGridState = null;
+let _widgetAnchorTemplatesReady = false;
+let _widgetSourceEditId = null;
 
 function _hideWidgetEditUi(){
   const toolbar = document.getElementById('widgetEditToolbar');
@@ -5251,10 +5431,651 @@ function _updateWidgetEditBtn(editing){
   btn.classList.toggle('is-active', editing);
 }
 
+function _ensureWidgetAnchorTemplates(){
+  if (_widgetAnchorTemplatesReady) return;
+  const box = document.getElementById('widgetAnchorTemplates');
+  if (!box) return;
+  box.innerHTML = '';
+  for (const type of ['calendar', 'drive', 'todo']) {
+    const src = document.querySelector(`.side-l > .gc[data-widget-template="${type}"]`);
+    if (src) box.appendChild(src.cloneNode(true));
+  }
+  _widgetAnchorTemplatesReady = true;
+}
+
+function _getAnchorTemplate(type){
+  const box = document.getElementById('widgetAnchorTemplates');
+  if (!box) return null;
+  const nodes = [...box.querySelectorAll('.gc')];
+  const idx = { calendar: 0, drive: 1, todo: 2 }[type];
+  return nodes[idx] || null;
+}
+
+function _cloneCalendarAnchor(widget){
+  const tpl = _getAnchorTemplate('calendar');
+  if (!tpl) return null;
+  const node = tpl.cloneNode(true);
+  const sid = widget.id;
+  node.dataset.widgetId = sid;
+  node.dataset.widgetType = 'calendar';
+  const titleEl = node.querySelector('.ch-title');
+  if (titleEl) {
+    titleEl.id = `calTitle_${sid}`;
+    titleEl.textContent = widget.title || '내 캘린더';
+  }
+  const dates = node.querySelector('.cal-dates');
+  if (dates) dates.id = `calDates_${sid}`;
+  const evBox = node.querySelector('.cal-events-box');
+  if (evBox) evBox.id = `calEvBox_${sid}`;
+  const navBtns = node.querySelectorAll('.ch-nav .nb');
+  if (navBtns[0]) navBtns[0].onclick = () => calMoveForWidget(sid, -1);
+  if (navBtns[1]) navBtns[1].onclick = () => calResetForWidget(sid);
+  if (navBtns[2]) navBtns[2].onclick = () => calMoveForWidget(sid, 1);
+  node.addEventListener('mousedown', () => setActiveCalendarWidget(sid));
+  return node;
+}
+
+function _cloneDriveAnchor(widget){
+  const tpl = _getAnchorTemplate('drive');
+  if (!tpl) return null;
+  const node = tpl.cloneNode(true);
+  const sid = widget.id;
+  node.dataset.widgetId = sid;
+  node.dataset.widgetType = 'drive';
+  const titleEl = node.querySelector('.ch-title');
+  if (titleEl) {
+    titleEl.id = `driveTitle_${sid}`;
+    titleEl.textContent = widget.title || 'Weekly Plan';
+  }
+  const mock = node.querySelector('.img-mock');
+  if (mock) mock.id = `driveMock_${sid}`;
+  const img = node.querySelector('img.drive-zoomable');
+  if (img) img.id = `driveImg_${sid}`;
+  const count = node.querySelector('.img-cnt');
+  if (count) count.id = `driveCount_${sid}`;
+  const navRow = node.querySelector('.img-nav-row');
+  if (navRow) {
+    const btns = navRow.querySelectorAll('.nb');
+    if (btns[0]) btns[0].onclick = () => drivePrevForWidget(sid);
+    if (btns[1]) btns[1].onclick = () => driveNextForWidget(sid);
+  }
+  const spin = node.querySelector('.nb-spin');
+  if (spin) spin.onclick = () => driveRefreshForWidget(sid);
+  return node;
+}
+
+function _cloneTodoAnchor(widget){
+  const tpl = _getAnchorTemplate('todo');
+  if (!tpl) return null;
+  const node = tpl.cloneNode(true);
+  const sid = widget.id;
+  node.dataset.widgetId = sid;
+  node.dataset.widgetType = 'todo';
+  const titleEl = node.querySelector('.ch-title');
+  if (titleEl) titleEl.textContent = widget.title || '메모 · 할 일';
+  const list = node.querySelector('.todo-list');
+  if (list) list.id = `todoList_${sid}`;
+  const inp = node.querySelector('.todo-input');
+  if (inp) {
+    inp.id = `todoInput_${sid}`;
+    inp.onkeydown = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addTodoItemForWidget(sid); }
+    };
+  }
+  const addBtn = node.querySelector('.todo-add-btn');
+  if (addBtn) addBtn.onclick = () => addTodoItemForWidget(sid);
+  const clearBtn = node.querySelector('.ch .nb');
+  if (clearBtn) clearBtn.onclick = () => clearDoneTodosForWidget(sid);
+  return node;
+}
+
+function syncCatsFromWidgetState(state){
+  const cats = (state?.widgets || []).filter((w) => w.type === 'category');
+  CATS.length = 0;
+  cats.forEach((w) => {
+    const color = w.color || '#ffb3b3';
+    CATS.push({
+      color,
+      tc: darkenColor(color),
+      name: w.title || '카테고리',
+      sub: w.sub || '',
+      icon: w.icon || '📚',
+      items: Array.isArray(w.items) ? w.items : [],
+      note: w.note || '',
+      type: w.catType || 'normal',
+      driveRootId: w.driveRootId || '',
+      _widgetId: w.id,
+    });
+  });
+}
+
+function syncWidgetAnchors(state){
+  _ensureWidgetAnchorTemplates();
+  const pool = document.getElementById('widgetAnchorPool');
+  if (!pool || !state?.widgets) return;
+  pool.innerHTML = '';
+  for (const w of state.widgets) {
+    if (w.type === 'calendar') {
+      const n = _cloneCalendarAnchor(w);
+      if (n) pool.appendChild(n);
+    } else if (w.type === 'drive') {
+      const n = _cloneDriveAnchor(w);
+      if (n) pool.appendChild(n);
+    } else if (w.type === 'todo') {
+      const n = _cloneTodoAnchor(w);
+      if (n) pool.appendChild(n);
+    }
+  }
+  syncCatsFromWidgetState(state);
+  buildCatPanels();
+  const catZone = document.getElementById('catZone');
+  if (catZone && isWidgetGridEnabled()) {
+    const n = state.widgets.filter((x) => x.type === 'category').length;
+    if (n > 0) catZone.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  }
+}
+
+function initCalWidgetState(widgetId, widget){
+  const n = new Date();
+  if (!_calWidgetState.has(widgetId)) {
+    _calWidgetState.set(widgetId, {
+      CY: n.getFullYear(),
+      CM: n.getMonth(),
+      CS: n.getDate(),
+      events: {},
+      calendarId: widget?.source?.calendarId || 'primary',
+    });
+  } else {
+    const st = _calWidgetState.get(widgetId);
+    st.calendarId = widget?.source?.calendarId || 'primary';
+  }
+}
+
+function getCalWidgetState(widgetId){
+  return _calWidgetState.get(widgetId);
+}
+
+function renderCalForWidget(widgetId){
+  const st = getCalWidgetState(widgetId);
+  if (!st) return;
+  const titleEl = document.getElementById(`calTitle_${widgetId}`);
+  const grid = document.getElementById(`calDates_${widgetId}`);
+  const box = document.getElementById(`calEvBox_${widgetId}`);
+  if (!grid || !box) return;
+  if (titleEl) titleEl.textContent = `${st.CY}년 ${st.CM + 1}월`;
+  grid.innerHTML = '';
+  const today = new Date();
+  const first = new Date(st.CY, st.CM, 1).getDay();
+  const dim = new Date(st.CY, st.CM + 1, 0).getDate();
+  const prev = new Date(st.CY, st.CM, 0).getDate();
+  for (let i = first - 1; i >= 0; i--) {
+    const el = document.createElement('div');
+    el.className = 'cday other';
+    el.textContent = prev - i;
+    grid.appendChild(el);
+  }
+  for (let d = 1; d <= dim; d++) {
+    const el = document.createElement('div');
+    el.className = 'cday';
+    const dow = new Date(st.CY, st.CM, d).getDay();
+    if (dow === 0) el.classList.add('sun');
+    if (dow === 6) el.classList.add('sat');
+    el.textContent = d;
+    const isToday = d === today.getDate() && st.CM === today.getMonth() && st.CY === today.getFullYear();
+    if (isToday) el.classList.add('today');
+    if (d === st.CS) el.classList.add('sel');
+    const key = `${st.CY}-${p(st.CM + 1)}-${p(d)}`;
+    if (st.events[key]?.length) el.classList.add('ev');
+    el.onclick = () => { st.CS = d; renderCalForWidget(widgetId); renderCalEventsForWidget(widgetId, d); };
+    grid.appendChild(el);
+  }
+  const total = first + dim;
+  const rem = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= rem; d++) {
+    const el = document.createElement('div');
+    el.className = 'cday other';
+    el.textContent = d;
+    grid.appendChild(el);
+  }
+  renderCalEventsForWidget(widgetId, st.CS);
+}
+
+function renderCalEventsForWidget(widgetId, day){
+  const st = getCalWidgetState(widgetId);
+  const box = document.getElementById(`calEvBox_${widgetId}`);
+  if (!st || !box) return;
+  box.innerHTML = '';
+  const key = `${st.CY}-${p(st.CM + 1)}-${p(day)}`;
+  const evs = st.events[key] || [];
+  if (!evs.length) {
+    const e = document.createElement('div');
+    e.style.cssText = 'font-size:11.5px;color:var(--text4);padding:4px 4px;';
+    e.textContent = `${st.CM + 1}/${day} — 일정 없음`;
+    box.appendChild(e);
+  } else {
+    const sorted = [...evs].sort((a, b) => {
+      if (a.t === '종일') return 1;
+      if (b.t === '종일') return -1;
+      return a.t.localeCompare(b.t);
+    });
+    sorted.forEach((ev) => {
+      const e = document.createElement('div');
+      e.className = 'cev';
+      e.innerHTML = `<div class="cev-dot" style="background:${ev.color}"></div>`
+        + `<span class="cev-time">${ev.t}</span>`
+        + `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${ev.title}</span>`;
+      e.style.cursor = 'pointer';
+      e.onclick = () => {
+        setActiveCalendarWidget(widgetId);
+        const dateStr = ev.startDT?.slice(0, 10) || '';
+        const [y, m, d] = dateStr ? dateStr.split('-').map(Number) : [st.CY, st.CM + 1, st.CS];
+        openEvDialog(y, m - 1, d, ev);
+      };
+      e.oncontextmenu = (evt) => {
+        evt.preventDefault();
+        setActiveCalendarWidget(widgetId);
+        openCevCtx(evt.clientX, evt.clientY, ev);
+      };
+      box.appendChild(e);
+    });
+  }
+  const add = document.createElement('div');
+  add.className = 'cal-add-btn';
+  add.textContent = `+ ${st.CM + 1}/${day} 일정 추가`;
+  add.onclick = () => {
+    setActiveCalendarWidget(widgetId);
+    openEvDialog(st.CY, st.CM, day);
+  };
+  box.appendChild(add);
+}
+
+function calMoveForWidget(widgetId, delta){
+  const st = getCalWidgetState(widgetId);
+  if (!st) return;
+  st.CM += delta;
+  if (st.CM < 0) { st.CM = 11; st.CY--; }
+  if (st.CM > 11) { st.CM = 0; st.CY++; }
+  renderCalForWidget(widgetId);
+  void syncCalendarForWidget(widgetId);
+}
+
+function calResetForWidget(widgetId){
+  const n = new Date();
+  const st = getCalWidgetState(widgetId);
+  if (!st) return;
+  st.CY = n.getFullYear();
+  st.CM = n.getMonth();
+  st.CS = n.getDate();
+  renderCalForWidget(widgetId);
+}
+
+async function syncCalendarForWidget(widgetId){
+  if (!await isAuthenticated()) return;
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  const st = getCalWidgetState(widgetId);
+  if (!w || !st) return;
+  const calId = w.source?.calendarId || 'primary';
+  const from = new Date(st.CY, st.CM - 1, 1).toISOString();
+  const to = new Date(st.CY, st.CM + 2, 0, 23, 59, 59).toISOString();
+  const result = await fetchCalendarEventsCached(calId, from, to);
+  if (!result.error) {
+    st.events = buildEventMap(result.events || []);
+    renderCalForWidget(widgetId);
+  }
+}
+
+async function syncAllCalendarWidgets(){
+  if (!isWidgetGridEnabled() || isContentSyncPaused()) return;
+  if (!await isAuthenticated()) return;
+  const widgets = (_widgetGridState?.widgets || []).filter((w) => w.type === 'calendar');
+  const calIdToWidgetIds = new Map();
+  for (const w of widgets) {
+    initCalWidgetState(w.id, w);
+    const calId = w.source?.calendarId || 'primary';
+    if (!calIdToWidgetIds.has(calId)) calIdToWidgetIds.set(calId, []);
+    calIdToWidgetIds.get(calId).push(w.id);
+  }
+  for (const [calId, widgetIds] of calIdToWidgetIds) {
+    const st0 = getCalWidgetState(widgetIds[0]);
+    const cy = st0?.CY ?? new Date().getFullYear();
+    const cm = st0?.CM ?? new Date().getMonth();
+    const from = new Date(cy, cm - 1, 1).toISOString();
+    const to = new Date(cy, cm + 2, 0, 23, 59, 59).toISOString();
+    const result = await fetchCalendarEventsCached(calId, from, to);
+    if (!result.error) {
+      const map = buildEventMap(result.events || []);
+      for (const wid of widgetIds) {
+        const st = getCalWidgetState(wid);
+        if (st) st.events = map;
+      }
+    }
+  }
+  for (const w of widgets) renderCalForWidget(w.id);
+  const first = widgets[0];
+  if (first) {
+    const st = getCalWidgetState(first.id);
+    if (st) { gcalEvents = st.events; syncGcalToWindow(); }
+  }
+}
+
+function renderTodoListForWidget(widgetId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  const list = document.getElementById(`todoList_${widgetId}`);
+  if (!w || !list) return;
+  const items = Array.isArray(w.items) ? w.items : [];
+  list.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'todo-empty';
+    empty.textContent = '할 일을 추가해 보세요 ✨';
+    list.appendChild(empty);
+    return;
+  }
+  items.forEach((item) => {
+    const el = document.createElement('div');
+    el.className = 'todo-item' + (item.done ? ' done' : '');
+    const chk = document.createElement('div');
+    chk.className = 'todo-chk';
+    chk.onclick = () => toggleTodoItemForWidget(widgetId, item.id);
+    const txt = document.createElement('div');
+    txt.className = 'todo-txt';
+    txt.textContent = item.text;
+    const del = document.createElement('button');
+    del.className = 'todo-del';
+    del.innerHTML = '×';
+    del.onclick = (e) => { e.stopPropagation(); deleteTodoItemForWidget(widgetId, item.id); };
+    el.appendChild(chk);
+    el.appendChild(txt);
+    el.appendChild(del);
+    list.appendChild(el);
+  });
+}
+
+function renderAllTodoWidgets(){
+  if (!_widgetGridState?.widgets) return;
+  for (const w of _widgetGridState.widgets.filter((x) => x.type === 'todo')) {
+    renderTodoListForWidget(w.id);
+  }
+}
+
+async function addTodoItemForWidget(widgetId){
+  const inp = document.getElementById(`todoInput_${widgetId}`);
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!inp || !w || !_widgetGridState) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  if (!Array.isArray(w.items)) w.items = [];
+  w.items.push({ id: Date.now(), text, done: false, alarmDT: '' });
+  inp.value = '';
+  renderTodoListForWidget(widgetId);
+  await saveState(_widgetGridState, { immediate: true });
+}
+
+function toggleTodoItemForWidget(widgetId, itemId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w?.items) return;
+  const item = w.items.find((t) => t.id === itemId);
+  if (!item) return;
+  item.done = !item.done;
+  renderTodoListForWidget(widgetId);
+  void saveState(_widgetGridState);
+}
+
+function deleteTodoItemForWidget(widgetId, itemId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w?.items) return;
+  w.items = w.items.filter((t) => t.id !== itemId);
+  renderTodoListForWidget(widgetId);
+  void saveState(_widgetGridState);
+}
+
+function clearDoneTodosForWidget(widgetId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w?.items) return;
+  w.items = w.items.filter((t) => !t.done);
+  renderTodoListForWidget(widgetId);
+  void saveState(_widgetGridState);
+}
+
+async function loadDriveImagesForWidget(widgetId, folderId){
+  if (isContentSyncPaused()) return;
+  if (!folderId) { showDriveEmptyForWidget(widgetId, '폴더 ID를 설정해주세요'); return; }
+  showDriveLoadingForWidget(widgetId);
+  const result = await listDriveImages(folderId);
+  if (result.error) {
+    showDriveEmptyForWidget(widgetId, result.error === 'not_authenticated' ? 'Google 미연결' : result.error);
+    return;
+  }
+  if (!driveImgFiles[widgetId]) driveImgFiles[widgetId] = [];
+  driveImgFiles[widgetId] = result.files || [];
+  driveImgIdx[widgetId] = 0;
+  if (!driveImgFiles[widgetId].length) { showDriveEmptyForWidget(widgetId, '이미지 없음'); return; }
+  await showDriveImageForWidget(widgetId, 0);
+}
+
+function showDriveLoadingForWidget(widgetId){
+  const imgEl = document.getElementById(`driveImg_${widgetId}`);
+  const mockEl = document.getElementById(`driveMock_${widgetId}`);
+  if (imgEl) imgEl.style.display = 'none';
+  if (mockEl) {
+    mockEl.style.display = 'flex';
+    mockEl.innerHTML = '<div style="font-size:22px">⏳</div><div style="font-size:12px;color:var(--text4)">로딩 중...</div>';
+  }
+}
+
+function showDriveEmptyForWidget(widgetId, msg){
+  const imgEl = document.getElementById(`driveImg_${widgetId}`);
+  const mockEl = document.getElementById(`driveMock_${widgetId}`);
+  if (imgEl) imgEl.style.display = 'none';
+  if (mockEl) {
+    mockEl.style.display = 'flex';
+    mockEl.innerHTML = `<div style="font-size:22px">📁</div><div style="font-size:12px;color:var(--text4);text-align:center">${msg}</div>`;
+  }
+  const countEl = document.getElementById(`driveCount_${widgetId}`);
+  if (countEl) countEl.textContent = '0 / 0';
+}
+
+async function showDriveImageForWidget(widgetId, idx){
+  const files = driveImgFiles[widgetId] || [];
+  if (!files.length) return;
+  idx = Math.max(0, Math.min(idx, files.length - 1));
+  driveImgIdx[widgetId] = idx;
+  const fileId = files[idx].id;
+  const imgEl = document.getElementById(`driveImg_${widgetId}`);
+  const countEl = document.getElementById(`driveCount_${widgetId}`);
+  const mockEl = document.getElementById(`driveMock_${widgetId}`);
+  if (!imgEl) return;
+  if (countEl) countEl.textContent = `${idx + 1} / ${files.length}`;
+  if (driveImgCache[fileId]) {
+    imgEl.src = driveImgCache[fileId];
+    imgEl.style.display = 'block';
+    if (mockEl) mockEl.style.display = 'none';
+    return;
+  }
+  imgEl.style.display = 'none';
+  if (mockEl) {
+    mockEl.style.display = 'flex';
+    mockEl.innerHTML = '<div style="font-size:22px">⏳</div><div style="font-size:12px;color:var(--text4)">로딩 중...</div>';
+  }
+  const result = await getDriveImageData(fileId);
+  if (result.error) {
+    if (mockEl) mockEl.innerHTML = `<div style="font-size:20px">⚠️</div><div style="font-size:11px;color:var(--text4)">${result.error}</div>`;
+    return;
+  }
+  const dataUrl = `data:${result.mimeType};base64,${result.data}`;
+  driveImgCache[fileId] = dataUrl;
+  imgEl.src = dataUrl;
+  imgEl.style.display = 'block';
+  if (mockEl) mockEl.style.display = 'none';
+}
+
+function drivePrevForWidget(widgetId){ void showDriveImageForWidget(widgetId, (driveImgIdx[widgetId] ?? 0) - 1); }
+function driveNextForWidget(widgetId){ void showDriveImageForWidget(widgetId, (driveImgIdx[widgetId] ?? 0) + 1); }
+
+async function driveRefreshForWidget(widgetId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w) return;
+  await loadDriveImagesForWidget(widgetId, w.source?.folderId || '');
+}
+
+async function syncAllDriveWidgets(){
+  if (!isWidgetGridEnabled() || isContentSyncPaused()) return;
+  for (const w of (_widgetGridState?.widgets || []).filter((x) => x.type === 'drive')) {
+    await loadDriveImagesForWidget(w.id, w.source?.folderId || '');
+  }
+}
+
+async function _remountWidgetGridState(){
+  const mount = document.getElementById('widgetGridMount');
+  if (!mount || !_widgetGridState) return;
+  syncWidgetAnchors(_widgetGridState);
+  const anchors = collectPanelAnchors(_widgetGridState);
+  _widgetGridTeardown = remountWidgetGrid(mount, _widgetGridState, anchors, _widgetGridTeardown);
+  for (const w of _widgetGridState.widgets.filter((x) => x.type === 'calendar')) {
+    initCalWidgetState(w.id, w);
+    renderCalForWidget(w.id);
+  }
+  renderAllTodoWidgets();
+  if (isEditMode()) {
+    enterEditMode(mount, _widgetGridState, {
+      onEsc: () => { void _finishWidgetEdit(true); },
+      onSettings: (id) => openWidgetSourceDialog(id),
+      onDelete: (id) => void deleteWidgetById(id),
+    });
+  }
+}
+
+function openWidgetTypePicker(){
+  document.getElementById('widgetTypePicker')?.classList.add('open');
+}
+
+function closeWidgetTypePicker(){
+  document.getElementById('widgetTypePicker')?.classList.remove('open');
+}
+
+async function addWidgetByType(type){
+  if (!_widgetGridState) return;
+  _widgetGridState = addWidget(_widgetGridState, type);
+  closeWidgetTypePicker();
+  await _remountWidgetGridState();
+  await saveState(_widgetGridState, { immediate: true });
+  await syncAllCalendarWidgets();
+  await syncAllDriveWidgets();
+  showToast('✅ 위젯이 추가됐어요');
+}
+
+async function deleteWidgetById(widgetId){
+  if (!_widgetGridState) return;
+  if (!confirm('이 위젯을 삭제할까요?')) return;
+  _widgetGridState = removeWidget(_widgetGridState, widgetId);
+  _calWidgetState.delete(widgetId);
+  await _remountWidgetGridState();
+  await saveState(_widgetGridState, { immediate: true });
+  showToast('🗑 위젯이 삭제됐어요');
+}
+
+async function fetchCalendarListCached(){
+  return fetchCached(
+    _gcalCache,
+    buildCalendarListKey(),
+    DEFAULT_LIST_TTL_MS,
+    () => getCalendarList(),
+  );
+}
+
+async function openWidgetSourceDialog(widgetId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w) return;
+  _widgetSourceEditId = widgetId;
+  const dlg = document.getElementById('widgetSourceDialog');
+  const titleInp = document.getElementById('wsfTitle');
+  const calWrap = document.getElementById('wsfCalendarWrap');
+  const taskWrap = document.getElementById('wsfTaskListWrap');
+  const folderWrap = document.getElementById('wsfFolderWrap');
+  if (!dlg || !titleInp) return;
+  titleInp.value = w.title || '';
+  calWrap.style.display = 'none';
+  taskWrap.style.display = 'none';
+  folderWrap.style.display = 'none';
+  if (w.type === 'calendar') {
+    calWrap.style.display = '';
+    const sel = document.getElementById('wsfCalendar');
+    sel.innerHTML = '<option value="">불러오는 중...</option>';
+    const res = await fetchCalendarListCached();
+    sel.innerHTML = '';
+    if (res.error) {
+      sel.innerHTML = `<option value="primary">primary (오류: ${res.error})</option>`;
+    } else {
+      for (const c of res.calendars || []) {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.summary + (c.primary ? ' (기본)' : '');
+        sel.appendChild(opt);
+      }
+    }
+    sel.value = w.source?.calendarId || 'primary';
+  } else if (w.type === 'todo') {
+    taskWrap.style.display = '';
+    const sel = document.getElementById('wsfTaskList');
+    sel.innerHTML = '<option value="">불러오는 중...</option>';
+    const res = await getTaskLists();
+    sel.innerHTML = '<option value="">— 선택 —</option>';
+    if (!res.error) {
+      for (const t of res.lists || []) {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.title;
+        sel.appendChild(opt);
+      }
+    }
+    sel.value = w.source?.taskListId || '';
+  } else if (w.type === 'drive') {
+    folderWrap.style.display = '';
+    document.getElementById('wsfFolder').value = w.source?.folderId || '';
+  } else if (w.type === 'category') {
+    titleInp.placeholder = '카테고리 이름';
+  }
+  dlg.classList.add('open');
+}
+
+function closeWidgetSourceDialog(){
+  document.getElementById('widgetSourceDialog')?.classList.remove('open');
+  _widgetSourceEditId = null;
+}
+
+async function saveWidgetSourceDialog(){
+  if (!_widgetSourceEditId || !_widgetGridState) return;
+  const w = _widgetGridState.widgets.find((x) => x.id === _widgetSourceEditId);
+  if (!w) return;
+  const title = document.getElementById('wsfTitle')?.value?.trim();
+  const patch = { title: title || w.title };
+  if (w.type === 'calendar') {
+    patch.source = { calendarId: document.getElementById('wsfCalendar')?.value || 'primary' };
+  } else if (w.type === 'todo') {
+    patch.source = { taskListId: document.getElementById('wsfTaskList')?.value || '' };
+  } else if (w.type === 'drive') {
+    patch.source = { folderId: document.getElementById('wsfFolder')?.value?.trim() || '' };
+  }
+  const savedId = _widgetSourceEditId;
+  _widgetGridState = updateWidgetSource(_widgetGridState, savedId, patch);
+  closeWidgetSourceDialog();
+  await _remountWidgetGridState();
+  await saveState(_widgetGridState, { immediate: true });
+  if (w.type === 'calendar') await syncAllCalendarWidgets();
+  if (w.type === 'drive') await syncAllDriveWidgets();
+  if (w.type === 'todo') renderTodoListForWidget(savedId);
+  showToast('✅ 설정이 저장됐어요');
+}
+
 async function _resumeDeferredContentSync(){
   try {
-    await syncCalendarSilent();
-    reloadDriveImages();
+    if (isWidgetGridEnabled()) {
+      await syncAllCalendarWidgets();
+      await syncAllDriveWidgets();
+    } else {
+      await syncCalendarSilent();
+      reloadDriveImages();
+    }
     await syncGoogleTasks(true);
   } catch (e) {
     console.warn('[WidgetGrid] deferred sync resume failed:', e);
@@ -5286,7 +6107,11 @@ async function toggleWidgetEdit(){
     return;
   }
 
-  enterEditMode(mount, _widgetGridState, { onEsc: () => { void _finishWidgetEdit(true); } });
+  enterEditMode(mount, _widgetGridState, {
+    onEsc: () => { void _finishWidgetEdit(true); },
+    onSettings: (id) => openWidgetSourceDialog(id),
+    onDelete: (id) => void deleteWidgetById(id),
+  });
   setContentSyncPaused(true);
   _updateWidgetEditBtn(true);
 }
@@ -5319,14 +6144,49 @@ async function initWidgetGrid(){
     root.style.display = '';
     const toolbar = document.getElementById('widgetEditToolbar');
     if (toolbar) toolbar.style.display = '';
-    const anchors = collectPanelAnchors();
+    syncWidgetAnchors(state);
+    const anchors = collectPanelAnchors(state);
     _widgetGridTeardown = mountWidgetGrid(mount, state, anchors);
+
+    for (const w of state.widgets.filter((x) => x.type === 'calendar')) {
+      initCalWidgetState(w.id, w);
+      renderCalForWidget(w.id);
+    }
+    renderAllTodoWidgets();
 
     const editBtn = document.getElementById('widgetEditBtn');
     if (editBtn && !editBtn.dataset.bound) {
       editBtn.dataset.bound = '1';
       editBtn.addEventListener('click', () => { void toggleWidgetEdit(); });
     }
+    const addBtn = document.getElementById('widgetAddBtn');
+    if (addBtn && !addBtn.dataset.bound) {
+      addBtn.dataset.bound = '1';
+      addBtn.addEventListener('click', () => openWidgetTypePicker());
+    }
+    const typePicker = document.getElementById('widgetTypePicker');
+    if (typePicker && !typePicker.dataset.bound) {
+      typePicker.dataset.bound = '1';
+      typePicker.querySelectorAll('.widget-type-opt').forEach((btn) => {
+        btn.addEventListener('click', () => void addWidgetByType(btn.dataset.widgetType));
+      });
+      document.getElementById('widgetTypeCancel')?.addEventListener('click', closeWidgetTypePicker);
+      typePicker.addEventListener('click', (e) => {
+        if (e.target === typePicker) closeWidgetTypePicker();
+      });
+    }
+    const srcDlg = document.getElementById('widgetSourceDialog');
+    if (srcDlg && !srcDlg.dataset.bound) {
+      srcDlg.dataset.bound = '1';
+      document.getElementById('widgetSourceCancel')?.addEventListener('click', closeWidgetSourceDialog);
+      document.getElementById('widgetSourceSave')?.addEventListener('click', () => void saveWidgetSourceDialog());
+      srcDlg.addEventListener('click', (e) => {
+        if (e.target === srcDlg) closeWidgetSourceDialog();
+      });
+    }
+
+    void syncAllCalendarWidgets();
+    void syncAllDriveWidgets();
   } catch (e) {
     console.warn('[WidgetGrid] init failed, falling back to legacy layout:', e);
     dashboard.classList.remove('widget-grid-active');
@@ -5359,6 +6219,10 @@ function initDashboard(){
 /* applySettings 이후 Drive 이미지 재로드 (폴더 ID가 바뀔 수 있으므로) */
 function reloadDriveImages(){
   if (isContentSyncPaused()) return;
+  if (isWidgetGridEnabled() && _widgetGridState) {
+    void syncAllDriveWidgets();
+    return;
+  }
   const wId = document.getElementById('spWeeklyId')?.value?.trim()
            || localStorage.getItem('driveWeeklyId') || '';
   const mId = document.getElementById('spMemoId')?.value?.trim()
@@ -5483,7 +6347,10 @@ async function syncGoogleTasks(silent){
 async function syncCalendarSilent(){
   if (isContentSyncPaused()) return;
   if (!await isAuthenticated()) return;
-  // CY/CM은 initDashboard() 이후에 초기화되므로 setup 화면에서 호출 시 방어
+  if (isWidgetGridEnabled() && _widgetGridState) {
+    await syncAllCalendarWidgets();
+    return;
+  }
   const now = new Date();
   const cy = (typeof CY !== 'undefined' && CY) ? CY : now.getFullYear();
   const cm = (typeof CM !== 'undefined' && CM) ? CM : now.getMonth() + 1;
@@ -5580,8 +6447,7 @@ function calMove(d){
   if(CM<0){CM=11;CY--;}
   if(CM>11){CM=0;CY++;}
   renderCal();
-  // 월 이동 시 해당 월 일정 자동 동기화
-  syncCalendarSilent();
+  if (!isWidgetGridEnabled()) syncCalendarSilent();
 }
 function calReset(){ const n=new Date(); CY=n.getFullYear(); CM=n.getMonth(); CS=n.getDate(); renderCal(); }
 
