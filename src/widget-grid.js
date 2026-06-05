@@ -1,5 +1,5 @@
 /**
- * widget-grid.js — 위젯 그리드 렌더 + 편집 모드 드래그·리사이즈 (단계 6)
+ * widget-grid.js — 위젯 그리드 렌더 + 편집 + ResizeObserver 반응형 (단계 7)
  */
 import {
   GRID_COLS,
@@ -20,6 +20,15 @@ let _editTeardown = null;
 let _dragSession = null;
 let _resizeSession = null;
 let _layoutDirty = false;
+let _observerRegistry = null;
+
+/** tier breakpoint (width·height px) — RESULT §6 참조 */
+export const TIER_WIDTH_COMPACT = 220;
+export const TIER_WIDTH_SPACIOUS = 380;
+export const TIER_HEIGHT_COMPACT = 180;
+export const TIER_HEIGHT_SPACIOUS = 260;
+
+const CATEGORY_MINMAX = { compact: 100, normal: 140, spacious: 180 };
 
 export function setContentSyncPaused(v) {
   _contentSyncPaused = !!v;
@@ -82,6 +91,103 @@ export function pixelSizeToCells(pw, ph, cellSize, gap = DEFAULT_GAP) {
   const w = Math.max(1, Math.round((Math.max(0, pw) + gap) / stride));
   const h = Math.max(1, Math.round((Math.max(0, ph) + gap) / stride));
   return { w, h };
+}
+
+/** 셸 크기 → 반응형 tier (compact | normal | spacious) */
+export function computeResponsiveTier(width, height) {
+  const w = Math.max(0, width);
+  const h = Math.max(0, height);
+  if (w < TIER_WIDTH_COMPACT || h < TIER_HEIGHT_COMPACT) return 'compact';
+  if (w >= TIER_WIDTH_SPACIOUS && h >= TIER_HEIGHT_SPACIOUS) return 'spacious';
+  return 'normal';
+}
+
+/** tier별 카테고리 auto-fill minmax(px) */
+export function categoryMinColForTier(tier) {
+  return CATEGORY_MINMAX[tier] ?? CATEGORY_MINMAX.normal;
+}
+
+/**
+ * @param {HTMLElement} shell
+ * @param {string} type
+ * @param {number} width
+ * @param {number} height
+ */
+export function applyWidgetResponsive(shell, type, width, height) {
+  if (!shell) return;
+  const tier = computeResponsiveTier(width, height);
+  shell.dataset.widgetTier = tier;
+  shell.style.setProperty('--widget-w', `${Math.round(width)}px`);
+  shell.style.setProperty('--widget-h', `${Math.round(height)}px`);
+
+  if (type === 'category') {
+    const minCol = categoryMinColForTier(tier);
+    const grid = `repeat(auto-fill, minmax(${minCol}px, 1fr))`;
+    const catZone = shell.querySelector(':scope > .cat-zone');
+    if (catZone) {
+      catZone.style.gridTemplateColumns = grid;
+    }
+  }
+}
+
+function observeShellResize(shell) {
+  const type = shell.dataset.widgetType || 'calendar';
+  const w = shell.clientWidth;
+  const h = shell.clientHeight;
+  if (w > 0 && h > 0) {
+    applyWidgetResponsive(shell, type, w, h);
+  }
+}
+
+/** @param {HTMLElement} rootEl */
+export function attachWidgetObservers(rootEl) {
+  if (!isWidgetGridEnabled()) return;
+  detachWidgetObservers();
+
+  const canvas = getCanvas(rootEl);
+  if (!canvas || typeof ResizeObserver === 'undefined') return;
+
+  const observers = new Map();
+  const rafPending = new Map();
+
+  for (const shell of canvas.querySelectorAll('.widget-cell')) {
+    observeShellResize(shell);
+
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const target = entry.target;
+        const prev = rafPending.get(target);
+        if (prev) cancelAnimationFrame(prev);
+        rafPending.set(target, requestAnimationFrame(() => {
+          rafPending.delete(target);
+          const cr = entry.contentRect;
+          const w = cr.width > 0 ? cr.width : target.clientWidth;
+          const h = cr.height > 0 ? cr.height : target.clientHeight;
+          applyWidgetResponsive(
+            target,
+            target.dataset.widgetType || 'calendar',
+            w,
+            h,
+          );
+        }));
+      }
+    });
+    obs.observe(shell);
+    observers.set(shell, obs);
+  }
+
+  _observerRegistry = { observers, rafPending };
+}
+
+export function detachWidgetObservers() {
+  if (!_observerRegistry) return;
+  for (const [, obs] of _observerRegistry.observers) {
+    obs.disconnect();
+  }
+  for (const raf of _observerRegistry.rafPending.values()) {
+    cancelAnimationFrame(raf);
+  }
+  _observerRegistry = null;
 }
 
 export function computeCellSize(containerWidth, cols, gap = DEFAULT_GAP) {
@@ -631,6 +737,7 @@ export function collectPanelAnchors() {
  * @returns {() => void} teardown
  */
 export function mountWidgetGrid(rootEl, state, anchors = null) {
+  detachWidgetObservers();
   if (_editTeardown) {
     _editTeardown();
     _editTeardown = null;
@@ -644,6 +751,7 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
   const metrics = renderGrid(rootEl, state, { anchors: resolvedAnchors });
 
   _mounted = { rootEl, state, anchors: resolvedAnchors, metrics };
+  attachWidgetObservers(rootEl);
 
   let raf = 0;
   const onResize = () => {
@@ -662,6 +770,7 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
   }
 
   return () => {
+    detachWidgetObservers();
     if (_editTeardown) {
       _editTeardown();
       _editTeardown = null;
