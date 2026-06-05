@@ -1,9 +1,10 @@
 /**
- * widget-grid.js — 위젯 그리드 렌더 + 편집 모드 드래그 (단계 5)
+ * widget-grid.js — 위젯 그리드 렌더 + 편집 모드 드래그·리사이즈 (단계 6)
  */
 import {
   GRID_COLS,
   moveElement,
+  resizeElement,
   pixelToCell,
 } from './layout-engine.js';
 
@@ -17,6 +18,7 @@ let _editMode = false;
 let _mounted = null;
 let _editTeardown = null;
 let _dragSession = null;
+let _resizeSession = null;
 let _layoutDirty = false;
 
 export function setContentSyncPaused(v) {
@@ -64,6 +66,22 @@ export function applyLayoutToWidgets(widgets, layout) {
     if (!el) return { ...w };
     return { ...w, x: el.x, y: el.y, w: el.w, h: el.h };
   });
+}
+
+/** 셀 치수 → 픽셀 (applyShellGeometry 와 동일) */
+export function cellsToPixelSize(w, h, cellSize, gap = DEFAULT_GAP) {
+  const pw = w * cellSize + (w - 1) * gap;
+  const ph = h * cellSize + (h - 1) * gap;
+  return { pw, ph };
+}
+
+/** 픽셀 크기 → 셀 수 역산 (스냅) */
+export function pixelSizeToCells(pw, ph, cellSize, gap = DEFAULT_GAP) {
+  const stride = cellSize + gap;
+  if (stride <= 0) return { w: 1, h: 1 };
+  const w = Math.max(1, Math.round((Math.max(0, pw) + gap) / stride));
+  const h = Math.max(1, Math.round((Math.max(0, ph) + gap) / stride));
+  return { w, h };
 }
 
 export function computeCellSize(containerWidth, cols, gap = DEFAULT_GAP) {
@@ -134,16 +152,21 @@ function getCanvas(container) {
   return container?.querySelector(':scope > .widget-grid-canvas') ?? null;
 }
 
+function applyWidgetsGeometry(canvas, widgets, metrics) {
+  if (!canvas) return;
+  const widgetById = new Map(widgets.map((w) => [w.id, w]));
+  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    const w = widgetById.get(shell.dataset.widgetId);
+    if (w) applyShellGeometry(shell, w, metrics.cellSize, metrics.gap);
+  });
+  canvas.style.height = `${computeGridHeight(widgets, metrics.cellSize, metrics.gap)}px`;
+}
+
 function updateAllShellGeometry(container, state, metrics) {
   const canvas = getCanvas(container);
   if (!canvas) return;
   const widgets = Array.isArray(state?.widgets) ? state.widgets : [];
-  const widgetById = new Map(widgets.map((w) => [w.id, w]));
-  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
-    const widget = widgetById.get(shell.dataset.widgetId);
-    if (widget) applyShellGeometry(shell, widget, metrics.cellSize, metrics.gap);
-  });
-  canvas.style.height = `${computeGridHeight(widgets, metrics.cellSize, metrics.gap)}px`;
+  applyWidgetsGeometry(canvas, widgets, metrics);
 }
 
 function ensureDragHandles(canvas) {
@@ -162,10 +185,55 @@ function removeDragHandles(canvas) {
   canvas.querySelectorAll('.widget-drag-handle').forEach((h) => h.remove());
 }
 
+function ensureResizeHandles(canvas) {
+  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    if (!shell.querySelector(':scope > .widget-resize-handle')) {
+      const handle = document.createElement('div');
+      handle.className = 'widget-resize-handle';
+      handle.setAttribute('aria-label', '위젯 크기 조절');
+      handle.innerHTML = '<span class="widget-resize-grip">↘</span>';
+      shell.appendChild(handle);
+    }
+  });
+}
+
+function removeResizeHandles(canvas) {
+  canvas.querySelectorAll('.widget-resize-handle').forEach((h) => h.remove());
+}
+
+function getOrCreateGhost(canvas) {
+  let ghost = canvas.querySelector(':scope > .widget-resize-ghost');
+  if (!ghost) {
+    ghost = document.createElement('div');
+    ghost.className = 'widget-resize-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    canvas.appendChild(ghost);
+  }
+  return ghost;
+}
+
+function hideResizeGhost(canvas) {
+  const ghost = canvas?.querySelector(':scope > .widget-resize-ghost');
+  if (ghost) ghost.style.display = 'none';
+}
+
+function showResizeGhost(canvas, widget, metrics) {
+  const ghost = getOrCreateGhost(canvas);
+  applyShellGeometry(ghost, widget, metrics.cellSize, metrics.gap);
+  ghost.style.display = 'block';
+}
+
 function clearDragVisuals(canvas) {
   canvas?.querySelectorAll('.widget-cell.is-dragging').forEach((shell) => {
     shell.classList.remove('is-dragging');
   });
+}
+
+function clearResizeVisuals(canvas) {
+  canvas?.querySelectorAll('.widget-cell.is-resizing').forEach((shell) => {
+    shell.classList.remove('is-resizing');
+  });
+  hideResizeGhost(canvas);
 }
 
 function commitDrag(state, container, session) {
@@ -208,15 +276,68 @@ function previewDrag(state, container, session) {
 
   const previewLayout = moveElement(layout, item, cell.x, cell.y);
   const previewWidgets = applyLayoutToWidgets(state.widgets, previewLayout);
-  const widgetById = new Map(previewWidgets.map((w) => [w.id, w]));
 
   const canvas = getCanvas(container);
   if (!canvas) return;
+  applyWidgetsGeometry(canvas, previewWidgets, metrics);
+}
 
-  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
-    const w = widgetById.get(shell.dataset.widgetId);
-    if (w) applyShellGeometry(shell, w, metrics.cellSize, metrics.gap);
-  });
+function computeResizeCells(widget, deltaX, deltaY, metrics) {
+  const { pw: startPw, ph: startPh } = cellsToPixelSize(
+    widget.w ?? 2,
+    widget.h ?? 2,
+    metrics.cellSize,
+    metrics.gap,
+  );
+  return pixelSizeToCells(
+    startPw + deltaX,
+    startPh + deltaY,
+    metrics.cellSize,
+    metrics.gap,
+  );
+}
+
+function commitResize(state, container, session) {
+  const { widgetId, deltaX, deltaY, metrics } = session;
+  const widget = state.widgets.find((w) => w.id === widgetId);
+  if (!widget) return state;
+
+  const { w: newW, h: newH } = computeResizeCells(widget, deltaX, deltaY, metrics);
+  const layout = widgetsToLayout(state.widgets);
+  const item = layout.find((el) => el.i === widgetId);
+  if (!item) return state;
+
+  const nextLayout = resizeElement(layout, item, newW, newH);
+  const nextWidgets = applyLayoutToWidgets(state.widgets, nextLayout);
+  state.widgets = nextWidgets;
+  _layoutDirty = true;
+
+  const canvas = getCanvas(container);
+  if (canvas) hideResizeGhost(canvas);
+  updateAllShellGeometry(container, state, metrics);
+  if (_mounted) _mounted.state = state;
+  return state;
+}
+
+function previewResize(state, container, session) {
+  const { widgetId, deltaX, deltaY, metrics } = session;
+  const widget = state.widgets.find((w) => w.id === widgetId);
+  if (!widget) return;
+
+  const { w: newW, h: newH } = computeResizeCells(widget, deltaX, deltaY, metrics);
+  const layout = widgetsToLayout(state.widgets);
+  const item = layout.find((el) => el.i === widgetId);
+  if (!item) return;
+
+  const previewLayout = resizeElement(layout, item, newW, newH);
+  const previewWidgets = applyLayoutToWidgets(state.widgets, previewLayout);
+
+  const canvas = getCanvas(container);
+  if (!canvas) return;
+  applyWidgetsGeometry(canvas, previewWidgets, metrics);
+
+  const resized = previewWidgets.find((w) => w.id === widgetId);
+  if (resized) showResizeGhost(canvas, resized, metrics);
 }
 
 function attachDragHandlers(container, state) {
@@ -227,7 +348,7 @@ function attachDragHandlers(container, state) {
   const cleanups = [];
 
   const onPointerDown = (e) => {
-    if (!_editMode || e.button !== 0) return;
+    if (!_editMode || _resizeSession || e.button !== 0) return;
     const handle = e.currentTarget;
     const shell = handle.closest('.widget-cell');
     const widgetId = shell?.dataset?.widgetId;
@@ -320,6 +441,108 @@ function attachDragHandlers(container, state) {
   };
 }
 
+function attachResizeHandlers(container, state) {
+  const canvas = getCanvas(container);
+  if (!canvas) return () => {};
+
+  const handles = [...canvas.querySelectorAll('.widget-resize-handle')];
+  const cleanups = [];
+
+  const onPointerDown = (e) => {
+    if (!_editMode || _dragSession || e.button !== 0) return;
+    const handle = e.currentTarget;
+    const shell = handle.closest('.widget-cell');
+    const widgetId = shell?.dataset?.widgetId;
+    if (!widgetId || !shell) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    handle.setPointerCapture(e.pointerId);
+
+    const metrics = renderGrid(container, state, { layoutOnly: true });
+    _resizeSession = {
+      pointerId: e.pointerId,
+      widgetId,
+      shell,
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      deltaX: 0,
+      deltaY: 0,
+      metrics,
+      raf: 0,
+      pending: false,
+    };
+    shell.classList.add('is-resizing');
+  };
+
+  const schedulePreview = () => {
+    if (!_resizeSession || _resizeSession.pending) return;
+    _resizeSession.pending = true;
+    _resizeSession.raf = requestAnimationFrame(() => {
+      if (!_resizeSession) return;
+      _resizeSession.pending = false;
+      previewResize(state, container, _resizeSession);
+    });
+  };
+
+  const onPointerMove = (e) => {
+    if (!_resizeSession || _resizeSession.pointerId !== e.pointerId) return;
+    _resizeSession.deltaX = e.clientX - _resizeSession.startX;
+    _resizeSession.deltaY = e.clientY - _resizeSession.startY;
+    schedulePreview();
+  };
+
+  const finishPointer = (e) => {
+    if (!_resizeSession || _resizeSession.pointerId !== e.pointerId) return;
+    const session = _resizeSession;
+    _resizeSession = null;
+    cancelAnimationFrame(session.raf);
+
+    try {
+      session.handle.releasePointerCapture(e.pointerId);
+    } catch (_) {
+      /* already released */
+    }
+
+    session.shell.classList.remove('is-resizing');
+    commitResize(state, container, session);
+  };
+
+  const onPointerUp = (e) => finishPointer(e);
+  const onPointerCancel = (e) => {
+    if (!_resizeSession || _resizeSession.pointerId !== e.pointerId) return;
+    const session = _resizeSession;
+    _resizeSession = null;
+    cancelAnimationFrame(session.raf);
+    session.shell.classList.remove('is-resizing');
+    hideResizeGhost(canvas);
+    updateAllShellGeometry(container, state, session.metrics);
+  };
+
+  for (const handle of handles) {
+    handle.addEventListener('pointerdown', onPointerDown);
+    handle.addEventListener('pointermove', onPointerMove);
+    handle.addEventListener('pointerup', onPointerUp);
+    handle.addEventListener('pointercancel', onPointerCancel);
+    cleanups.push(() => {
+      handle.removeEventListener('pointerdown', onPointerDown);
+      handle.removeEventListener('pointermove', onPointerMove);
+      handle.removeEventListener('pointerup', onPointerUp);
+      handle.removeEventListener('pointercancel', onPointerCancel);
+    });
+  }
+
+  return () => {
+    for (const fn of cleanups) fn();
+    if (_resizeSession) {
+      cancelAnimationFrame(_resizeSession.raf);
+      _resizeSession = null;
+    }
+    clearResizeVisuals(canvas);
+  };
+}
+
 /**
  * @param {HTMLElement} container
  * @param {object} state
@@ -375,7 +598,10 @@ export function renderGrid(container, state, options = {}) {
     canvas.appendChild(shell);
   }
 
-  if (_editMode) ensureDragHandles(canvas);
+  if (_editMode) {
+    ensureDragHandles(canvas);
+    ensureResizeHandles(canvas);
+  }
 
   return metrics;
 }
@@ -411,6 +637,8 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
   }
   _editMode = false;
   _layoutDirty = false;
+  _dragSession = null;
+  _resizeSession = null;
 
   const resolvedAnchors = anchors ?? collectPanelAnchors();
   const metrics = renderGrid(rootEl, state, { anchors: resolvedAnchors });
@@ -439,6 +667,8 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
       _editTeardown = null;
     }
     _editMode = false;
+    _dragSession = null;
+    _resizeSession = null;
     _mounted = null;
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', onResize);
@@ -460,6 +690,7 @@ export function enterEditMode(rootEl, state, options = {}) {
   _editMode = true;
   setContentSyncPaused(true);
   ensureDragHandles(canvas);
+  ensureResizeHandles(canvas);
 
   const dashboard = typeof document !== 'undefined'
     ? document.getElementById('dashboard')
@@ -467,7 +698,9 @@ export function enterEditMode(rootEl, state, options = {}) {
   if (dashboard) dashboard.classList.add('widget-grid-editing');
 
   if (_editTeardown) _editTeardown();
-  _editTeardown = attachDragHandlers(rootEl, state);
+
+  const dragTeardown = attachDragHandlers(rootEl, state);
+  const resizeTeardown = attachResizeHandlers(rootEl, state);
 
   const onKeyDown = (e) => {
     if (e.key === 'Escape' && _editMode && typeof options.onEsc === 'function') {
@@ -478,9 +711,9 @@ export function enterEditMode(rootEl, state, options = {}) {
     window.addEventListener('keydown', onKeyDown);
   }
 
-  const prevTeardown = _editTeardown;
   _editTeardown = () => {
-    prevTeardown();
+    dragTeardown();
+    resizeTeardown();
     if (typeof window !== 'undefined') {
       window.removeEventListener('keydown', onKeyDown);
     }
@@ -501,6 +734,10 @@ export function exitEditMode(rootEl, state) {
     cancelAnimationFrame(_dragSession.raf);
     _dragSession = null;
   }
+  if (_resizeSession) {
+    cancelAnimationFrame(_resizeSession.raf);
+    _resizeSession = null;
+  }
 
   if (_editTeardown) {
     _editTeardown();
@@ -510,7 +747,9 @@ export function exitEditMode(rootEl, state) {
   const canvas = getCanvas(rootEl);
   if (canvas) {
     clearDragVisuals(canvas);
+    clearResizeVisuals(canvas);
     removeDragHandles(canvas);
+    removeResizeHandles(canvas);
     updateAllShellGeometry(rootEl, state, renderGrid(rootEl, state, { layoutOnly: true }));
   }
 

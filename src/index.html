@@ -533,6 +533,43 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   outline-offset: 2px;
 }
 .widget-cell.is-dragging { z-index: 20; opacity: 0.94; }
+.widget-cell.is-resizing { z-index: 21; }
+.widget-resize-handle {
+  display: none;
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: nwse-resize;
+  touch-action: none;
+  user-select: none;
+  z-index: 3;
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text2);
+}
+#dashboard.widget-grid-editing .widget-resize-handle { display: flex; }
+.widget-cell.is-resizing .widget-resize-handle { background: var(--primary-soft); color: var(--primary); }
+.widget-resize-grip { pointer-events: none; font-weight: 700; }
+.widget-resize-ghost {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border: 2px dashed rgba(110,91,242,0.55);
+  border-radius: 22px;
+  background: rgba(110,91,242,0.08);
+  box-sizing: border-box;
+  z-index: 15;
+}
 .widget-drag-handle {
   display: none;
   align-items: center;
