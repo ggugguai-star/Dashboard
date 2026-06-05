@@ -5,7 +5,7 @@
  *
  * ── 모듈 구성 ──────────────────────────────────────────────────────────
  *  [Auth]    getAuthUrl · exchangeCodeForTokens · getValidAccessToken
- *  [Cal]     getCalendarEvents · createCalendarEvent · updateCalendarEvent · deleteCalendarEvent
+ *  [Cal]     getCalendarList · getCalendarEvents · createCalendarEvent · updateCalendarEvent · deleteCalendarEvent
  *  [Drive]   listDriveFolder · listDriveImages · getDriveImageData
  *            driveTrashFile · driveMoveFile · driveDownloadFile
  *  [Tasks]   tasksGetDefaultList · tasksListTasks · tasksCreateTask
@@ -204,13 +204,37 @@ async function _apiFetch(url, options = {}) {
 //  Calendar
 // ══════════════════════════════════════════════════════════════════════
 
+function _calendarIdPath(calendarId) {
+  return encodeURIComponent(calendarId ?? 'primary');
+}
+
 /**
- * 기본 캘린더(primary) 이벤트 목록을 조회한다.
+ * 사용자 캘린더 목록을 조회한다.
  *
- * @param {{timeMin?:string, timeMax?:string}} [params]
+ * @returns {Promise<{calendars:{id:string,summary:string,primary?:boolean,backgroundColor?:string}[]}|{error:string}>}
+ */
+export async function getCalendarList() {
+  const json = await _apiFetch(
+    'https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250'
+  );
+  if (json.error) return json;
+  const calendars = (json.items ?? []).map((item) => ({
+    id: item.id,
+    summary: item.summary,
+    primary: !!item.primary,
+    backgroundColor: item.backgroundColor,
+  }));
+  return { calendars };
+}
+
+/**
+ * 캘린더 이벤트 목록을 조회한다.
+ *
+ * @param {{calendarId?:string, timeMin?:string, timeMax?:string}} [params]
  * @returns {Promise<{events:object[]}|{error:string}>}
  */
-export async function getCalendarEvents({ timeMin, timeMax } = {}) {
+export async function getCalendarEvents({ calendarId, timeMin, timeMax } = {}) {
+  const calPath = _calendarIdPath(calendarId);
   const params = new URLSearchParams({
     timeMin:      timeMin ?? new Date(Date.now() - 7  * 86_400_000).toISOString(),
     timeMax:      timeMax ?? new Date(Date.now() + 60 * 86_400_000).toISOString(),
@@ -219,7 +243,7 @@ export async function getCalendarEvents({ timeMin, timeMax } = {}) {
     maxResults:   '250',
   });
   const json = await _apiFetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`
+    `https://www.googleapis.com/calendar/v3/calendars/${calPath}/events?${params}`
   );
   if (json.error) return json;
   return { events: json.items ?? [] };
@@ -229,11 +253,13 @@ export async function getCalendarEvents({ timeMin, timeMax } = {}) {
  * 캘린더 이벤트를 생성한다.
  *
  * @param {object} eventData — Google Calendar 이벤트 리소스
+ * @param {{calendarId?:string}} [options]
  * @returns {Promise<{success:true, event:object}|{error:string}>}
  */
-export async function createCalendarEvent(eventData) {
+export async function createCalendarEvent(eventData, options = {}) {
+  const calPath = _calendarIdPath(options.calendarId);
   const json = await _apiFetch(
-    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+    `https://www.googleapis.com/calendar/v3/calendars/${calPath}/events`,
     {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -249,11 +275,13 @@ export async function createCalendarEvent(eventData) {
  *
  * @param {string} eventId
  * @param {object} eventData
+ * @param {{calendarId?:string}} [options]
  * @returns {Promise<{success:true, event:object}|{error:string}>}
  */
-export async function updateCalendarEvent(eventId, eventData) {
+export async function updateCalendarEvent(eventId, eventData, options = {}) {
+  const calPath = _calendarIdPath(options.calendarId);
   const json = await _apiFetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(eventId)}`,
+    `https://www.googleapis.com/calendar/v3/calendars/${calPath}/events/${encodeURIComponent(eventId)}`,
     {
       method:  'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -268,11 +296,13 @@ export async function updateCalendarEvent(eventId, eventData) {
  * 캘린더 이벤트를 삭제한다.
  *
  * @param {string} eventId
+ * @param {{calendarId?:string}} [options]
  * @returns {Promise<{success:true}|{error:string}>}
  */
-export async function deleteCalendarEvent(eventId) {
+export async function deleteCalendarEvent(eventId, options = {}) {
+  const calPath = _calendarIdPath(options.calendarId);
   return _apiFetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(eventId)}`,
+    `https://www.googleapis.com/calendar/v3/calendars/${calPath}/events/${encodeURIComponent(eventId)}`,
     { method: 'DELETE' }
   );
 }

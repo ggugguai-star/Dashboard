@@ -3348,11 +3348,18 @@ import {
 } from './token-store.js';
 import {
   getAuthUrl, exchangeCodeForTokens, getValidAccessToken,
-  getCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
+  getCalendarList, getCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
   listDriveFolder, listDriveImages, getDriveImageData,
   driveTrashFile, driveMoveFile, driveDownloadFile,
   tasksGetDefaultList, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
 } from './google-api.js';
+import {
+  createGoogleCache,
+  fetchCached,
+  buildCalendarEventsKey,
+  invalidateCache,
+  DEFAULT_EVENTS_TTL_MS,
+} from './google-cache.js';
 import { loadState, saveState } from './store.js';
 import {
   mountWidgetGrid,
@@ -3365,6 +3372,35 @@ import {
   setContentSyncPaused,
   isContentSyncPaused,
 } from './widget-grid.js';
+
+/* ── Google Calendar 공유 캐시 (단계 8) ── */
+const _gcalCache = createGoogleCache();
+const GCAL_EVENTS_TTL_MS = DEFAULT_EVENTS_TTL_MS;
+
+function resolvePrimaryCalendarId() {
+  const widgets = _widgetGridState?.widgets;
+  if (Array.isArray(widgets)) {
+    const cal = widgets.find((w) => w.type === 'calendar');
+    if (cal?.source?.calendarId) return cal.source.calendarId;
+  }
+  return 'primary';
+}
+
+function invalidateCalendarEventsCache(calendarId) {
+  const id = calendarId ?? resolvePrimaryCalendarId();
+  invalidateCache(_gcalCache, `cal:events:${id}`);
+}
+
+async function fetchCalendarEventsCached(calendarId, timeMin, timeMax) {
+  const calId = calendarId ?? resolvePrimaryCalendarId();
+  const key = buildCalendarEventsKey(calId, timeMin, timeMax);
+  return fetchCached(
+    _gcalCache,
+    key,
+    GCAL_EVENTS_TTL_MS,
+    () => getCalendarEvents({ calendarId: calId, timeMin, timeMax }),
+  );
+}
 
 /* ── Tauri invoke / listen 단축 래퍼 ── */
 const tInvoke = (cmd, args, opts) => window.__TAURI__.core.invoke(cmd, args, opts);
@@ -4991,9 +5027,10 @@ async function saveEvDialog(){
   btn.disabled = true; txt.textContent = '저장 중...';
 
   try {
+    const calId = resolvePrimaryCalendarId();
     const result = evdEditingId
-      ? await updateCalendarEvent(evdEditingId, event)
-      : await createCalendarEvent(event);
+      ? await updateCalendarEvent(evdEditingId, event, { calendarId: calId })
+      : await createCalendarEvent(event, { calendarId: calId });
 
     if(result.error){
       showToast('❌ ' + result.error);
@@ -5012,6 +5049,7 @@ async function saveEvDialog(){
       }
       saveCalAlarms();
 
+      invalidateCalendarEventsCache(calId);
       closeEvDialog();
       showToast(evdEditingId ? '✅ 일정이 수정됐어요!' : '✅ 일정이 추가됐어요!');
       await syncCalendarSilent();
@@ -5057,11 +5095,13 @@ async function cevCtxDelete(){
   const ev = _cevCtxEvent; closeCevCtx(); if(!ev?.id) return;
   showToast('🗑 삭제 중...');
   try {
-    const result = await deleteCalendarEvent(ev.id);
+    const calId = resolvePrimaryCalendarId();
+    const result = await deleteCalendarEvent(ev.id, { calendarId: calId });
     if(result.error) showToast('❌ ' + result.error);
     else {
       // 연결된 알림도 함께 제거
       if(calAlarms[ev.id]){ delete calAlarms[ev.id]; saveCalAlarms(); }
+      invalidateCalendarEventsCache(calId);
       showToast('✅ 일정이 삭제됐어요!'); await syncCalendarSilent(); renderCal();
     }
   } catch(e){ showToast('❌ ' + e.message); }
@@ -5156,7 +5196,7 @@ async function doSync(){
   const from = new Date(CY, CM - 1, 1).toISOString();
   const to   = new Date(CY, CM + 2, 0, 23, 59, 59).toISOString();
 
-  const result = await getCalendarEvents({ timeMin: from, timeMax: to });
+  const result = await fetchCalendarEventsCached(resolvePrimaryCalendarId(), from, to);
   btn.classList.remove('spinning');
 
   if (result.error) {
@@ -5449,7 +5489,7 @@ async function syncCalendarSilent(){
   const cm = (typeof CM !== 'undefined' && CM) ? CM : now.getMonth() + 1;
   const from = new Date(cy, cm - 1, 1).toISOString();
   const to   = new Date(cy, cm + 2, 0, 23, 59, 59).toISOString();
-  const result = await getCalendarEvents({ timeMin: from, timeMax: to });
+  const result = await fetchCalendarEventsCached(resolvePrimaryCalendarId(), from, to);
   if (!result.error) {
     gcalEvents = buildEventMap(result.events || []);
     syncGcalToWindow();
