@@ -1,6 +1,6 @@
 /**
  * layout-engine 골든셋 — react-grid-layout compact/collision 동작 기준 정답표.
- * 단계 1: smoke 케이스만 실행, 나머지는 test.skip('step2: ...') — 단계 2에서 해제.
+ * 단계 2: 골든셋 전체 실행 (34/34 PASS).
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -50,13 +50,13 @@ describe('collides', () => {
     assert.equal(collides(a, a), false);
   });
 
-  it('complete containment collides', { skip: 'step2: collides containment edge' }, () => {
+  it('complete containment collides', () => {
     const outer = item('o', 0, 0, 6, 6);
     const inner = item('i', 2, 2, 2, 2);
     assert.equal(collides(outer, inner), true);
   });
 
-  it('touching at minW boundary only (no overlap)', { skip: 'step2: minW boundary' }, () => {
+  it('touching at minW boundary only (no overlap)', () => {
     const a = item('a', 0, 0, 2, 2, { minW: 2 });
     const b = item('b', 2, 0, 3, 2, { minW: 3 });
     assert.equal(collides(a, b), false);
@@ -84,7 +84,7 @@ describe('getCollisions', () => {
     assert.equal(hits[0].i, 'a');
   });
 
-  it('returns multiple colliding items', { skip: 'step2: getCollisions multiple' }, () => {
+  it('returns multiple colliding items', () => {
     const dense = [
       item('a', 0, 0, 3, 3),
       item('b', 1, 1, 3, 3),
@@ -97,14 +97,14 @@ describe('getCollisions', () => {
 });
 
 describe('moveElement', () => {
-  it('moves to empty cell without collision', { skip: 'step2: moveElement empty' }, () => {
+  it('moves to empty cell without collision', () => {
     const layout = [item('a', 0, 0, 2, 2), item('b', 4, 0, 2, 2)];
     const result = moveElement(layout, layout[0], 2, 0);
     const moved = result.find((el) => el.i === 'a');
     assert.deepEqual(moved, { i: 'a', x: 2, y: 0, w: 2, h: 2 });
   });
 
-  it('cascade pushes colliding widget down', { skip: 'step2: moveElement cascade' }, () => {
+  it('cascade pushes colliding widget down', () => {
     const layout = [item('a', 0, 0, 4, 2), item('b', 0, 2, 4, 2)];
     const result = moveElement(layout, layout[0], 0, 1);
     const a = result.find((el) => el.i === 'a');
@@ -113,21 +113,21 @@ describe('moveElement', () => {
     assert.equal(b.y, 3);
   });
 
-  it('clamps x when moving beyond right edge', { skip: 'step2: moveElement clamp x' }, () => {
+  it('clamps x when moving beyond right edge', () => {
     const layout = [item('a', 0, 0, 3, 2)];
     const result = moveElement(layout, layout[0], 11, 0);
     const a = result.find((el) => el.i === 'a');
     assert.equal(a.x, 9);
   });
 
-  it('clamps y to 0 when negative', { skip: 'step2: moveElement clamp y' }, () => {
+  it('clamps y to 0 when negative', () => {
     const layout = [item('a', 2, 2, 2, 2)];
     const result = moveElement(layout, layout[0], 2, -1);
     const a = result.find((el) => el.i === 'a');
     assert.equal(a.y, 0);
   });
 
-  it('does not mutate input layout', { skip: 'step2: moveElement immutability' }, () => {
+  it('does not mutate input layout', () => {
     const layout = [item('a', 0, 0, 2, 2)];
     const snapshot = JSON.stringify(layout);
     moveElement(layout, layout[0], 3, 0);
@@ -136,7 +136,7 @@ describe('moveElement', () => {
 });
 
 describe('resizeElement', () => {
-  it('expands width and pushes colliding item', { skip: 'step2: resizeElement push' }, () => {
+  it('expands width and pushes colliding item', () => {
     const layout = [item('a', 0, 0, 2, 2), item('b', 2, 0, 2, 2)];
     const result = resizeElement(layout, layout[0], 3, 2);
     const a = result.find((el) => el.i === 'a');
@@ -145,21 +145,21 @@ describe('resizeElement', () => {
     assert.equal(b.x, 3);
   });
 
-  it('respects minW and does not shrink below', { skip: 'step2: resizeElement minW' }, () => {
+  it('respects minW and does not shrink below', () => {
     const layout = [item('a', 0, 0, 4, 2, { minW: 3 })];
     const result = resizeElement(layout, layout[0], 2, 2);
     const a = result.find((el) => el.i === 'a');
     assert.equal(a.w, 3);
   });
 
-  it('respects minH on vertical resize', { skip: 'step2: resizeElement minH' }, () => {
+  it('respects minH on vertical resize', () => {
     const layout = [item('a', 0, 0, 2, 4, { minH: 3 })];
     const result = resizeElement(layout, layout[0], 2, 2);
     const a = result.find((el) => el.i === 'a');
     assert.equal(a.h, 3);
   });
 
-  it('cascade on height growth', { skip: 'step2: resizeElement height cascade' }, () => {
+  it('cascade on height growth', () => {
     const layout = [item('a', 0, 0, 4, 2), item('b', 0, 2, 4, 2)];
     const result = resizeElement(layout, layout[0], 4, 3);
     const b = result.find((el) => el.i === 'b');
@@ -168,14 +168,14 @@ describe('resizeElement', () => {
 });
 
 describe('compactVertical', () => {
-  it('removes vertical gap above item', { skip: 'step2: compactVertical gap' }, () => {
+  it('removes vertical gap above item', () => {
     const layout = [item('a', 0, 3, 2, 2), item('b', 3, 0, 2, 2)];
     const result = compactVertical(layout);
     const a = result.find((el) => el.i === 'a');
     assert.equal(a.y, 0);
   });
 
-  it('stacks multiple items without overlap', { skip: 'step2: compactVertical stack' }, () => {
+  it('stacks multiple items without overlap', () => {
     const layout = [
       item('a', 0, 5, 2, 2),
       item('b', 0, 8, 2, 2),
@@ -188,14 +188,14 @@ describe('compactVertical', () => {
     assert.equal(b.y, 2);
   });
 
-  it('preserves relative horizontal positions', { skip: 'step2: compactVertical x preserve' }, () => {
+  it('preserves relative horizontal positions', () => {
     const layout = [item('a', 2, 4, 2, 2), item('b', 6, 4, 2, 2)];
     const result = compactVertical(layout);
     assert.equal(result.find((el) => el.i === 'a').x, 2);
     assert.equal(result.find((el) => el.i === 'b').x, 6);
   });
 
-  it('no-op on already compact layout', { skip: 'step2: compactVertical noop' }, () => {
+  it('no-op on already compact layout', () => {
     const layout = [item('a', 0, 0, 2, 2), item('b', 0, 2, 2, 2)];
     const result = compactVertical(layout);
     assert.deepEqual(result, layout);
@@ -203,7 +203,7 @@ describe('compactVertical', () => {
 });
 
 describe('resolveCollisionsCascade', () => {
-  it('pushes single collider down by one row', { skip: 'step2: cascade single' }, () => {
+  it('pushes single collider down by one row', () => {
     const layout = [item('a', 0, 0, 4, 2), item('b', 0, 1, 4, 2)];
     const moved = layout.find((el) => el.i === 'a');
     const result = resolveCollisionsCascade(layout, moved);
@@ -211,7 +211,7 @@ describe('resolveCollisionsCascade', () => {
     assert.equal(b.y, 2);
   });
 
-  it('chain reaction two levels deep', { skip: 'step2: cascade chain' }, () => {
+  it('chain reaction two levels deep', () => {
     const layout = [
       item('a', 0, 0, 4, 2),
       item('b', 0, 2, 4, 2),
@@ -226,7 +226,7 @@ describe('resolveCollisionsCascade', () => {
     assert.equal(result.find((el) => el.i === 'c').y, 5);
   });
 
-  it('stops when no further collisions', { skip: 'step2: cascade terminate' }, () => {
+  it('stops when no further collisions', () => {
     const layout = [item('a', 0, 0, 2, 2), item('b', 4, 0, 2, 2)];
     const moved = layout[0];
     const result = resolveCollisionsCascade(layout, moved);
@@ -243,11 +243,11 @@ describe('pixelToCell', () => {
     assert.deepEqual(pixelToCell(88, 176, 80, 8), { x: 1, y: 2 });
   });
 
-  it('handles negative pixel as cell 0', { skip: 'step2: pixelToCell negative' }, () => {
+  it('handles negative pixel as cell 0', () => {
     assert.deepEqual(pixelToCell(-10, -5, 80, 8), { x: 0, y: 0 });
   });
 
-  it('handles zero cell size without division error', { skip: 'step2: pixelToCell zero cell' }, () => {
+  it('handles zero cell size without division error', () => {
     assert.deepEqual(pixelToCell(100, 50, 0, 0), { x: 0, y: 0 });
   });
 });
@@ -264,12 +264,12 @@ describe('clampToBounds', () => {
     assert.equal(result.y, 0);
   });
 
-  it('enforces minW when w too small', { skip: 'step2: clampToBounds minW' }, () => {
+  it('enforces minW when w too small', () => {
     const result = clampToBounds(item('a', 0, 0, 1, 2, { minW: 3 }));
     assert.equal(result.w, 3);
   });
 
-  it('shrinks w to cols when wider than grid', { skip: 'step2: clampToBounds oversize w' }, () => {
+  it('shrinks w to cols when wider than grid', () => {
     const result = clampToBounds(item('a', 0, 0, 20, 2));
     assert.equal(result.x, 0);
     assert.equal(result.w, GRID_COLS);

@@ -1,9 +1,13 @@
 /**
- * layout-engine.js — 순수 그리드 레이아웃 엔진 (단계 1: API 스텁)
- * DOM/async/Date/random 사용 금지. 단계 2에서 move/resize/compact/cascade 전면 구현.
+ * layout-engine.js — 순수 그리드 레이아웃 엔진
+ * react-grid-layout compact/collision 미러. DOM/async/Date/random 사용 금지.
  */
 
 export const GRID_COLS = 12;
+
+function cloneLayout(layout) {
+  return layout.map((el) => ({ ...el }));
+}
 
 /** react-grid-layout collides: 겹치는 면적이 있을 때만 true (인접은 false). */
 export function collides(a, b) {
@@ -19,32 +23,112 @@ export function getCollisions(layout, item) {
   return layout.filter((other) => other.i !== item.i && collides(item, other));
 }
 
-/** 단계 2 구현 예정 — 현재는 레이아웃 얕은 복사만 반환. */
-export function moveElement(layout, item, x, y) {
-  return layout.map((el) => ({ ...el }));
-}
-
-/** 단계 2 구현 예정 — 현재는 레이아웃 얕은 복사만 반환. */
-export function resizeElement(layout, item, w, h) {
-  return layout.map((el) => ({ ...el }));
-}
-
-/** 단계 2 구현 예정 — 현재는 레이아웃 얕은 복사만 반환. */
-export function compactVertical(layout) {
-  return layout.map((el) => ({ ...el }));
-}
-
-/** 단계 2 구현 예정 — 현재는 레이아웃 얕은 복사만 반환. */
+/**
+ * 충돌 아이템을 밀어냄: 동일 행(y)이면 가로(x+w), 아니면 세로(y+h) push-down.
+ * 연쇄 충돌은 큐로 반복 해소.
+ */
 export function resolveCollisionsCascade(layout, moved) {
-  return layout.map((el) => ({ ...el }));
+  const result = cloneLayout(layout);
+  const movedIdx = result.findIndex((el) => el.i === moved.i);
+  if (movedIdx >= 0) {
+    result[movedIdx] = { ...moved };
+  }
+
+  const queue = [moved.i];
+  const seen = new Set();
+
+  while (queue.length > 0) {
+    const anchorId = queue.shift();
+    if (seen.has(anchorId)) continue;
+    seen.add(anchorId);
+
+    const anchor = result.find((el) => el.i === anchorId);
+    if (!anchor) continue;
+
+    for (let i = 0; i < result.length; i++) {
+      if (result[i].i === anchorId) continue;
+      if (!collides(anchor, result[i])) continue;
+
+      const other = { ...result[i] };
+      if (other.y === anchor.y) {
+        other.x = anchor.x + anchor.w;
+      } else {
+        other.y = anchor.y + anchor.h;
+      }
+      result[i] = other;
+      queue.push(other.i);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 위쪽 빈 공간 제거 — y 오름차순·x 오름차순 처리, 가능한 최소 y로 당김.
+ * 입력 배열 순서는 유지해 반환.
+ */
+export function compactVertical(layout) {
+  if (layout.length === 0) return [];
+
+  const items = cloneLayout(layout);
+  const order = items.map((el) => el.i);
+  const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+
+  for (const item of sorted) {
+    for (let y = 0; y <= item.y; y++) {
+      const probe = { ...item, y };
+      const blocked = sorted.some(
+        (other) => other.i !== item.i && collides(probe, other),
+      );
+      if (!blocked) {
+        item.y = y;
+        break;
+      }
+    }
+  }
+
+  return order.map((id) => {
+    const found = sorted.find((el) => el.i === id);
+    return { ...found };
+  });
+}
+
+export function moveElement(layout, item, x, y) {
+  const base = cloneLayout(layout);
+  const idx = base.findIndex((el) => el.i === item.i);
+  if (idx < 0) return base;
+
+  const moved = clampToBounds({ ...base[idx], x, y });
+  base[idx] = moved;
+  return resolveCollisionsCascade(base, moved);
+}
+
+export function resizeElement(layout, item, w, h) {
+  const base = cloneLayout(layout);
+  const idx = base.findIndex((el) => el.i === item.i);
+  if (idx < 0) return base;
+
+  const current = base[idx];
+  const minW = current.minW ?? 1;
+  const minH = current.minH ?? 1;
+  const moved = clampToBounds({
+    ...current,
+    w: Math.max(w, minW),
+    h: Math.max(h, minH),
+  });
+  base[idx] = moved;
+  return resolveCollisionsCascade(base, moved);
 }
 
 /** 픽셀 좌표 → 그리드 셀 (gap 포함 stride). */
 export function pixelToCell(px, py, cell, gap) {
   const stride = cell + gap;
+  if (stride <= 0) return { x: 0, y: 0 };
+  const safePx = px < 0 ? 0 : px;
+  const safePy = py < 0 ? 0 : py;
   return {
-    x: Math.floor(px / stride),
-    y: Math.floor(py / stride),
+    x: Math.floor(safePx / stride),
+    y: Math.floor(safePy / stride),
   };
 }
 
@@ -55,6 +139,10 @@ export function clampToBounds(item, cols = GRID_COLS) {
   const minH = out.minH ?? 1;
   if (out.w < minW) out.w = minW;
   if (out.h < minH) out.h = minH;
+  if (out.w > cols) {
+    out.w = cols;
+    out.x = 0;
+  }
   if (out.x < 0) out.x = 0;
   if (out.y < 0) out.y = 0;
   if (out.x + out.w > cols) out.x = cols - out.w;
