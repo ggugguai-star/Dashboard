@@ -517,6 +517,27 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   display: none;
 }
 #dashboard.widget-grid-editing .widget-add-btn { display: inline-block; }
+.widget-backup-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  color: var(--text2);
+  cursor: pointer;
+}
+.widget-backup-btn:hover { background: rgba(255,255,255,0.92); color: var(--text1); }
+.widget-backup-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text3);
+  margin-left: 4px;
+  user-select: none;
+}
+.widget-backup-keys input { accent-color: #7c3aed; }
 .widget-edit-actions {
   position: absolute;
   top: 6px;
@@ -2974,6 +2995,11 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <div class="widget-edit-toolbar" id="widgetEditToolbar">
         <button type="button" class="widget-edit-btn" id="widgetEditBtn">편집</button>
         <button type="button" class="widget-add-btn" id="widgetAddBtn">+ 위젯</button>
+        <button type="button" class="widget-backup-btn" id="widgetExportBtn">📤 보내기</button>
+        <button type="button" class="widget-backup-btn" id="widgetImportBtn">📥 가져오기</button>
+        <label class="widget-backup-keys" title="API 키 포함">
+          <input type="checkbox" id="widgetExportIncludeKeys" checked> API 키
+        </label>
       </div>
       <div id="widgetAnchorTemplates" aria-hidden="true"></div>
       <div id="widgetAnchorPool" aria-hidden="true"></div>
@@ -3293,6 +3319,30 @@ body.item-reorder-active .item{cursor:grabbing !important}
               onmouseover="this.style.opacity='0.88'"
               onmouseout="this.style.opacity='1'">
               🔄 업데이트 확인
+            </button>
+          </div>
+        </div>
+
+        <!-- 백업 · 복원 -->
+        <div class="sp-section" style="margin-top:6px">
+          <div class="sp-sec-title">백업 · 복원</div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);margin:8px 0 6px;cursor:pointer;user-select:none">
+            <input type="checkbox" id="spExportIncludeKeys" checked style="width:16px;height:16px;accent-color:#7c3aed">
+            API 키 포함 (Gemini)
+          </label>
+          <p style="font-size:11.5px;color:var(--text4);margin:0 0 10px;line-height:1.5">
+            다른 사람과 공유할 때는 키 포함을 해제하세요.
+          </p>
+          <div style="display:flex;gap:8px;margin-bottom:4px">
+            <button type="button" id="spExportBtn" style="
+              flex:1;padding:10px;border-radius:11px;border:1px solid rgba(139,92,246,0.25);
+              background:rgba(139,92,246,0.1);color:#6d28d9;font-size:13px;font-weight:600;cursor:pointer">
+              📤 보내기
+            </button>
+            <button type="button" id="spImportBtn" style="
+              flex:1;padding:10px;border-radius:11px;border:1px solid rgba(139,92,246,0.25);
+              background:rgba(139,92,246,0.1);color:#6d28d9;font-size:13px;font-weight:600;cursor:pointer">
+              📥 가져오기
             </button>
           </div>
         </div>
@@ -3703,7 +3753,7 @@ import {
   loadState, saveState, addWidget, removeWidget, updateWidgetSource,
   updateStateSecrets, createGeminiChat, appendGeminiMessage, updateGeminiChatTitle,
   deleteGeminiChat, setActiveGeminiChat, listGeminiChatsForWidget, getGeminiChat,
-  DEFAULT_GEMINI_MODEL,
+  exportState, importState, DEFAULT_GEMINI_MODEL,
 } from './store.js';
 import {
   mountWidgetGrid,
@@ -7058,6 +7108,153 @@ async function syncAllDriveWidgets(){
   }
 }
 
+function _backupDefaultFilename() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `dashboard-backup-${y}${m}${day}.json`;
+}
+
+function _mapImportError(err) {
+  const msg = err?.message || String(err || '');
+  if (msg.includes('Invalid state JSON')) return '잘못된 JSON 파일입니다';
+  if (msg.includes('Unsupported schema version')) return '지원하지 않는 버전입니다';
+  return `가져오기 실패: ${msg}`;
+}
+
+async function _getDashboardStateForExport() {
+  if (_widgetGridState) return _widgetGridState;
+  try {
+    return await loadState();
+  } catch {
+    return null;
+  }
+}
+
+async function _syncLegacyUiFromImportedState(state) {
+  syncCatsFromWidgetState(state);
+  buildCatPanels();
+  const catZone = document.getElementById('catZone');
+  const catN = (state?.widgets || []).filter((w) => w.type === 'category').length;
+  if (catZone && catN > 0) {
+    catZone.style.gridTemplateColumns = `repeat(${catN}, 1fr)`;
+  }
+  const firstTodo = (state?.widgets || []).find((w) => w.type === 'todo');
+  if (firstTodo && Array.isArray(firstTodo.items)) {
+    todoItems.length = 0;
+    firstTodo.items.forEach((t) => todoItems.push(t));
+    renderTodoList();
+  }
+  const driveW = (state?.widgets || []).find((w) => w.type === 'drive');
+  if (driveW) {
+    const fid = driveW.source?.folderId || '';
+    const spW = document.getElementById('spWeeklyId');
+    if (spW) spW.value = fid;
+    localStorage.setItem('driveWeeklyId', fid);
+  }
+  if (state?.settings?.driveMemoId != null) {
+    const spM = document.getElementById('spMemoId');
+    if (spM) spM.value = state.settings.driveMemoId;
+    localStorage.setItem('driveMemoId', state.settings.driveMemoId);
+  }
+}
+
+async function applyImportedDashboardState(imported) {
+  const scale = imported?.settings?.scale ?? 100;
+  spScale = scale;
+  userScale = scale;
+  syncSpScaleUI(scale);
+  applyScale(scale);
+
+  if (isWidgetGridEnabled()) {
+    await initWidgetGrid();
+    void fetchAllWeatherWidgets();
+    await syncAllCalendarWidgets();
+    await syncAllDriveWidgets();
+    await syncGoogleTasks(true);
+  } else {
+    _widgetGridState = imported;
+    await _syncLegacyUiFromImportedState(imported);
+    if (await isAuthenticated()) {
+      reloadDriveImages();
+      syncCalendarSilent();
+    }
+    await syncGoogleTasks(true);
+  }
+}
+
+async function exportDashboardState({ includeKeys = true } = {}) {
+  try {
+    const state = await _getDashboardStateForExport();
+    if (!state) {
+      showToast('⚠️ 보낼 데이터가 없습니다');
+      return;
+    }
+    const json = exportState(state, { includeKeys });
+    const path = await tInvoke('plugin:dialog|save', {
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: _backupDefaultFilename(),
+    });
+    if (!path) return;
+    const filePath = Array.isArray(path) ? path[0] : path;
+    await tInvoke('plugin:fs|write_text_file', { path: filePath, contents: json });
+    showToast('✅ 백업 저장됨');
+  } catch (e) {
+    showToast(`⚠️ 보내기 실패: ${e?.message || '오류'}`);
+  }
+}
+
+async function importDashboardState() {
+  if (!confirm('현재 데이터를 덮어씁니다. 계속할까요?')) return;
+  try {
+    const picked = await tInvoke('plugin:dialog|open', {
+      multiple: false,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      title: '백업 파일 가져오기',
+    });
+    if (!picked) return;
+    const filePath = Array.isArray(picked) ? picked[0] : picked;
+    const text = await tInvoke('plugin:fs|read_text_file', { path: filePath });
+    const imported = importState(text);
+    await saveState(imported, { immediate: true });
+    _widgetGridState = imported;
+    await applyImportedDashboardState(imported);
+    showToast('✅ 가져오기 완료');
+  } catch (e) {
+    showToast(`⚠️ ${_mapImportError(e)}`);
+  }
+}
+
+function _bindBackupUiOnce() {
+  const spExport = document.getElementById('spExportBtn');
+  if (spExport && !spExport.dataset.bound) {
+    spExport.dataset.bound = '1';
+    spExport.addEventListener('click', () => {
+      const inc = document.getElementById('spExportIncludeKeys')?.checked !== false;
+      void exportDashboardState({ includeKeys: inc });
+    });
+  }
+  const spImport = document.getElementById('spImportBtn');
+  if (spImport && !spImport.dataset.bound) {
+    spImport.dataset.bound = '1';
+    spImport.addEventListener('click', () => { void importDashboardState(); });
+  }
+  const wExport = document.getElementById('widgetExportBtn');
+  if (wExport && !wExport.dataset.bound) {
+    wExport.dataset.bound = '1';
+    wExport.addEventListener('click', () => {
+      const inc = document.getElementById('widgetExportIncludeKeys')?.checked !== false;
+      void exportDashboardState({ includeKeys: inc });
+    });
+  }
+  const wImport = document.getElementById('widgetImportBtn');
+  if (wImport && !wImport.dataset.bound) {
+    wImport.dataset.bound = '1';
+    wImport.addEventListener('click', () => { void importDashboardState(); });
+  }
+}
+
 async function _remountWidgetGridState(){
   const mount = document.getElementById('widgetGridMount');
   if (!mount || !_widgetGridState) return;
@@ -7466,6 +7663,7 @@ function initDashboard(){
   renderTodoList();       // 투두 리스트 초기화
   checkGoogleAuth();      // 인증 상태 확인 → 자동 동기화 + Drive 이미지
   startAlarmWatcher();    // 알림 워처 시작
+  _bindBackupUiOnce();
   void initWidgetGrid();
 }
 

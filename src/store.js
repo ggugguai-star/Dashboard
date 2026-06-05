@@ -736,14 +736,45 @@ export function getGeminiChat(state, chatId) {
   return (state?.geminiChats || []).find((c) => c.id === chatId) || null;
 }
 
-/** version 호환 검사 후 상태 반환 (미래 버전 거부) */
+/** @param {object} parsed */
+export function validateImportState(parsed) {
+  if (!parsed || typeof parsed !== 'object') {
+    return { ok: false, error: 'Invalid state JSON' };
+  }
+  if (typeof parsed.schema === 'number' && parsed.schema > SCHEMA_VERSION) {
+    return { ok: false, error: 'Unsupported schema version' };
+  }
+  if (!Array.isArray(parsed.widgets)) {
+    return { ok: false, error: 'Invalid state JSON' };
+  }
+  return { ok: true };
+}
+
+/** @param {object} parsed */
+export function normalizeImportedState(parsed) {
+  const next = cloneState(parsed);
+  if (!Array.isArray(next.geminiChats)) next.geminiChats = [];
+  if (!next.secrets || typeof next.secrets !== 'object') next.secrets = {};
+  if (!next.memos || typeof next.memos !== 'object') next.memos = {};
+  if (!next.settings || typeof next.settings !== 'object') {
+    next.settings = createEmptyState().settings;
+  }
+  if (!next.grid || typeof next.grid !== 'object') {
+    next.grid = { cols: GRID_COLS };
+  }
+  if (typeof next.schema !== 'number') next.schema = SCHEMA_VERSION;
+  return next;
+}
+
+/** 가져오기 = 전체 replace (부분 병합 없음) */
 export function importState(text) {
   const parsed = parseStateJson(text);
   if (!parsed) {
     throw new Error('Invalid state JSON');
   }
-  if (typeof parsed.schema === 'number' && parsed.schema > SCHEMA_VERSION) {
-    throw new Error(`Unsupported schema version: ${parsed.schema}`);
+  const validation = validateImportState(parsed);
+  if (!validation.ok) {
+    throw new Error(validation.error || 'Invalid state JSON');
   }
-  return parsed;
+  return normalizeImportedState(parsed);
 }
