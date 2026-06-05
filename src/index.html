@@ -472,15 +472,47 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .widget-grid-root {
   display: none;
   flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 14px;
+}
+#dashboard.widget-grid-active .main-layout { display: none !important; }
+#dashboard.widget-grid-active .widget-grid-root { display: flex; }
+.widget-edit-toolbar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 10px;
+  flex-shrink: 0;
+}
+#dashboard.widget-grid-active .widget-edit-toolbar { display: flex; }
+.widget-edit-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  color: var(--text1);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: background .18s, transform .18s;
+}
+.widget-edit-btn:hover { background: rgba(255,255,255,0.92); }
+.widget-edit-btn.is-active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: rgba(110,91,242,0.35);
+}
+.widget-grid-mount {
+  flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px 14px;
   scrollbar-width: thin;
   scrollbar-color: rgba(196,181,253,0.4) transparent;
 }
-#dashboard.widget-grid-active .main-layout { display: none !important; }
-#dashboard.widget-grid-active .widget-grid-root { display: block; }
 .widget-grid { position: relative; width: 100%; min-height: 100%; }
 .widget-grid-canvas { position: relative; width: 100%; }
 .widget-cell {
@@ -493,9 +525,41 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+#dashboard.widget-grid-editing .widget-cell {
+  outline: 2px dashed rgba(110,91,242,0.42);
+  outline-offset: 2px;
+}
+.widget-cell.is-dragging { z-index: 20; opacity: 0.94; }
+.widget-drag-handle {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  background: rgba(236,232,255,0.72);
+  border-bottom: 1px solid rgba(110,91,242,0.14);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+}
+#dashboard.widget-grid-editing .widget-drag-handle { display: flex; }
+.widget-cell.is-dragging .widget-drag-handle { cursor: grabbing; }
+.widget-drag-grip {
+  width: 14px;
+  height: 10px;
+  background:
+    radial-gradient(circle, rgba(110,91,242,0.55) 1.5px, transparent 1.5px) 0 0 / 7px 5px;
 }
 .widget-cell > .gc {
-  height: 100%;
+  flex: 1;
+  height: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -504,14 +568,16 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .widget-cell > .gc:hover { transform: none; }
 .widget-cell > .cat-zone {
-  height: 100%;
+  flex: 1;
+  height: auto;
   min-height: 0;
   padding: 8px;
   overflow: auto;
   box-sizing: border-box;
 }
 .widget-cell > .cat-panel {
-  height: 100%;
+  flex: 1;
+  height: auto;
   min-height: 0;
 }
 
@@ -2604,7 +2670,12 @@ body.item-reorder-active .item{cursor:grabbing !important}
     </div>
 
     <!-- 위젯 그리드 (USE_WIDGET_GRID=1 시 표시) -->
-    <div class="widget-grid-root" id="widgetGridRoot"></div>
+    <div class="widget-grid-root" id="widgetGridRoot">
+      <div class="widget-edit-toolbar" id="widgetEditToolbar">
+        <button type="button" class="widget-edit-btn" id="widgetEditBtn">편집</button>
+      </div>
+      <div class="widget-grid-mount" id="widgetGridMount"></div>
+    </div>
 
     <!-- 메인 레이아웃 (기본 / flag OFF) -->
     <div class="main-layout">
@@ -3208,11 +3279,17 @@ import {
   driveTrashFile, driveMoveFile, driveDownloadFile,
   tasksGetDefaultList, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
 } from './google-api.js';
-import { loadState } from './store.js';
+import { loadState, saveState } from './store.js';
 import {
   mountWidgetGrid,
   isWidgetGridEnabled,
   collectPanelAnchors,
+  enterEditMode,
+  exitEditMode,
+  isEditMode,
+  isLayoutDirty,
+  setContentSyncPaused,
+  isContentSyncPaused,
 } from './widget-grid.js';
 
 /* ── Tauri invoke / listen 단축 래퍼 ── */
@@ -4924,6 +5001,7 @@ var driveImgIdx   = { weekly: 0,   memo: 0  };
 var driveImgCache = {};
 
 async function loadDriveImages(type, folderId){
+  if (isContentSyncPaused()) return;
   if(!folderId){ showDriveEmpty(type,'폴더 ID를 설정해주세요'); return; }
   showDriveLoading(type);
   const result = await listDriveImages(folderId);
@@ -5036,32 +5114,120 @@ function launchDashboard(){
 
 /* checkSetupDone — window 전역 노출(Object.assign) 이후 맨 아래에서 실행 */
 
-/* ── 위젯 그리드 (단계 4: 정적 렌더, 편집 OFF) ── */
+/* ── 위젯 그리드 (단계 5: 정적 렌더 + 편집 드래그) ── */
 let _widgetGridTeardown = null;
+let _widgetGridState = null;
+
+function _hideWidgetEditUi(){
+  const toolbar = document.getElementById('widgetEditToolbar');
+  const btn = document.getElementById('widgetEditBtn');
+  const dashboard = document.getElementById('dashboard');
+  if (toolbar) toolbar.style.display = 'none';
+  if (btn) {
+    btn.textContent = '편집';
+    btn.classList.remove('is-active');
+  }
+  if (dashboard) dashboard.classList.remove('widget-grid-editing');
+}
+
+function _updateWidgetEditBtn(editing){
+  const btn = document.getElementById('widgetEditBtn');
+  if (!btn) return;
+  btn.textContent = editing ? '완료' : '편집';
+  btn.classList.toggle('is-active', editing);
+}
+
+async function _resumeDeferredContentSync(){
+  try {
+    await syncCalendarSilent();
+    reloadDriveImages();
+    await syncGoogleTasks(true);
+  } catch (e) {
+    console.warn('[WidgetGrid] deferred sync resume failed:', e);
+  }
+}
+
+async function _finishWidgetEdit(save = true){
+  const mount = document.getElementById('widgetGridMount');
+  if (!mount || !_widgetGridState || !isEditMode()) return;
+  exitEditMode(mount, _widgetGridState);
+  _updateWidgetEditBtn(false);
+  if (save) {
+    try {
+      await saveState(_widgetGridState, { immediate: true });
+    } catch (e) {
+      console.warn('[WidgetGrid] saveState on exit failed:', e);
+    }
+  }
+  setContentSyncPaused(false);
+  await _resumeDeferredContentSync();
+}
+
+async function toggleWidgetEdit(){
+  const mount = document.getElementById('widgetGridMount');
+  if (!mount || !_widgetGridState) return;
+
+  if (isEditMode()) {
+    await _finishWidgetEdit(true);
+    return;
+  }
+
+  enterEditMode(mount, _widgetGridState, { onEsc: () => { void _finishWidgetEdit(true); } });
+  setContentSyncPaused(true);
+  _updateWidgetEditBtn(true);
+}
 
 async function initWidgetGrid(){
   const root = document.getElementById('widgetGridRoot');
+  const mount = document.getElementById('widgetGridMount');
   const dashboard = document.getElementById('dashboard');
-  if (!root || !dashboard) return;
+  if (!root || !mount || !dashboard) return;
+
+  if (isEditMode() && _widgetGridState) {
+    exitEditMode(mount, _widgetGridState);
+    setContentSyncPaused(false);
+  }
+  _updateWidgetEditBtn(false);
 
   if (!isWidgetGridEnabled()) {
     dashboard.classList.remove('widget-grid-active');
     root.style.display = 'none';
+    _widgetGridState = null;
+    _hideWidgetEditUi();
     return;
   }
 
   try {
     const state = await loadState();
     if (_widgetGridTeardown) _widgetGridTeardown();
+    _widgetGridState = state;
     dashboard.classList.add('widget-grid-active');
     root.style.display = '';
+    const toolbar = document.getElementById('widgetEditToolbar');
+    if (toolbar) toolbar.style.display = '';
     const anchors = collectPanelAnchors();
-    _widgetGridTeardown = mountWidgetGrid(root, state, anchors);
+    _widgetGridTeardown = mountWidgetGrid(mount, state, anchors);
+
+    const editBtn = document.getElementById('widgetEditBtn');
+    if (editBtn && !editBtn.dataset.bound) {
+      editBtn.dataset.bound = '1';
+      editBtn.addEventListener('click', () => { void toggleWidgetEdit(); });
+    }
   } catch (e) {
     console.warn('[WidgetGrid] init failed, falling back to legacy layout:', e);
     dashboard.classList.remove('widget-grid-active');
     root.style.display = 'none';
+    _widgetGridState = null;
+    _hideWidgetEditUi();
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (isEditMode() && _widgetGridState && isLayoutDirty()) {
+      saveState(_widgetGridState, { immediate: true }).catch(() => {});
+    }
+  });
 }
 
 /* ── 대시보드 초기화 ── */
@@ -5078,6 +5244,7 @@ function initDashboard(){
 
 /* applySettings 이후 Drive 이미지 재로드 (폴더 ID가 바뀔 수 있으므로) */
 function reloadDriveImages(){
+  if (isContentSyncPaused()) return;
   const wId = document.getElementById('spWeeklyId')?.value?.trim()
            || localStorage.getItem('driveWeeklyId') || '';
   const mId = document.getElementById('spMemoId')?.value?.trim()
@@ -5125,6 +5292,7 @@ function _showTasksSyncBtn(){
 }
 
 async function syncGoogleTasks(silent){
+  if (silent && isContentSyncPaused()) return;
   if(_gtasksSyncing) return;
 
   // _gtasksListId 없으면 재조회
@@ -5199,6 +5367,7 @@ async function syncGoogleTasks(silent){
 }
 
 async function syncCalendarSilent(){
+  if (isContentSyncPaused()) return;
   if (!await isAuthenticated()) return;
   // CY/CM은 initDashboard() 이후에 초기화되므로 setup 화면에서 호출 시 방어
   const now = new Date();
