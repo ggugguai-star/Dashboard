@@ -30,7 +30,7 @@ export const TIER_HEIGHT_SPACIOUS = 260;
 
 const CATEGORY_MINMAX = { compact: 100, normal: 140, spacious: 180 };
 
-const LOCAL_WIDGET_TYPES = ['clock', 'sticky', 'pomodoro', 'dday'];
+const LOCAL_WIDGET_TYPES = ['clock', 'sticky', 'pomodoro', 'dday', 'weather'];
 
 export function setContentSyncPaused(v) {
   _contentSyncPaused = !!v;
@@ -683,7 +683,7 @@ export function renderGrid(container, state, options = {}) {
 
   const typeIndex = {
     calendar: 0, drive: 0, todo: 0, category: 0,
-    clock: 0, sticky: 0, pomodoro: 0, dday: 0,
+    clock: 0, sticky: 0, pomodoro: 0, dday: 0, weather: 0,
   };
   const categoryCount = countCategoryWidgets(widgets);
   const widgetById = new Map(widgets.map((w) => [w.id, w]));
@@ -757,7 +757,7 @@ export function collectPanelAnchors(state = null) {
   if (typeof document === 'undefined') {
     return {
       calendar: [], drive: [], todo: [],
-      clock: [], sticky: [], pomodoro: [], dday: [],
+      clock: [], sticky: [], pomodoro: [], dday: [], weather: [],
       catZone: null, categoryPanels: [],
     };
   }
@@ -770,6 +770,7 @@ export function collectPanelAnchors(state = null) {
     const sticky = [];
     const pomodoro = [];
     const dday = [];
+    const weather = [];
     for (const w of state.widgets) {
       const node = pool.querySelector(`[data-widget-id="${w.id}"]`);
       if (!node) continue;
@@ -780,11 +781,12 @@ export function collectPanelAnchors(state = null) {
       else if (w.type === 'sticky') sticky.push(node);
       else if (w.type === 'pomodoro') pomodoro.push(node);
       else if (w.type === 'dday') dday.push(node);
+      else if (w.type === 'weather') weather.push(node);
     }
     const catZone = document.getElementById('catZone');
     const categoryPanels = catZone ? [...catZone.querySelectorAll(':scope > .cat-panel')] : [];
     return {
-      calendar, drive, todo, clock, sticky, pomodoro, dday, catZone, categoryPanels,
+      calendar, drive, todo, clock, sticky, pomodoro, dday, weather, catZone, categoryPanels,
     };
   }
   const sideL = document.querySelector('.side-l');

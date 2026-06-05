@@ -30,16 +30,18 @@ const WIDGET_DEFAULTS = {
   sticky: { w: 2, h: 2, minW: 2, minH: 2 },
   pomodoro: { w: 2, h: 2, minW: 2, minH: 2 },
   dday: { w: 2, h: 2, minW: 2, minH: 2 },
+  weather: { w: 3, h: 2, minW: 2, minH: 2 },
 };
 
 const TYPE_ORDER = {
   calendar: 0, drive: 1, todo: 2, category: 3,
-  clock: 4, sticky: 5, pomodoro: 6, dday: 7,
+  clock: 4, sticky: 5, pomodoro: 6, dday: 7, weather: 8,
 };
 
 const TYPE_PREFIX = {
   calendar: 'cal', drive: 'wk', todo: 'memo', category: 'cat',
   clock: 'clock', sticky: 'note', pomodoro: 'pomo', dday: 'dday',
+  weather: 'wx',
 };
 
 const WIDGET_TITLES = {
@@ -51,6 +53,7 @@ const WIDGET_TITLES = {
   sticky: '스티키 메모',
   pomodoro: '뽀모도로',
   dday: 'D-Day',
+  weather: '날씨',
 };
 
 function stateWidgetsToLayout(widgets) {
@@ -545,6 +548,19 @@ export function createWidget(type, widgets) {
       ...base,
       title: WIDGET_TITLES.dday,
       config: { date: '2026-12-31', label: '마감' },
+    };
+  }
+  if (type === 'weather') {
+    return {
+      ...base,
+      title: WIDGET_TITLES.weather,
+      config: {
+        loc: 'Seoul',
+        unit: 'c',
+        latitude: 37.5665,
+        longitude: 126.9780,
+        placeName: '서울',
+      },
     };
   }
   throw new Error(`Unknown widget type: ${type}`);

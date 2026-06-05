@@ -778,6 +778,39 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .widget-cell[data-widget-tier="spacious"] .local-pomo-time { font-size: 36px; }
 .widget-cell[data-widget-tier="spacious"] .local-dday-num { font-size: 42px; }
 
+/* ── 날씨 위젯 ── */
+.local-weather-body {
+  flex: 1; display: flex; flex-direction: column; min-height: 0;
+  padding: 8px 10px; gap: 6px;
+}
+.local-wx-current {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.local-wx-icon { font-size: 28px; line-height: 1; }
+.local-wx-temp { font-size: 26px; font-weight: 700; color: var(--text1); }
+.local-wx-meta { flex: 1; min-width: 0; }
+.local-wx-label { font-size: 12px; color: var(--text2); }
+.local-wx-place { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.local-wx-daily {
+  flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px;
+}
+.local-wx-daily-row {
+  display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2);
+}
+.local-wx-day { width: 28px; flex-shrink: 0; }
+.local-wx-daily-icon { width: 18px; text-align: center; }
+.local-wx-range { margin-left: auto; font-variant-numeric: tabular-nums; }
+.widget-cell[data-widget-tier="compact"] .local-wx-temp { font-size: 20px; }
+.widget-cell[data-widget-tier="compact"] .local-wx-icon { font-size: 22px; }
+.widget-cell[data-widget-tier="compact"] .local-wx-label,
+.widget-cell[data-widget-tier="compact"] .local-wx-place,
+.widget-cell[data-widget-tier="compact"] .local-wx-daily-row { font-size: 11px; }
+.widget-cell[data-widget-tier="spacious"] .local-wx-temp { font-size: 32px; }
+.widget-cell[data-widget-tier="spacious"] .local-wx-icon { font-size: 36px; }
+.widget-cell[data-widget-tier="spacious"] .local-wx-daily-row { font-size: 12px; }
+.wsf-weather-search-row { display: flex; gap: 6px; margin-top: 4px; }
+.wsf-weather-search-row input { flex: 1; }
+
 /* ── 좌측 사이드 ── */
 .side-l {
   display: flex; flex-direction: column; gap: 10px;
@@ -3237,6 +3270,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <button type="button" class="widget-type-opt" data-widget-type="sticky">📌 메모</button>
       <button type="button" class="widget-type-opt" data-widget-type="pomodoro">⏱ 뽀모도로</button>
       <button type="button" class="widget-type-opt" data-widget-type="dday">📆 D-Day</button>
+      <button type="button" class="widget-type-opt" data-widget-type="weather">☀️ 날씨</button>
     </div>
     <div class="widget-source-actions" style="margin-top:14px">
       <button type="button" class="widget-edit-btn" id="widgetTypeCancel">취소</button>
@@ -3282,6 +3316,20 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <input type="date" id="wsfDdayDate">
       <label for="wsfDdayLabel" style="margin-top:8px">라벨</label>
       <input type="text" id="wsfDdayLabel" maxlength="30" placeholder="마감">
+    </div>
+    <div class="widget-source-field" id="wsfWeatherWrap" style="display:none">
+      <label for="wsfWeatherLoc">위치 검색</label>
+      <div class="wsf-weather-search-row">
+        <input type="text" id="wsfWeatherLoc" maxlength="60" placeholder="도시 이름">
+        <button type="button" class="widget-edit-btn" id="wsfWeatherSearch">검색</button>
+      </div>
+      <label for="wsfWeatherPlace" style="margin-top:8px">검색 결과</label>
+      <select id="wsfWeatherPlace"></select>
+      <label for="wsfWeatherUnit" style="margin-top:8px">단위</label>
+      <select id="wsfWeatherUnit">
+        <option value="c">℃ (섭씨)</option>
+        <option value="f">℉ (화씨)</option>
+      </select>
     </div>
     <div class="widget-source-actions">
       <button type="button" class="widget-edit-btn" id="widgetSourceCancel">취소</button>
@@ -3570,9 +3618,21 @@ import {
   isContentSyncPaused,
 } from './widget-grid.js';
 import { computeDday, formatPomoTime } from './local-widgets.js';
+import {
+  geocodeLocation,
+  fetchWeatherForecast,
+  buildWeatherForecastKey,
+  buildGeocodeKey,
+  weatherCodeLabel,
+  weatherCodeIcon,
+  formatTemperature,
+  DEFAULT_WEATHER_TTL_MS,
+  DEFAULT_GEOCODE_TTL_MS,
+} from './weather-api.js';
 
 /* ── Google Calendar 공유 캐시 (단계 8) ── */
 const _gcalCache = createGoogleCache();
+const _wxCache = createGoogleCache({ defaultTtlMs: DEFAULT_WEATHER_TTL_MS });
 const GCAL_EVENTS_TTL_MS = DEFAULT_EVENTS_TTL_MS;
 
 let _activeCalendarWidgetId = null;
@@ -5622,7 +5682,9 @@ const CLOCK_TIMEZONES = [
 
 let _localClockTimer = null;
 let _localPomoTimer = null;
+let _localWxTimer = null;
 const _stickySaveTimers = new Map();
+const _wxGeoResults = [];
 
 function _stopPointerOnLocalInput(el) {
   if (!el) return;
@@ -5641,7 +5703,7 @@ function createLocalWidgetNode(widget){
 
   const ch = document.createElement('div');
   ch.className = 'ch';
-  const icons = { clock: '🕐', sticky: '📌', pomodoro: '⏱', dday: '📆' };
+  const icons = { clock: '🕐', sticky: '📌', pomodoro: '⏱', dday: '📆', weather: '☀️' };
   const chIcon = document.createElement('span');
   chIcon.className = 'ch-icon';
   chIcon.textContent = icons[widget.type] || '◻';
@@ -5708,6 +5770,40 @@ function createLocalWidgetNode(widget){
     lblEl.id = `localDdayLabel_${sid}`;
     body.appendChild(numEl);
     body.appendChild(lblEl);
+    node.appendChild(body);
+  } else if (widget.type === 'weather') {
+    const body = document.createElement('div');
+    body.className = 'local-weather-body';
+    const current = document.createElement('div');
+    current.className = 'local-wx-current';
+    const iconEl = document.createElement('span');
+    iconEl.className = 'local-wx-icon';
+    iconEl.id = `localWxIcon_${sid}`;
+    iconEl.textContent = '🌡️';
+    const meta = document.createElement('div');
+    meta.className = 'local-wx-meta';
+    const tempEl = document.createElement('div');
+    tempEl.className = 'local-wx-temp';
+    tempEl.id = `localWxTemp_${sid}`;
+    tempEl.textContent = '—';
+    const labelEl = document.createElement('div');
+    labelEl.className = 'local-wx-label';
+    labelEl.id = `localWxLabel_${sid}`;
+    labelEl.textContent = '불러오는 중…';
+    const placeEl = document.createElement('div');
+    placeEl.className = 'local-wx-place';
+    placeEl.id = `localWxPlace_${sid}`;
+    placeEl.textContent = widget.config?.placeName || widget.config?.loc || '';
+    meta.appendChild(tempEl);
+    meta.appendChild(labelEl);
+    meta.appendChild(placeEl);
+    current.appendChild(iconEl);
+    current.appendChild(meta);
+    const dailyEl = document.createElement('div');
+    dailyEl.className = 'local-wx-daily';
+    dailyEl.id = `localWxDaily_${sid}`;
+    body.appendChild(current);
+    body.appendChild(dailyEl);
     node.appendChild(body);
   }
   return node;
@@ -5870,9 +5966,145 @@ function bindPomodoroWidget(w){
   if (w.config?.phase && w.config.phase !== 'idle' && w.config.endsAt) _ensurePomoTimer();
 }
 
+function _formatWxWeekday(dateStr){
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(`${dateStr}T12:00:00`);
+    return new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(d);
+  } catch {
+    return dateStr.slice(5);
+  }
+}
+
+function renderWeatherWidget(w, data){
+  const unit = w.config?.unit === 'f' ? 'f' : 'c';
+  const tempEl = document.getElementById(`localWxTemp_${w.id}`);
+  const labelEl = document.getElementById(`localWxLabel_${w.id}`);
+  const placeEl = document.getElementById(`localWxPlace_${w.id}`);
+  const iconEl = document.getElementById(`localWxIcon_${w.id}`);
+  const dailyEl = document.getElementById(`localWxDaily_${w.id}`);
+  if (!tempEl || !labelEl || !dailyEl) return;
+  if (!data || data.error) {
+    tempEl.textContent = '—';
+    labelEl.textContent = data?.error || '데이터 없음';
+    if (placeEl) placeEl.textContent = w.config?.placeName || w.config?.loc || '';
+    if (iconEl) iconEl.textContent = '🌡️';
+    dailyEl.innerHTML = '';
+    return;
+  }
+  const cur = data.current || {};
+  if (iconEl) iconEl.textContent = weatherCodeIcon(cur.code);
+  tempEl.textContent = formatTemperature(cur.temp, unit);
+  labelEl.textContent = weatherCodeLabel(cur.code);
+  if (placeEl) placeEl.textContent = w.config?.placeName || w.config?.loc || '';
+  const rows = (data.daily || []).slice(0, 5).map((day) => {
+    const icon = weatherCodeIcon(day.code);
+    const max = formatTemperature(day.max, unit);
+    const min = formatTemperature(day.min, unit);
+    return `<div class="local-wx-daily-row">`
+      + `<span class="local-wx-day">${_formatWxWeekday(day.date)}</span>`
+      + `<span class="local-wx-daily-icon">${icon}</span>`
+      + `<span class="local-wx-range">${max} / ${min}</span>`
+      + `</div>`;
+  }).join('');
+  dailyEl.innerHTML = rows;
+}
+
+async function fetchWeatherForWidget(widgetId, { forceToast = false } = {}){
+  if (isContentSyncPaused()) return;
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w || w.type !== 'weather') return;
+  const cfg = w.config || {};
+  const lat = cfg.latitude;
+  const lon = cfg.longitude;
+  const unit = cfg.unit === 'f' ? 'f' : 'c';
+  if (lat == null || lon == null) {
+    renderWeatherWidget(w, { error: '좌표 없음' });
+    return;
+  }
+  const key = buildWeatherForecastKey(lat, lon, unit);
+  const data = await fetchCached(
+    _wxCache,
+    key,
+    DEFAULT_WEATHER_TTL_MS,
+    () => fetchWeatherForecast({ latitude: lat, longitude: lon, unit }),
+  );
+  renderWeatherWidget(w, data);
+  if (data?.error && forceToast) showToast(`☁️ 날씨: ${data.error}`);
+}
+
+async function fetchAllWeatherWidgets({ forceToast = false } = {}){
+  const widgets = (_widgetGridState?.widgets || []).filter((x) => x.type === 'weather');
+  await Promise.all(widgets.map((w) => fetchWeatherForWidget(w.id, { forceToast })));
+}
+
+function _ensureWxTimer(){
+  if (_localWxTimer) return;
+  _localWxTimer = setInterval(() => {
+    if (isContentSyncPaused()) return;
+    void fetchAllWeatherWidgets();
+  }, DEFAULT_WEATHER_TTL_MS);
+}
+
+function _stopWxTimerIfNone(){
+  const hasWx = (_widgetGridState?.widgets || []).some((w) => w.type === 'weather');
+  if (!hasWx && _localWxTimer) {
+    clearInterval(_localWxTimer);
+    _localWxTimer = null;
+  }
+}
+
+function _populateWeatherPlaceSelect(sel, places, selectedLat, selectedLon){
+  if (!sel) return;
+  sel.innerHTML = '';
+  for (const p of places) {
+    const opt = document.createElement('option');
+    opt.value = `${p.lat},${p.lon}`;
+    opt.textContent = p.label || p.name;
+    opt.dataset.name = p.name;
+    opt.dataset.lat = String(p.lat);
+    opt.dataset.lon = String(p.lon);
+    sel.appendChild(opt);
+  }
+  if (selectedLat != null && selectedLon != null) {
+    const match = `${selectedLat},${selectedLon}`;
+    const found = [...sel.options].find((o) => o.value === match);
+    if (found) sel.value = match;
+    else if (sel.options.length) sel.selectedIndex = 0;
+  } else if (sel.options.length) {
+    sel.selectedIndex = 0;
+  }
+}
+
+async function searchWeatherLocation(){
+  const inp = document.getElementById('wsfWeatherLoc');
+  const sel = document.getElementById('wsfWeatherPlace');
+  const q = inp?.value?.trim();
+  if (!q) {
+    showToast('위치 이름을 입력하세요');
+    return;
+  }
+  if (sel) sel.innerHTML = '<option>검색 중…</option>';
+  const res = await fetchCached(
+    _wxCache,
+    buildGeocodeKey(q),
+    DEFAULT_GEOCODE_TTL_MS,
+    () => geocodeLocation(q),
+  );
+  _wxGeoResults.length = 0;
+  if (res.error) {
+    if (sel) sel.innerHTML = `<option value="">${res.error}</option>`;
+    showToast(`☁️ ${res.error}`);
+    return;
+  }
+  _wxGeoResults.push(...(res.places || []));
+  _populateWeatherPlaceSelect(sel, _wxGeoResults);
+}
+
 function stopLocalWidgetTimers(){
   if (_localClockTimer) { clearInterval(_localClockTimer); _localClockTimer = null; }
   if (_localPomoTimer) { clearInterval(_localPomoTimer); _localPomoTimer = null; }
+  if (_localWxTimer) { clearInterval(_localWxTimer); _localWxTimer = null; }
   for (const t of _stickySaveTimers.values()) clearTimeout(t);
   _stickySaveTimers.clear();
 }
@@ -5885,6 +6117,7 @@ function initLocalWidgetRuntimes(state){
     else if (w.type === 'sticky') bindStickyWidget(w);
     else if (w.type === 'pomodoro') bindPomodoroWidget(w);
     else if (w.type === 'dday') renderDdayWidget(w);
+    else if (w.type === 'weather') renderWeatherWidget(w, null);
   }
   if (widgets.some((w) => w.type === 'clock')) {
     _localClockTimer = setInterval(() => {
@@ -5895,6 +6128,10 @@ function initLocalWidgetRuntimes(state){
   }
   if (widgets.some((w) => w.type === 'pomodoro' && w.config?.phase !== 'idle' && w.config?.endsAt)) {
     _ensurePomoTimer();
+  }
+  if (widgets.some((w) => w.type === 'weather')) {
+    void fetchAllWeatherWidgets({ forceToast: true });
+    _ensureWxTimer();
   }
 }
 
@@ -5925,7 +6162,8 @@ function syncWidgetAnchors(state){
     } else if (w.type === 'todo') {
       const n = _cloneTodoAnchor(w);
       if (n) pool.appendChild(n);
-    } else if (w.type === 'clock' || w.type === 'sticky' || w.type === 'pomodoro' || w.type === 'dday') {
+    } else if (w.type === 'clock' || w.type === 'sticky' || w.type === 'pomodoro'
+      || w.type === 'dday' || w.type === 'weather') {
       pool.appendChild(createLocalWidgetNode(w));
     }
   }
@@ -6336,6 +6574,7 @@ async function deleteWidgetById(widgetId){
   _widgetGridState = removeWidget(_widgetGridState, widgetId);
   _calWidgetState.delete(widgetId);
   await _remountWidgetGridState();
+  _stopWxTimerIfNone();
   await saveState(_widgetGridState, { immediate: true });
   showToast('🗑 위젯이 삭제됐어요');
 }
@@ -6361,6 +6600,7 @@ async function openWidgetSourceDialog(widgetId){
   const clockWrap = document.getElementById('wsfClockWrap');
   const pomoWrap = document.getElementById('wsfPomoWrap');
   const ddayWrap = document.getElementById('wsfDdayWrap');
+  const weatherWrap = document.getElementById('wsfWeatherWrap');
   if (!dlg || !titleInp) return;
   titleInp.value = w.title || '';
   calWrap.style.display = 'none';
@@ -6369,6 +6609,7 @@ async function openWidgetSourceDialog(widgetId){
   clockWrap.style.display = 'none';
   pomoWrap.style.display = 'none';
   ddayWrap.style.display = 'none';
+  if (weatherWrap) weatherWrap.style.display = 'none';
   if (w.type === 'calendar') {
     calWrap.style.display = '';
     const sel = document.getElementById('wsfCalendar');
@@ -6420,6 +6661,26 @@ async function openWidgetSourceDialog(widgetId){
     document.getElementById('wsfDdayLabel').value = w.config?.label || '';
   } else if (w.type === 'sticky') {
     titleInp.placeholder = '메모 제목';
+  } else if (w.type === 'weather') {
+    if (weatherWrap) weatherWrap.style.display = '';
+    const locInp = document.getElementById('wsfWeatherLoc');
+    const placeSel = document.getElementById('wsfWeatherPlace');
+    const unitSel = document.getElementById('wsfWeatherUnit');
+    if (locInp) locInp.value = w.config?.loc || '';
+    if (unitSel) unitSel.value = w.config?.unit === 'f' ? 'f' : 'c';
+    _wxGeoResults.length = 0;
+    const curPlace = {
+      name: w.config?.placeName || w.config?.loc || '현재 위치',
+      lat: w.config?.latitude,
+      lon: w.config?.longitude,
+      label: w.config?.placeName || w.config?.loc || '현재 위치',
+    };
+    if (curPlace.lat != null && curPlace.lon != null) {
+      _wxGeoResults.push(curPlace);
+      _populateWeatherPlaceSelect(placeSel, _wxGeoResults, curPlace.lat, curPlace.lon);
+    } else if (placeSel) {
+      placeSel.innerHTML = '<option value="">검색 후 선택</option>';
+    }
   }
   dlg.classList.add('open');
 }
@@ -6456,6 +6717,20 @@ async function saveWidgetSourceDialog(){
       date: document.getElementById('wsfDdayDate')?.value || '2026-12-31',
       label: document.getElementById('wsfDdayLabel')?.value?.trim() || '마감',
     };
+  } else if (w.type === 'weather') {
+    const loc = document.getElementById('wsfWeatherLoc')?.value?.trim() || w.config?.loc || '';
+    const unit = document.getElementById('wsfWeatherUnit')?.value === 'f' ? 'f' : 'c';
+    const placeSel = document.getElementById('wsfWeatherPlace');
+    const opt = placeSel?.selectedOptions?.[0];
+    let latitude = w.config?.latitude;
+    let longitude = w.config?.longitude;
+    let placeName = w.config?.placeName || loc;
+    if (opt?.dataset?.lat && opt?.dataset?.lon) {
+      latitude = parseFloat(opt.dataset.lat);
+      longitude = parseFloat(opt.dataset.lon);
+      placeName = opt.dataset.name || opt.textContent || placeName;
+    }
+    patch.config = { loc, unit, latitude, longitude, placeName };
   }
   const savedId = _widgetSourceEditId;
   _widgetGridState = updateWidgetSource(_widgetGridState, savedId, patch);
@@ -6471,6 +6746,10 @@ async function saveWidgetSourceDialog(){
     if (nw?.type === 'dday') renderDdayWidget(nw);
     if (nw?.type === 'pomodoro') renderPomodoroWidget(nw);
   }
+  if (w.type === 'weather') {
+    await fetchWeatherForWidget(savedId, { forceToast: true });
+    _ensureWxTimer();
+  }
   showToast('✅ 설정이 저장됐어요');
 }
 
@@ -6484,6 +6763,7 @@ async function _resumeDeferredContentSync(){
       reloadDriveImages();
     }
     await syncGoogleTasks(true);
+    if (isWidgetGridEnabled()) await fetchAllWeatherWidgets();
   } catch (e) {
     console.warn('[WidgetGrid] deferred sync resume failed:', e);
   }
@@ -6588,6 +6868,7 @@ async function initWidgetGrid(){
       srcDlg.dataset.bound = '1';
       document.getElementById('widgetSourceCancel')?.addEventListener('click', closeWidgetSourceDialog);
       document.getElementById('widgetSourceSave')?.addEventListener('click', () => void saveWidgetSourceDialog());
+      document.getElementById('wsfWeatherSearch')?.addEventListener('click', () => void searchWeatherLocation());
       srcDlg.addEventListener('click', (e) => {
         if (e.target === srcDlg) closeWidgetSourceDialog();
       });

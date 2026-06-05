@@ -90,4 +90,14 @@ describe('createWidget', () => {
     assert.equal(w.config.date, '2026-12-31');
     assert.equal(w.config.label, '마감');
   });
+
+  it('creates weather with seoul defaults', () => {
+    const w = createWidget('weather', []);
+    assert.equal(w.type, 'weather');
+    assert.match(w.id, /^wx-\d+$/);
+    assert.equal(w.config.loc, 'Seoul');
+    assert.equal(w.config.unit, 'c');
+    assert.equal(w.config.latitude, 37.5665);
+    assert.equal(w.config.placeName, '서울');
+  });
 });
