@@ -468,6 +468,53 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   min-height: 0;
 }
 
+/* ── 위젯 그리드 (USE_WIDGET_GRID=1) ── */
+.widget-grid-root {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(196,181,253,0.4) transparent;
+}
+#dashboard.widget-grid-active .main-layout { display: none !important; }
+#dashboard.widget-grid-active .widget-grid-root { display: block; }
+.widget-grid { position: relative; width: 100%; min-height: 100%; }
+.widget-grid-canvas { position: relative; width: 100%; }
+.widget-cell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.widget-cell > .gc {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: inherit;
+  animation: none;
+}
+.widget-cell > .gc:hover { transform: none; }
+.widget-cell > .cat-zone {
+  height: 100%;
+  min-height: 0;
+  padding: 8px;
+  overflow: auto;
+  box-sizing: border-box;
+}
+.widget-cell > .cat-panel {
+  height: 100%;
+  min-height: 0;
+}
+
 /* ── 좌측 사이드 ── */
 .side-l {
   display: flex; flex-direction: column; gap: 10px;
@@ -2556,7 +2603,10 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <div class="sf-settings-btn" onclick="reopenSetup()" title="전체 설정">⚙</div>
     </div>
 
-    <!-- 메인 레이아웃 -->
+    <!-- 위젯 그리드 (USE_WIDGET_GRID=1 시 표시) -->
+    <div class="widget-grid-root" id="widgetGridRoot"></div>
+
+    <!-- 메인 레이아웃 (기본 / flag OFF) -->
     <div class="main-layout">
 
       <!-- ── 좌측 사이드 ── -->
@@ -3158,6 +3208,12 @@ import {
   driveTrashFile, driveMoveFile, driveDownloadFile,
   tasksGetDefaultList, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
 } from './google-api.js';
+import { loadState } from './store.js';
+import {
+  mountWidgetGrid,
+  isWidgetGridEnabled,
+  collectPanelAnchors,
+} from './widget-grid.js';
 
 /* ── Tauri invoke / listen 단축 래퍼 ── */
 const tInvoke = (cmd, args, opts) => window.__TAURI__.core.invoke(cmd, args, opts);
@@ -4980,6 +5036,34 @@ function launchDashboard(){
 
 /* checkSetupDone — window 전역 노출(Object.assign) 이후 맨 아래에서 실행 */
 
+/* ── 위젯 그리드 (단계 4: 정적 렌더, 편집 OFF) ── */
+let _widgetGridTeardown = null;
+
+async function initWidgetGrid(){
+  const root = document.getElementById('widgetGridRoot');
+  const dashboard = document.getElementById('dashboard');
+  if (!root || !dashboard) return;
+
+  if (!isWidgetGridEnabled()) {
+    dashboard.classList.remove('widget-grid-active');
+    root.style.display = 'none';
+    return;
+  }
+
+  try {
+    const state = await loadState();
+    if (_widgetGridTeardown) _widgetGridTeardown();
+    dashboard.classList.add('widget-grid-active');
+    root.style.display = '';
+    const anchors = collectPanelAnchors();
+    _widgetGridTeardown = mountWidgetGrid(root, state, anchors);
+  } catch (e) {
+    console.warn('[WidgetGrid] init failed, falling back to legacy layout:', e);
+    dashboard.classList.remove('widget-grid-active');
+    root.style.display = 'none';
+  }
+}
+
 /* ── 대시보드 초기화 ── */
 function initDashboard(){
   startClock();
@@ -4989,6 +5073,7 @@ function initDashboard(){
   renderTodoList();       // 투두 리스트 초기화
   checkGoogleAuth();      // 인증 상태 확인 → 자동 동기화 + Drive 이미지
   startAlarmWatcher();    // 알림 워처 시작
+  void initWidgetGrid();
 }
 
 /* applySettings 이후 Drive 이미지 재로드 (폴더 ID가 바뀔 수 있으므로) */
