@@ -29,7 +29,7 @@
     ],
 
     "security": {
-      "csp": "default-src 'self' tauri://localhost; connect-src 'self' tauri://localhost ipc: http://ipc.localhost https://ipc.localhost http://127.0.0.1:59123 https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://drive.googleapis.com https://tasks.googleapis.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://api.open-meteo.com https://geocoding-api.open-meteo.com; img-src 'self' tauri://localhost data: blob: https://*.googleapis.com https://*.googleusercontent.com https://www.gstatic.com; style-src 'self' tauri://localhost 'unsafe-inline' 'unsafe-hashes'; script-src 'self' tauri://localhost 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'; font-src 'self' tauri://localhost data:; media-src 'self' blob: data:",
+      "csp": "default-src 'self' tauri://localhost; connect-src 'self' tauri://localhost ipc: http://ipc.localhost https://ipc.localhost http://127.0.0.1:59123 https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://drive.googleapis.com https://tasks.googleapis.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://generativelanguage.googleapis.com; img-src 'self' tauri://localhost data: blob: https://*.googleapis.com https://*.googleusercontent.com https://www.gstatic.com; style-src 'self' tauri://localhost 'unsafe-inline' 'unsafe-hashes'; script-src 'self' tauri://localhost 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'; font-src 'self' tauri://localhost data:; media-src 'self' blob: data:",
       "dangerousDisableAssetCspModification": true
     }
   },

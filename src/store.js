@@ -31,17 +31,18 @@ const WIDGET_DEFAULTS = {
   pomodoro: { w: 2, h: 2, minW: 2, minH: 2 },
   dday: { w: 2, h: 2, minW: 2, minH: 2 },
   weather: { w: 3, h: 2, minW: 2, minH: 2 },
+  gemini: { w: 4, h: 4, minW: 3, minH: 3 },
 };
 
 const TYPE_ORDER = {
   calendar: 0, drive: 1, todo: 2, category: 3,
-  clock: 4, sticky: 5, pomodoro: 6, dday: 7, weather: 8,
+  clock: 4, sticky: 5, pomodoro: 6, dday: 7, weather: 8, gemini: 9,
 };
 
 const TYPE_PREFIX = {
   calendar: 'cal', drive: 'wk', todo: 'memo', category: 'cat',
   clock: 'clock', sticky: 'note', pomodoro: 'pomo', dday: 'dday',
-  weather: 'wx',
+  weather: 'wx', gemini: 'ai',
 };
 
 const WIDGET_TITLES = {
@@ -54,7 +55,10 @@ const WIDGET_TITLES = {
   pomodoro: '뽀모도로',
   dday: 'D-Day',
   weather: '날씨',
+  gemini: 'Gemini',
 };
+
+export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
 function stateWidgetsToLayout(widgets) {
   if (!Array.isArray(widgets)) return [];
@@ -128,7 +132,15 @@ export function createEmptyState() {
       driveMemoId: '',
     },
     secrets: {},
+    geminiChats: [],
   };
+}
+
+/** @returns {string} */
+export function generateChatId() {
+  const n = Date.now().toString(36);
+  const r = Math.random().toString(36).slice(2, 9);
+  return `chat-${n}-${r}`;
 }
 
 /** 신규 사용자 기본 4종 위젯 시드 */
@@ -563,6 +575,16 @@ export function createWidget(type, widgets) {
       },
     };
   }
+  if (type === 'gemini') {
+    return {
+      ...base,
+      title: WIDGET_TITLES.gemini,
+      config: {
+        model: DEFAULT_GEMINI_MODEL,
+        activeChatId: null,
+      },
+    };
+  }
   throw new Error(`Unknown widget type: ${type}`);
 }
 
@@ -584,6 +606,9 @@ export function addWidget(state, type) {
 export function removeWidget(state, widgetId) {
   const next = cloneState(state);
   next.widgets = next.widgets.filter((w) => w.id !== widgetId);
+  if (Array.isArray(next.geminiChats)) {
+    next.geminiChats = next.geminiChats.filter((c) => c.widgetId !== widgetId);
+  }
   if (next.widgets.length > 0) {
     const packed = compactVertical(stateWidgetsToLayout(next.widgets));
     next.widgets = applyLayoutToStateWidgets(next.widgets, packed);
@@ -610,6 +635,105 @@ export function updateWidgetSource(state, widgetId, patch) {
     return updated;
   });
   return next;
+}
+
+/** secrets 부분 갱신 */
+export function updateStateSecrets(state, patch) {
+  const next = cloneState(state);
+  next.secrets = { ...(next.secrets || {}), ...patch };
+  return next;
+}
+
+/** @param {object} state @param {string} widgetId */
+export function listGeminiChatsForWidget(state, widgetId) {
+  const chats = Array.isArray(state?.geminiChats) ? state.geminiChats : [];
+  return chats
+    .filter((c) => c.widgetId === widgetId)
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+}
+
+/** @param {object} state @param {string} widgetId */
+export function createGeminiChat(state, widgetId) {
+  const next = cloneState(state);
+  if (!Array.isArray(next.geminiChats)) next.geminiChats = [];
+  const widget = next.widgets.find((w) => w.id === widgetId);
+  const model = widget?.config?.model || DEFAULT_GEMINI_MODEL;
+  const now = new Date().toISOString();
+  const chat = {
+    id: generateChatId(),
+    widgetId,
+    title: '새 대화',
+    model,
+    createdAt: now,
+    updatedAt: now,
+    messages: [],
+  };
+  next.geminiChats.push(chat);
+  next.widgets = next.widgets.map((w) => {
+    if (w.id !== widgetId) return w;
+    return { ...w, config: { ...(w.config || {}), activeChatId: chat.id } };
+  });
+  return next;
+}
+
+/** @param {object} state @param {string} chatId @param {object} message */
+export function appendGeminiMessage(state, chatId, message) {
+  const next = cloneState(state);
+  if (!Array.isArray(next.geminiChats)) next.geminiChats = [];
+  const now = new Date().toISOString();
+  next.geminiChats = next.geminiChats.map((c) => {
+    if (c.id !== chatId) return c;
+    const messages = [...(c.messages || []), message];
+    return { ...c, messages, updatedAt: now };
+  });
+  return next;
+}
+
+/** @param {object} state @param {string} chatId @param {string} title */
+export function updateGeminiChatTitle(state, chatId, title) {
+  const next = cloneState(state);
+  if (!Array.isArray(next.geminiChats)) return next;
+  const now = new Date().toISOString();
+  next.geminiChats = next.geminiChats.map((c) => {
+    if (c.id !== chatId) return c;
+    return { ...c, title: title || c.title, updatedAt: now };
+  });
+  return next;
+}
+
+/** @param {object} state @param {string} chatId */
+export function deleteGeminiChat(state, chatId) {
+  const next = cloneState(state);
+  if (!Array.isArray(next.geminiChats)) return next;
+  const removed = next.geminiChats.find((c) => c.id === chatId);
+  next.geminiChats = next.geminiChats.filter((c) => c.id !== chatId);
+  if (removed) {
+    next.widgets = next.widgets.map((w) => {
+      if (w.id !== removed.widgetId) return w;
+      if (w.config?.activeChatId !== chatId) return w;
+      const remaining = next.geminiChats.filter((c) => c.widgetId === w.id);
+      return {
+        ...w,
+        config: { ...(w.config || {}), activeChatId: remaining[0]?.id || null },
+      };
+    });
+  }
+  return next;
+}
+
+/** @param {object} state @param {string} widgetId @param {string} chatId */
+export function setActiveGeminiChat(state, widgetId, chatId) {
+  const next = cloneState(state);
+  next.widgets = next.widgets.map((w) => {
+    if (w.id !== widgetId) return w;
+    return { ...w, config: { ...(w.config || {}), activeChatId: chatId } };
+  });
+  return next;
+}
+
+/** @param {object} state @param {string} chatId */
+export function getGeminiChat(state, chatId) {
+  return (state?.geminiChats || []).find((c) => c.id === chatId) || null;
 }
 
 /** version 호환 검사 후 상태 반환 (미래 버전 거부) */

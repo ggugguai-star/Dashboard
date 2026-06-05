@@ -811,6 +811,76 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .wsf-weather-search-row { display: flex; gap: 6px; margin-top: 4px; }
 .wsf-weather-search-row input { flex: 1; }
 
+/* ── Gemini 위젯 ── */
+.gc.gemini-widget { height: 100%; min-height: 0; }
+.gem-body {
+  flex: 1; display: flex; min-height: 0; gap: 0; overflow: hidden;
+}
+.gem-sidebar {
+  width: 0; overflow: hidden; flex-shrink: 0;
+  display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.08);
+  transition: width .2s ease;
+}
+.gem-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.gem-chat-list { flex: 1; overflow-y: auto; padding: 4px; }
+.gem-chat-item {
+  padding: 6px 8px; border-radius: 8px; font-size: 11px; color: var(--text2);
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gem-chat-item.is-active { background: rgba(139,92,246,0.15); color: var(--text1); }
+.gem-new-chat {
+  margin: 6px; padding: 6px 8px; border-radius: 8px; border: 1px dashed rgba(139,92,246,0.35);
+  background: transparent; color: var(--primary); font-size: 11px; cursor: pointer;
+}
+.gem-messages {
+  flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px;
+}
+.gem-bubble {
+  max-width: 92%; padding: 8px 10px; border-radius: 12px; font-size: 12px; line-height: 1.45;
+  word-break: break-word; white-space: pre-wrap;
+}
+.gem-bubble.user { align-self: flex-end; background: rgba(139,92,246,0.18); color: var(--text1); }
+.gem-bubble.model { align-self: flex-start; background: rgba(255,255,255,0.06); color: var(--text1); }
+.gem-bubble.system { align-self: center; background: rgba(255,193,7,0.12); color: var(--text2); font-size: 11px; }
+.gem-stream { padding: 0 10px 4px; font-size: 12px; color: var(--text2); min-height: 0; }
+.gem-attach-preview {
+  padding: 0 10px; font-size: 11px; color: var(--text3); display: flex; flex-wrap: wrap; gap: 4px;
+}
+.gem-attach-chip {
+  padding: 2px 6px; border-radius: 6px; background: rgba(255,255,255,0.06); font-size: 11px;
+}
+.gem-input-row {
+  display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.gem-input-row textarea {
+  flex: 1; min-height: 36px; max-height: 80px; resize: none; border: none; outline: none;
+  background: rgba(255,255,255,0.04); border-radius: 10px; padding: 8px 10px;
+  font-size: 12px; color: var(--text1); font-family: inherit;
+}
+.gem-attach-btn, .gem-send-btn {
+  flex-shrink: 0; border: none; border-radius: 10px; padding: 8px 10px; cursor: pointer;
+  background: rgba(139,92,246,0.2); color: var(--text1); font-size: 12px;
+}
+.gem-send-btn:disabled, .gem-attach-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.gem-model-badge {
+  margin-left: auto; font-size: 10px; color: var(--text3); padding: 2px 6px;
+  border-radius: 6px; background: rgba(255,255,255,0.05);
+}
+.widget-cell[data-widget-tier="compact"] .gem-sidebar { display: none; }
+.widget-cell[data-widget-tier="compact"] .gem-bubble,
+.widget-cell[data-widget-tier="compact"] .gem-input-row textarea,
+.widget-cell[data-widget-tier="compact"] .gem-stream { font-size: 11px; }
+.widget-cell[data-widget-tier="spacious"] .gem-sidebar { width: 120px; }
+.widget-cell[data-widget-tier="spacious"] .gem-bubble { font-size: 13px; }
+.widget-cell[data-widget-tier="normal"] .gem-sidebar { width: 100px; }
+.gemini-key-guide-panel { max-width: 420px; }
+.gemini-key-guide-panel ol { margin: 10px 0 0 18px; font-size: 13px; line-height: 1.55; color: var(--text2); }
+.gemini-key-guide-panel .gem-guide-note {
+  margin-top: 12px; padding: 10px; border-radius: 10px;
+  background: rgba(255,193,7,0.1); font-size: 12px; color: var(--text2);
+}
+
 /* ── 좌측 사이드 ── */
 .side-l {
   display: flex; flex-direction: column; gap: 10px;
@@ -3271,6 +3341,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <button type="button" class="widget-type-opt" data-widget-type="pomodoro">⏱ 뽀모도로</button>
       <button type="button" class="widget-type-opt" data-widget-type="dday">📆 D-Day</button>
       <button type="button" class="widget-type-opt" data-widget-type="weather">☀️ 날씨</button>
+      <button type="button" class="widget-type-opt" data-widget-type="gemini">🤖 Gemini</button>
     </div>
     <div class="widget-source-actions" style="margin-top:14px">
       <button type="button" class="widget-edit-btn" id="widgetTypeCancel">취소</button>
@@ -3331,9 +3402,35 @@ body.item-reorder-active .item{cursor:grabbing !important}
         <option value="f">℉ (화씨)</option>
       </select>
     </div>
+    <div class="widget-source-field" id="wsfGeminiWrap" style="display:none">
+      <label for="wsfGeminiKey">API 키</label>
+      <input type="password" id="wsfGeminiKey" maxlength="120" placeholder="AI Studio API 키" autocomplete="off">
+      <button type="button" class="widget-edit-btn" id="wsfGeminiKeyGuide" style="margin-top:8px;width:100%">무료 키 발급 방법</button>
+      <label for="wsfGeminiModel" style="margin-top:8px">모델</label>
+      <select id="wsfGeminiModel"></select>
+    </div>
     <div class="widget-source-actions">
       <button type="button" class="widget-edit-btn" id="widgetSourceCancel">취소</button>
       <button type="button" class="widget-edit-btn is-active" id="widgetSourceSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gemini API 키 발급 안내 -->
+<div class="widget-source-dialog" id="geminiKeyGuideDialog">
+  <div class="widget-source-panel gemini-key-guide-panel">
+    <h3>Gemini 무료 API 키 발급</h3>
+    <ol>
+      <li>개인 <strong>Gmail</strong> 계정으로 <a href="#" id="geminiStudioLink">Google AI Studio</a>에 접속합니다.</li>
+      <li>좌측 메뉴에서 <strong>API 키</strong>를 선택합니다.</li>
+      <li><strong>키 만들기</strong> → 프로젝트 선택 후 키를 복사합니다.</li>
+      <li>위젯 ⚙ 설정에 키를 붙여넣고 저장합니다.</li>
+    </ol>
+    <div class="gem-guide-note">
+      교육청 관리 계정은 AI Studio가 차단된 경우가 많습니다. Gemini 키는 대시보드 Google 로그인과 별개이며, <strong>개인 Gmail</strong>으로 발급하는 것을 권장합니다.
+    </div>
+    <div class="widget-source-actions" style="margin-top:14px">
+      <button type="button" class="widget-edit-btn is-active" id="geminiKeyGuideClose">확인</button>
     </div>
   </div>
 </div>
@@ -3604,6 +3701,9 @@ import {
 } from './google-cache.js';
 import {
   loadState, saveState, addWidget, removeWidget, updateWidgetSource,
+  updateStateSecrets, createGeminiChat, appendGeminiMessage, updateGeminiChatTitle,
+  deleteGeminiChat, setActiveGeminiChat, listGeminiChatsForWidget, getGeminiChat,
+  DEFAULT_GEMINI_MODEL,
 } from './store.js';
 import {
   mountWidgetGrid,
@@ -3629,6 +3729,18 @@ import {
   DEFAULT_WEATHER_TTL_MS,
   DEFAULT_GEOCODE_TTL_MS,
 } from './weather-api.js';
+import {
+  GEMINI_MODELS,
+  streamGenerateContent,
+  generateTitle,
+  extractDocxText,
+  extractXlsxText,
+  uploadLargeFile,
+  readFileAsBase64Part,
+  readFileUriPart,
+  arrayBufferToBase64,
+  LARGE_FILE_BYTES,
+} from './gemini.js';
 
 /* ── Google Calendar 공유 캐시 (단계 8) ── */
 const _gcalCache = createGoogleCache();
@@ -5685,6 +5797,8 @@ let _localPomoTimer = null;
 let _localWxTimer = null;
 const _stickySaveTimers = new Map();
 const _wxGeoResults = [];
+const _gemPendingAttach = new Map();
+const _gemStreamAbort = new Map();
 
 function _stopPointerOnLocalInput(el) {
   if (!el) return;
@@ -6135,6 +6249,422 @@ function initLocalWidgetRuntimes(state){
   }
 }
 
+function _stopPointerOnGeminiInput(el) {
+  if (!el) return;
+  el.addEventListener('mousedown', (e) => e.stopPropagation());
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+}
+
+function _getGeminiApiKey() {
+  return _widgetGridState?.secrets?.geminiApiKey?.trim() || '';
+}
+
+function _populateGeminiModelSelect(sel, selected) {
+  if (!sel) return;
+  sel.innerHTML = '';
+  for (const m of GEMINI_MODELS) {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.label;
+    sel.appendChild(opt);
+  }
+  sel.value = selected || DEFAULT_GEMINI_MODEL;
+}
+
+function openGeminiKeyGuideModal() {
+  document.getElementById('geminiKeyGuideDialog')?.classList.add('open');
+}
+
+function closeGeminiKeyGuideModal() {
+  document.getElementById('geminiKeyGuideDialog')?.classList.remove('open');
+}
+
+function createGeminiWidgetNode(widget) {
+  const sid = widget.id;
+  const node = document.createElement('div');
+  node.className = 'gc gemini-widget';
+  node.dataset.widgetId = sid;
+  node.dataset.widgetType = 'gemini';
+  node.style.display = 'flex';
+  node.style.flexDirection = 'column';
+
+  const ch = document.createElement('div');
+  ch.className = 'ch';
+  const chIcon = document.createElement('span');
+  chIcon.className = 'ch-icon';
+  chIcon.textContent = '🤖';
+  const chTitle = document.createElement('span');
+  chTitle.className = 'ch-title';
+  chTitle.textContent = widget.title || 'Gemini';
+  const badge = document.createElement('span');
+  badge.className = 'gem-model-badge';
+  badge.id = `gemModelBadge_${sid}`;
+  badge.textContent = widget.config?.model || DEFAULT_GEMINI_MODEL;
+  ch.appendChild(chIcon);
+  ch.appendChild(chTitle);
+  ch.appendChild(badge);
+  node.appendChild(ch);
+
+  const body = document.createElement('div');
+  body.className = 'gem-body';
+
+  const sidebar = document.createElement('div');
+  sidebar.className = 'gem-sidebar';
+  sidebar.id = `gemSidebar_${sid}`;
+  const newBtn = document.createElement('button');
+  newBtn.type = 'button';
+  newBtn.className = 'gem-new-chat';
+  newBtn.id = `gemNewChat_${sid}`;
+  newBtn.textContent = '+ 새 대화';
+  const chatList = document.createElement('div');
+  chatList.className = 'gem-chat-list';
+  chatList.id = `gemChatList_${sid}`;
+  sidebar.appendChild(newBtn);
+  sidebar.appendChild(chatList);
+
+  const main = document.createElement('div');
+  main.className = 'gem-main';
+  const messages = document.createElement('div');
+  messages.className = 'gem-messages';
+  messages.id = `gemMessages_${sid}`;
+  const streamEl = document.createElement('div');
+  streamEl.className = 'gem-stream';
+  streamEl.id = `gemStream_${sid}`;
+  const attachPreview = document.createElement('div');
+  attachPreview.className = 'gem-attach-preview';
+  attachPreview.id = `gemAttach_${sid}`;
+  const inputRow = document.createElement('div');
+  inputRow.className = 'gem-input-row';
+  const attachBtn = document.createElement('button');
+  attachBtn.type = 'button';
+  attachBtn.className = 'gem-attach-btn';
+  attachBtn.id = `gemAttachBtn_${sid}`;
+  attachBtn.textContent = '📎';
+  const textarea = document.createElement('textarea');
+  textarea.id = `gemInput_${sid}`;
+  textarea.placeholder = '메시지를 입력하세요…';
+  textarea.rows = 1;
+  const sendBtn = document.createElement('button');
+  sendBtn.type = 'button';
+  sendBtn.className = 'gem-send-btn';
+  sendBtn.id = `gemSend_${sid}`;
+  sendBtn.textContent = '전송';
+  _stopPointerOnGeminiInput(textarea);
+  _stopPointerOnGeminiInput(attachBtn);
+  _stopPointerOnGeminiInput(sendBtn);
+  inputRow.appendChild(attachBtn);
+  inputRow.appendChild(textarea);
+  inputRow.appendChild(sendBtn);
+  main.appendChild(messages);
+  main.appendChild(streamEl);
+  main.appendChild(attachPreview);
+  main.appendChild(inputRow);
+  body.appendChild(sidebar);
+  body.appendChild(main);
+  node.appendChild(body);
+  return node;
+}
+
+function _escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function renderGeminiChatList(widgetId) {
+  const listEl = document.getElementById(`gemChatList_${widgetId}`);
+  const widget = _widgetGridState?.widgets?.find((w) => w.id === widgetId);
+  if (!listEl || !widget) return;
+  const chats = listGeminiChatsForWidget(_widgetGridState, widgetId);
+  const activeId = widget.config?.activeChatId;
+  listEl.innerHTML = '';
+  for (const c of chats) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `gem-chat-item${c.id === activeId ? ' is-active' : ''}`;
+    btn.textContent = c.title || '새 대화';
+    btn.dataset.chatId = c.id;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      void selectGeminiChat(widgetId, c.id);
+    };
+    listEl.appendChild(btn);
+  }
+}
+
+function renderGeminiMessages(widgetId) {
+  const box = document.getElementById(`gemMessages_${widgetId}`);
+  const widget = _widgetGridState?.widgets?.find((w) => w.id === widgetId);
+  if (!box || !widget) return;
+  const apiKey = _getGeminiApiKey();
+  if (!apiKey) {
+    box.innerHTML = '<div class="gem-bubble system">API 키가 없습니다. 편집 모드에서 ⚙ 설정으로 키를 입력하거나 '
+      + '<button type="button" class="gem-new-chat" id="gemInlineKeyGuide">무료 키 발급 방법</button>을 확인하세요.</div>';
+    document.getElementById('gemInlineKeyGuide')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openGeminiKeyGuideModal();
+    });
+    return;
+  }
+  const chatId = widget.config?.activeChatId;
+  const chat = chatId ? getGeminiChat(_widgetGridState, chatId) : null;
+  if (!chat || !chat.messages?.length) {
+    box.innerHTML = '<div class="gem-bubble system">새 대화를 시작하세요. 📎로 파일을 첨부할 수 있습니다.</div>';
+    return;
+  }
+  box.innerHTML = chat.messages.map((m) => {
+    const role = m.role === 'model' ? 'model' : (m.role === 'user' ? 'user' : 'system');
+    let extra = '';
+    if (m.attachments?.length) {
+      extra = `<div style="font-size:10px;color:var(--text3);margin-top:4px">${m.attachments.map((a) => `📎 ${a.name}`).join(', ')}</div>`;
+    }
+    return `<div class="gem-bubble ${role}">${_escapeHtml(m.text || '')}${extra}</div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderGeminiAttachPreview(widgetId) {
+  const el = document.getElementById(`gemAttach_${widgetId}`);
+  const pending = _gemPendingAttach.get(widgetId) || [];
+  if (!el) return;
+  if (!pending.length) { el.innerHTML = ''; return; }
+  el.innerHTML = pending.map((p) => `<span class="gem-attach-chip">📎 ${p.name}</span>`).join('');
+}
+
+function _setGeminiStreaming(widgetId, streaming) {
+  const sendBtn = document.getElementById(`gemSend_${widgetId}`);
+  const attachBtn = document.getElementById(`gemAttachBtn_${widgetId}`);
+  const input = document.getElementById(`gemInput_${widgetId}`);
+  const paused = isContentSyncPaused();
+  if (sendBtn) sendBtn.disabled = paused || streaming;
+  if (attachBtn) attachBtn.disabled = paused || streaming;
+  if (input) input.disabled = paused || streaming;
+}
+
+async function selectGeminiChat(widgetId, chatId) {
+  if (!_widgetGridState) return;
+  _widgetGridState = setActiveGeminiChat(_widgetGridState, widgetId, chatId);
+  renderGeminiChatList(widgetId);
+  renderGeminiMessages(widgetId);
+  await saveState(_widgetGridState);
+}
+
+async function newGeminiChat(widgetId) {
+  if (!_widgetGridState) return;
+  _widgetGridState = createGeminiChat(_widgetGridState, widgetId);
+  renderGeminiChatList(widgetId);
+  renderGeminiMessages(widgetId);
+  await saveState(_widgetGridState);
+}
+
+async function _processAttachmentFile(filePath, fileName) {
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith('.hwp') || lower.endsWith('.hwpx')) {
+    return { error: 'HWP/HWPX는 지원 예정입니다' };
+  }
+  let bytes;
+  try {
+    bytes = await tInvoke('plugin:fs|read_file', { path: filePath });
+  } catch (e) {
+    return { error: e?.message || '파일 읽기 실패' };
+  }
+  const buf = bytes instanceof ArrayBuffer ? bytes : bytes?.buffer || bytes;
+  const u8 = buf instanceof ArrayBuffer ? new Uint8Array(buf) : new Uint8Array(buf);
+  const size = u8.byteLength;
+
+  if (lower.endsWith('.docx')) {
+    const res = await extractDocxText(u8.buffer);
+    if (res.error) return res;
+    return {
+      name: fileName, mime: 'text/plain', kind: 'docx',
+      parts: [{ text: `[첨부: ${fileName}]\n${res.text}` }],
+    };
+  }
+  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+    const res = await extractXlsxText(u8.buffer);
+    if (res.error) return res;
+    return {
+      name: fileName, mime: 'text/plain', kind: 'xlsx',
+      parts: [{ text: `[첨부: ${fileName}]\n${res.text}` }],
+    };
+  }
+
+  let mime = 'application/octet-stream';
+  if (lower.endsWith('.png')) mime = 'image/png';
+  else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mime = 'image/jpeg';
+  else if (lower.endsWith('.gif')) mime = 'image/gif';
+  else if (lower.endsWith('.webp')) mime = 'image/webp';
+  else if (lower.endsWith('.pdf')) mime = 'application/pdf';
+  else if (lower.endsWith('.txt') || lower.endsWith('.md')) mime = 'text/plain';
+
+  const apiKey = _getGeminiApiKey();
+  if (size > LARGE_FILE_BYTES) {
+    const up = await uploadLargeFile({ apiKey, bytes: u8, mime, displayName: fileName });
+    if (up.error) return up;
+    return {
+      name: fileName, mime: up.mimeType || mime, kind: 'file',
+      parts: [readFileUriPart(up.uri, up.mimeType || mime)],
+    };
+  }
+
+  const b64 = arrayBufferToBase64(u8.buffer);
+  if (mime.startsWith('text/')) {
+    try {
+      const text = new TextDecoder().decode(u8);
+      return {
+        name: fileName, mime, kind: 'text',
+        parts: [{ text: `[첨부: ${fileName}]\n${text}` }],
+      };
+    } catch {
+      // fall through to base64
+    }
+  }
+  return {
+    name: fileName, mime, kind: 'inline',
+    parts: [readFileAsBase64Part(mime, b64)],
+  };
+}
+
+async function pickGeminiAttachment(widgetId) {
+  if (isContentSyncPaused()) return;
+  try {
+    const picked = await tInvoke('plugin:dialog|open', {
+      multiple: false,
+      title: '첨부 파일 선택',
+      filters: [{
+        name: '지원 파일',
+        extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'docx', 'xlsx', 'xls'],
+      }],
+    });
+    if (!picked) return;
+    const filePath = Array.isArray(picked) ? picked[0] : picked;
+    const fileName = String(filePath).split(/[\\/]/).pop() || 'file';
+    const processed = await _processAttachmentFile(filePath, fileName);
+    if (processed.error) {
+      showToast(`📎 ${processed.error}`);
+      return;
+    }
+    const list = _gemPendingAttach.get(widgetId) || [];
+    list.push(processed);
+    _gemPendingAttach.set(widgetId, list);
+    renderGeminiAttachPreview(widgetId);
+  } catch (e) {
+    showToast(`📎 첨부 실패: ${e?.message || '오류'}`);
+  }
+}
+
+async function sendGeminiMessage(widgetId) {
+  if (isContentSyncPaused() || !_widgetGridState) return;
+  const apiKey = _getGeminiApiKey();
+  if (!apiKey) {
+    showToast('🤖 API 키를 먼저 설정하세요');
+    openGeminiKeyGuideModal();
+    return;
+  }
+  const widget = _widgetGridState.widgets.find((w) => w.id === widgetId);
+  if (!widget) return;
+  const input = document.getElementById(`gemInput_${widgetId}`);
+  const streamEl = document.getElementById(`gemStream_${widgetId}`);
+  const text = input?.value?.trim() || '';
+  const pending = _gemPendingAttach.get(widgetId) || [];
+  if (!text && !pending.length) return;
+
+  let chatId = widget.config?.activeChatId;
+  if (!chatId) {
+    _widgetGridState = createGeminiChat(_widgetGridState, widgetId);
+    chatId = _widgetGridState.widgets.find((w) => w.id === widgetId)?.config?.activeChatId;
+  }
+  if (!chatId) return;
+
+  const attachMeta = pending.map((p) => ({ name: p.name, mime: p.mime, kind: p.kind }));
+  const attachParts = pending.flatMap((p) => p.parts || []);
+  const userMsg = { role: 'user', text: text || '(첨부 파일)', attachments: attachMeta };
+  _widgetGridState = appendGeminiMessage(_widgetGridState, chatId, userMsg);
+  if (input) input.value = '';
+  _gemPendingAttach.set(widgetId, []);
+  renderGeminiAttachPreview(widgetId);
+  renderGeminiMessages(widgetId);
+  renderGeminiChatList(widgetId);
+
+  const chat = getGeminiChat(_widgetGridState, chatId);
+  const model = widget.config?.model || DEFAULT_GEMINI_MODEL;
+  const messages = (chat?.messages || []).filter((m) => m.role === 'user' || m.role === 'model');
+
+  _setGeminiStreaming(widgetId, true);
+  if (streamEl) streamEl.textContent = '…';
+  const abort = new AbortController();
+  _gemStreamAbort.set(widgetId, abort);
+
+  const result = await streamGenerateContent({
+    apiKey,
+    model,
+    messages,
+    attachmentParts: attachParts,
+    onChunk: (full) => { if (streamEl) streamEl.textContent = full; },
+    signal: abort.signal,
+  });
+
+  _gemStreamAbort.delete(widgetId);
+  _setGeminiStreaming(widgetId, false);
+  if (streamEl) streamEl.textContent = '';
+
+  if (result.aborted) return;
+  if (result.error) {
+    showToast(`🤖 ${result.error}`);
+    if (input && text) input.value = text;
+    return;
+  }
+
+  _widgetGridState = appendGeminiMessage(_widgetGridState, chatId, {
+    role: 'model', text: result.text || '(응답 없음)',
+  });
+  renderGeminiMessages(widgetId);
+  await saveState(_widgetGridState);
+
+  const updated = getGeminiChat(_widgetGridState, chatId);
+  const userCount = (updated?.messages || []).filter((m) => m.role === 'user').length;
+  if (userCount === 1 && text) {
+    void generateTitle({ apiKey, model, firstUserText: text }).then(async (t) => {
+      if (!_widgetGridState || !t?.title) return;
+      _widgetGridState = updateGeminiChatTitle(_widgetGridState, chatId, t.title);
+      renderGeminiChatList(widgetId);
+      await saveState(_widgetGridState);
+    });
+  }
+}
+
+function bindGeminiWidget(widget) {
+  const sid = widget.id;
+  const newBtn = document.getElementById(`gemNewChat_${sid}`);
+  const sendBtn = document.getElementById(`gemSend_${sid}`);
+  const attachBtn = document.getElementById(`gemAttachBtn_${sid}`);
+  const input = document.getElementById(`gemInput_${sid}`);
+  const badge = document.getElementById(`gemModelBadge_${sid}`);
+  if (badge) badge.textContent = widget.config?.model || DEFAULT_GEMINI_MODEL;
+  if (newBtn) newBtn.onclick = (e) => { e.stopPropagation(); void newGeminiChat(sid); };
+  if (sendBtn) sendBtn.onclick = (e) => { e.stopPropagation(); void sendGeminiMessage(sid); };
+  if (attachBtn) attachBtn.onclick = (e) => { e.stopPropagation(); void pickGeminiAttachment(sid); };
+  if (input) {
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        void sendGeminiMessage(sid);
+      }
+    };
+  }
+  _setGeminiStreaming(sid, false);
+  renderGeminiChatList(sid);
+  renderGeminiMessages(sid);
+  renderGeminiAttachPreview(sid);
+}
+
+function initGeminiWidgetRuntimes(state) {
+  for (const w of (state?.widgets || []).filter((x) => x.type === 'gemini')) {
+    bindGeminiWidget(w);
+  }
+}
+
 function _populateClockTzSelect(sel, selected){
   if (!sel) return;
   sel.innerHTML = '';
@@ -6162,6 +6692,8 @@ function syncWidgetAnchors(state){
     } else if (w.type === 'todo') {
       const n = _cloneTodoAnchor(w);
       if (n) pool.appendChild(n);
+    } else if (w.type === 'gemini') {
+      pool.appendChild(createGeminiWidgetNode(w));
     } else if (w.type === 'clock' || w.type === 'sticky' || w.type === 'pomodoro'
       || w.type === 'dday' || w.type === 'weather') {
       pool.appendChild(createLocalWidgetNode(w));
@@ -6538,6 +7070,7 @@ async function _remountWidgetGridState(){
   }
   renderAllTodoWidgets();
   initLocalWidgetRuntimes(_widgetGridState);
+  initGeminiWidgetRuntimes(_widgetGridState);
   if (isEditMode()) {
     enterEditMode(mount, _widgetGridState, {
       onEsc: () => { void _finishWidgetEdit(true); },
@@ -6601,6 +7134,7 @@ async function openWidgetSourceDialog(widgetId){
   const pomoWrap = document.getElementById('wsfPomoWrap');
   const ddayWrap = document.getElementById('wsfDdayWrap');
   const weatherWrap = document.getElementById('wsfWeatherWrap');
+  const geminiWrap = document.getElementById('wsfGeminiWrap');
   if (!dlg || !titleInp) return;
   titleInp.value = w.title || '';
   calWrap.style.display = 'none';
@@ -6610,6 +7144,7 @@ async function openWidgetSourceDialog(widgetId){
   pomoWrap.style.display = 'none';
   ddayWrap.style.display = 'none';
   if (weatherWrap) weatherWrap.style.display = 'none';
+  if (geminiWrap) geminiWrap.style.display = 'none';
   if (w.type === 'calendar') {
     calWrap.style.display = '';
     const sel = document.getElementById('wsfCalendar');
@@ -6681,6 +7216,12 @@ async function openWidgetSourceDialog(widgetId){
     } else if (placeSel) {
       placeSel.innerHTML = '<option value="">검색 후 선택</option>';
     }
+  } else if (w.type === 'gemini') {
+    if (geminiWrap) geminiWrap.style.display = '';
+    const keyInp = document.getElementById('wsfGeminiKey');
+    const modelSel = document.getElementById('wsfGeminiModel');
+    if (keyInp) keyInp.value = _widgetGridState?.secrets?.geminiApiKey || '';
+    _populateGeminiModelSelect(modelSel, w.config?.model);
   }
   dlg.classList.add('open');
 }
@@ -6731,6 +7272,11 @@ async function saveWidgetSourceDialog(){
       placeName = opt.dataset.name || opt.textContent || placeName;
     }
     patch.config = { loc, unit, latitude, longitude, placeName };
+  } else if (w.type === 'gemini') {
+    const model = document.getElementById('wsfGeminiModel')?.value || DEFAULT_GEMINI_MODEL;
+    patch.config = { model };
+    const apiKey = document.getElementById('wsfGeminiKey')?.value?.trim() || '';
+    _widgetGridState = updateStateSecrets(_widgetGridState, { geminiApiKey: apiKey });
   }
   const savedId = _widgetSourceEditId;
   _widgetGridState = updateWidgetSource(_widgetGridState, savedId, patch);
@@ -6749,6 +7295,10 @@ async function saveWidgetSourceDialog(){
   if (w.type === 'weather') {
     await fetchWeatherForWidget(savedId, { forceToast: true });
     _ensureWxTimer();
+  }
+  if (w.type === 'gemini') {
+    const nw = _widgetGridState.widgets.find((x) => x.id === savedId);
+    if (nw) bindGeminiWidget(nw);
   }
   showToast('✅ 설정이 저장됐어요');
 }
@@ -6841,6 +7391,7 @@ async function initWidgetGrid(){
     }
     renderAllTodoWidgets();
     initLocalWidgetRuntimes(state);
+    initGeminiWidgetRuntimes(state);
 
     const editBtn = document.getElementById('widgetEditBtn');
     if (editBtn && !editBtn.dataset.bound) {
@@ -6869,8 +7420,21 @@ async function initWidgetGrid(){
       document.getElementById('widgetSourceCancel')?.addEventListener('click', closeWidgetSourceDialog);
       document.getElementById('widgetSourceSave')?.addEventListener('click', () => void saveWidgetSourceDialog());
       document.getElementById('wsfWeatherSearch')?.addEventListener('click', () => void searchWeatherLocation());
+      document.getElementById('wsfGeminiKeyGuide')?.addEventListener('click', () => openGeminiKeyGuideModal());
       srcDlg.addEventListener('click', (e) => {
         if (e.target === srcDlg) closeWidgetSourceDialog();
+      });
+    }
+    const gemGuide = document.getElementById('geminiKeyGuideDialog');
+    if (gemGuide && !gemGuide.dataset.bound) {
+      gemGuide.dataset.bound = '1';
+      document.getElementById('geminiKeyGuideClose')?.addEventListener('click', closeGeminiKeyGuideModal);
+      document.getElementById('geminiStudioLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPath('https://aistudio.google.com/apikey');
+      });
+      gemGuide.addEventListener('click', (e) => {
+        if (e.target === gemGuide) closeGeminiKeyGuideModal();
       });
     }
 

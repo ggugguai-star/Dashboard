@@ -100,4 +100,12 @@ describe('createWidget', () => {
     assert.equal(w.config.latitude, 37.5665);
     assert.equal(w.config.placeName, '서울');
   });
+
+  it('creates gemini with flash-lite model', () => {
+    const w = createWidget('gemini', []);
+    assert.equal(w.type, 'gemini');
+    assert.match(w.id, /^ai-\d+$/);
+    assert.equal(w.config.model, 'gemini-2.5-flash-lite');
+    assert.equal(w.config.activeChatId, null);
+  });
 });
