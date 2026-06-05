@@ -31,6 +31,7 @@ BLOCK_MYPY    = False   # mypy 타입 오류 → 기본 경고(비차단). 타�
 BLOCK_PYTEST  = True    # tests 폴더가 있으면 pytest 실패 → 차단
 BLOCK_TSC     = True    # tsconfig.json 이 있으면 `tsc --noEmit` 실패 → 차단
 BLOCK_CARGO   = True    # Cargo.toml 이 있으면 `cargo check` 실패 → 차단 (Tauri v2 + Rust)
+BLOCK_NODE_TEST = True  # *.test.mjs/*.test.js 있으면 `node --test` 실패 → 차단 (node 부재도 차단)
 
 # 검사에서 제외할 디렉터리
 EXCLUDE_DIRS = {
@@ -47,27 +48,18 @@ results: "list[tuple[str, str, str]]" = []
 blocking_failures: "list[str]" = []   # 차단 사유 요약(맨 끝 출력용)
 
 
-def _configure_stdio():
-    """Windows cp949 등 narrow 콘솔에서 UnicodeEncodeError 방지."""
-    for stream in (sys.stdout, sys.stderr):
-        if stream is None or not hasattr(stream, "reconfigure"):
-            continue
-        try:
-            stream.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-
-
 def log(msg=""):
+    """Windows cp949 등 비-UTF-8 콘솔에서도 UnicodeEncodeError 없이 출력."""
+    text = "" if msg is None else str(msg)
+    stream = sys.stdout
     try:
-        print(msg, flush=True)
+        stream.write(text + "\n")
+        stream.flush()
     except UnicodeEncodeError:
-        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
-        safe = msg.encode(enc, errors="replace").decode(enc, errors="replace")
-        print(safe, flush=True)
-
-
-_configure_stdio()
+        enc = getattr(stream, "encoding", None) or "ascii"
+        safe = text.encode(enc, errors="replace").decode(enc, errors="replace")
+        stream.write(safe + "\n")
+        stream.flush()
 
 
 def _excluded(path: Path) -> bool:
@@ -101,7 +93,7 @@ def find_files(suffixes):
 def run(cmd, cwd=None, **kw):
     """도구 실행 헬퍼. (returncode, stdout, stderr) 반환. 미설치 시 (None, '', '')."""
     exe = cmd[0]
-    if shutil.which(exe) is None:
+    if shutil.which(exe) is None and not Path(exe).is_file():
         return None, "", ""
     try:
         r = subprocess.run(
@@ -265,6 +257,68 @@ def check_cargo():
             record("clippy", "PASS")
 
 
+def _resolve_node_exe():
+    """node 실행 파일 탐색. WSL에서 Windows node.exe 폴백 포함."""
+    for name in ("node", "node.exe"):
+        path = shutil.which(name)
+        if path:
+            return path
+    win_node = Path("/mnt/c/Program Files/nodejs/node.exe")
+    if win_node.is_file():
+        return str(win_node)
+    return None
+
+
+def find_js_test_files():
+    """src/ 및 프로젝트 루트의 *.test.mjs / *.test.js 수집 (EXCLUDE_DIRS 준수)."""
+    out = []
+    seen = set()
+    for p in ROOT.rglob("*"):
+        if not p.is_file():
+            continue
+        name = p.name
+        if not (name.endswith(".test.mjs") or name.endswith(".test.js")):
+            continue
+        if _excluded(p):
+            continue
+        try:
+            rel = p.relative_to(ROOT)
+        except ValueError:
+            continue
+        if len(rel.parts) != 1 and not (len(rel.parts) >= 2 and rel.parts[0] == "src"):
+            continue
+        key = str(p.resolve())
+        if key not in seen:
+            seen.add(key)
+            out.append(p)
+    return sorted(out, key=lambda p: str(p))
+
+
+def check_node_test():
+    """Node 내장 테스트 러너로 JS 골든셋 게이팅. 테스트 파일 있는데 node 없으면 BLOCK."""
+    test_files = find_js_test_files()
+    if not test_files:
+        record("node-test", "SKIP", "JS 테스트 파일 없음")
+        return
+    node_exe = _resolve_node_exe()
+    if node_exe is None:
+        record(
+            "node-test",
+            "FAIL",
+            "JS 테스트 파일이 있으나 node가 PATH에 없음 — Node ≥18 설치 필수",
+            blocking=BLOCK_NODE_TEST,
+        )
+        return
+    rel_paths = [str(f.relative_to(ROOT)) for f in test_files]
+    rc, out, err = run([node_exe, "--test", *rel_paths])
+    detail = (out + "\n" + err).strip()
+    if rc == 0:
+        record("node-test", "PASS")
+    else:
+        tail = detail[-1200:] if len(detail) > 1200 else detail
+        record("node-test", "FAIL", tail or "node --test 실패", blocking=BLOCK_NODE_TEST)
+
+
 def check_tsc():
     if not (ROOT / "tsconfig.json").exists():
         return  # TS 프로젝트 아님
@@ -319,6 +373,9 @@ def main():
     elif not has_cargo:
         log("➖ 파이썬 소스 없음 — 파이썬 검사 건너뜀")
 
+    # JS 골든셋 (node --test)
+    check_node_test()
+
     # TypeScript/JS 검사
     if (ROOT / "tsconfig.json").exists():
         check_tsc()
@@ -342,7 +399,6 @@ def main():
 
 
 if __name__ == "__main__":
-    _configure_stdio()
     try:
         main()
     except Exception as e:

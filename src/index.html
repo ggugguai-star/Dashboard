@@ -904,17 +904,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .item.item-ptr-dragging{opacity:0.4;pointer-events:none;transform:none}
 .item[title]{cursor:pointer}
-.item-grip{
-  flex-shrink:0;width:22px;min-width:22px;text-align:center;
-  font-size:12px;line-height:1;letter-spacing:-2px;
-  color:var(--text3);cursor:grab;user-select:none;touch-action:none;
-  opacity:0.7;padding:2px 3px;border-radius:6px;
-  background:rgba(139,92,246,0.06);
-}
-.item-grip:hover{opacity:1;color:#7c3aed;background:rgba(139,92,246,0.14)}
-.item-grip:active,.item.item-ptr-dragging .item-grip{cursor:grabbing}
 body.item-reorder-active{cursor:grabbing !important}
-body.item-reorder-active .item-grip{cursor:grabbing}
+body.item-reorder-active .item{cursor:grabbing !important}
 .item-drag-ghost{
   position:fixed;z-index:9997;pointer-events:none;
   padding:8px 14px;border-radius:12px;
@@ -1125,7 +1116,7 @@ body.item-reorder-active .item-grip{cursor:grabbing}
   border:1px solid rgba(196,181,253,0.35);
   border-radius:20px;
   box-shadow:0 16px 50px rgba(80,50,180,0.22),0 2px 8px rgba(0,0,0,0.06);
-  width:min(480px, calc(100vw - 24px));overflow:hidden;
+  width:min(600px, calc(100vw - 20px));overflow:hidden;
   max-height:min(90vh, 780px);
   display:flex;flex-direction:column;
 }
@@ -1144,25 +1135,24 @@ body.item-reorder-active .item-grip{cursor:grabbing}
 .icp-header-title { font-size:13px;font-weight:700;color:#1e293b; }
 .icp-header-sub   { font-size:11px;color:#94a3b8;margin-top:1px; }
 .icp-tabs {
-  display:flex;gap:2px;padding:8px 10px 0;
-  overflow-x:auto;scrollbar-width:none;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+  padding:6px 8px 4px;overflow:visible;
 }
-.icp-tabs::-webkit-scrollbar{display:none}
 .icp-tab {
-  flex-shrink:0;padding:5px 10px;border-radius:20px;
-  font-size:11.5px;font-weight:600;color:#64748b;
+  padding:6px 3px;border-radius:12px;
+  font-size:10px;font-weight:600;color:#64748b;line-height:1.25;
   background:transparent;border:none;cursor:pointer;
-  transition:all .15s;white-space:nowrap;font-family:inherit;
+  transition:all .15s;white-space:normal;text-align:center;
+  font-family:inherit;min-width:0;
 }
 .icp-tab:hover  { background:rgba(196,181,253,0.18);color:#5b21b6; }
 .icp-tab.icp-tab-active {
   background:rgba(139,92,246,0.12);color:#7c3aed;
 }
 .icp-grid {
-  display:grid;grid-template-columns:repeat(9,1fr);
-  gap:4px;padding:8px 12px;
-  flex:1;min-height:240px;max-height:min(62vh, 460px);overflow-y:auto;
-  scrollbar-width:thin;scrollbar-color:rgba(196,181,253,0.5) transparent;
+  display:grid;grid-template-columns:repeat(14,36px);
+  gap:1px;padding:4px 10px;justify-content:start;
+  flex:0 0 auto;max-height:none;overflow:visible;
 }
 .icp-grid::-webkit-scrollbar{width:4px}
 .icp-grid::-webkit-scrollbar-thumb{background:rgba(196,181,253,0.5);border-radius:4px}
@@ -1605,7 +1595,7 @@ body.item-reorder-active .item-grip{cursor:grabbing}
   border: 1px solid rgba(255,255,255,0.9);
   border-radius: 20px;
   padding: 18px 22px 16px;
-  width: min(520px, calc(100vw - 28px));
+  width: min(600px, calc(100vw - 20px));
   max-height: min(92vh, 820px);
   box-shadow: 0 12px 48px rgba(100,80,200,0.2), inset 0 1px 0 rgba(255,255,255,1);
   display: flex; flex-direction: column; gap: 12px;
@@ -1621,15 +1611,15 @@ body.item-reorder-active .item-grip{cursor:grabbing}
 
 /* 카테고리 편집 — 아이콘 탭·검색 (icp 패턴) */
 .cep-tabs {
-  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+  padding: 4px 0 6px; overflow: visible;
 }
-.cep-tabs::-webkit-scrollbar { display: none; }
 .cep-tab {
-  flex-shrink: 0; padding: 4px 9px; border-radius: 16px;
-  font-size: 11px; font-weight: 600; color: #64748b;
+  padding: 5px 3px; border-radius: 12px;
+  font-size: 10px; font-weight: 600; color: #64748b; line-height: 1.25;
   background: transparent; border: none; cursor: pointer;
-  white-space: nowrap; font-family: inherit;
-  transition: background .15s, color .15s;
+  white-space: normal; text-align: center; font-family: inherit;
+  transition: background .15s, color .15s; min-width: 0;
 }
 .cep-tab:hover { background: rgba(196,181,253,0.18); color: #5b21b6; }
 .cep-tab.cep-tab-active { background: rgba(139,92,246,0.12); color: #7c3aed; }
@@ -1645,9 +1635,9 @@ body.item-reorder-active .item-grip{cursor:grabbing}
 
 /* 아이콘 선택 그리드 */
 .cep-icon-grid {
-  display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px;
-  flex: 1; min-height: 240px; max-height: min(62vh, 480px); overflow-y: auto;
-  scrollbar-width: thin; scrollbar-color: rgba(196,181,253,0.4) transparent;
+  display: grid; grid-template-columns: repeat(14, 32px); gap: 1px;
+  padding: 4px 8px; justify-content: start;
+  flex: 0 0 auto; max-height: none; overflow: visible;
 }
 .cep-icon-btn {
   width: 32px; height: 32px; border-radius: 9px; font-size: 17px;
@@ -2713,8 +2703,8 @@ body.item-reorder-active .item-grip{cursor:grabbing}
   <div class="icp-footer">
     <div class="icp-custom-wrap">
       <div class="icp-custom-menu" id="icpCustomMenu">
-        <div class="icp-cm-item" onclick="icpStartCapture()">📸 캡처</div>
-        <div class="icp-cm-item" onclick="icpTriggerUpload()">📁 파일 선택</div>
+        <div class="icp-cm-item" onclick="icpStartCapture(event)">📸 캡처</div>
+        <div class="icp-cm-item" onclick="icpTriggerUpload(event)">📁 파일 선택</div>
       </div>
       <button class="icp-upload-btn" onclick="icpToggleCustomMenu(event)">🎭 커스텀 ▾</button>
     </div>
@@ -3318,7 +3308,7 @@ function beginItemReorder(row, cat, item, startEvent) {
   let ghost = null;
   _itemReorderDidMove = false;
 
-  const captureEl = startEvent.target?.closest?.('.item-grip') || row;
+  const captureEl = row;
   try { captureEl.setPointerCapture(pid); } catch (_) {}
 
   _ptrItemReorder = {
@@ -3379,10 +3369,9 @@ function installItemRowInteractions(row, cat, item) {
   row.__itemRef = item;
   row.draggable = false;
   const openHint = item.path ? ' — 클릭하여 열기' : '';
-  row.title = (item.lbl || '') + openHint;
+  row.title = (item.lbl || '') + openHint + ' · 잡고 끌어 순서·카테고리 이동';
 
   row.addEventListener('click', async e => {
-    if (e.target.closest('.item-grip')) return;
     if (_itemReorderDidMove) {
       _itemReorderDidMove = false;
       return;
@@ -3579,9 +3568,18 @@ async function checkForUpdates() {
 
   } catch (e) {
     const msg = String(e.message ?? e);
-    // pubkey 미설정 / 서명 검증 실패 / 엔드포인트 미구성 → 개발 단계 정상
-    if (/pubkey|signature|missing field|No data|CERTIFICATE|notFound|404/i.test(msg)) {
-      console.info('[Updater] 서명 키 또는 릴리즈 미구성 (Stage 8에서 완성):', msg);
+    if (/valid release JSON|404|not found|could not fetch/i.test(msg)) {
+      _emitUpdateStatus({
+        type: 'error',
+        message: '업데이트 정보(latest.json)를 받지 못했어요. GitHub 릴리즈에 latest.json·서명(.sig)이 있는지 확인해 주세요.',
+      });
+    } else if (/pubkey|signature|CERTIFICATE|verify/i.test(msg)) {
+      _emitUpdateStatus({
+        type: 'error',
+        message: '다운로드 서명 검증에 실패했어요. 설치 파일(.exe)에 맞는 .sig 서명이 GitHub 릴리즈에 올라갔는지 확인해 주세요.',
+      });
+    } else if (/missing field|No data|notFound/i.test(msg)) {
+      console.info('[Updater] 릴리즈 메타데이터 없음:', msg);
       _emitUpdateStatus({ type: 'not-available' });
     } else {
       _emitUpdateStatus({ type: 'error', message: msg });
@@ -5517,7 +5515,7 @@ function buildCatPanels(){
       const icoHtml = item.ic?.startsWith('data:')
         ? `<img src="${item.ic}" style="width:20px;height:20px;object-fit:cover;border-radius:4px;vertical-align:middle">`
         : (item.ic || '📄');
-      row.innerHTML=`<span class="item-grip" title="잡고 끌어 순서·다른 카테고리로 이동">⋮⋮</span><span class="item-ico">${icoHtml}</span><span class="item-lbl">${item.lbl}</span><span class="item-tag" style="background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}">${item.tag}</span>`;
+      row.innerHTML=`<span class="item-ico">${icoHtml}</span><span class="item-lbl">${item.lbl}</span><span class="item-tag" style="background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}">${item.tag}</span>`;
 
       installItemRowInteractions(row, cat, item);
 
@@ -6295,7 +6293,29 @@ let _renameX=0, _renameY=0;
 /* ════════════════════════════════════════
    아이콘 피커
 ════════════════════════════════════════ */
-const ITEM_ICON_SETS = [
+/** 여러 원본 카테고리를 하나의 탭으로 합칠 때 — 이모지 목록 그대로 이어 붙임(개수 유지) */
+function _mergeIconLists(...lists) {
+  return lists.reduce((acc, list) => acc.concat(list), []);
+}
+
+function _layoutIconGrid(gridEl, btnPx, count) {
+  if (!gridEl) return;
+  const apply = () => {
+    const gap = 1;
+    const panel = gridEl.closest('.icp-popup') || gridEl.closest('.cep-panel');
+    const pad = panel?.classList.contains('cep-panel') ? 48 : 40;
+    const w = Math.max((panel?.offsetWidth || 600) - pad, 320);
+    let cols = Math.floor((w + gap) / (btnPx + gap));
+    cols = Math.min(16, Math.max(12, cols));
+    if (count > 0 && count < cols) cols = count;
+    gridEl.style.gridTemplateColumns = `repeat(${cols}, ${btnPx}px)`;
+    gridEl.style.justifyContent = 'start';
+  };
+  apply();
+  requestAnimationFrame(apply);
+}
+
+const _ITEM_ICON_RAW = [
   { label:'📁 파일/문서', icons:[
     '📁','📂','🗂️','📄','📝','📋','📊','📈','📉','📃','📜','📑',
     '🗒️','🗓️','📌','📍','📎','🖇️','✂️','🖊️','✏️','🖋️','🔖','📬',
@@ -6343,8 +6363,28 @@ const ITEM_ICON_SETS = [
     '😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛',
     '😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑',
     '😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','🧑',
+    '😎','🤓','🫠','😮‍💨','🫡','👍','👎','🙏','💪','🤝','👋','✌️',
+    '🤞','🫶','❤️‍🔥','🥳','😤','😱','🤯','🥺','😭','🤬','👀','🫥',
   ]},
 ];
+
+/**
+ * 아이콘 피커 — 8개 원본 풀을 5개 탭으로 재분류만 함(이모지 개수 유지·합침)
+ * 4: 기술+크리에이티브 / 5: 심볼+생활+감정
+ */
+const ITEM_ICON_SETS = [
+  { label:'📁 파일·문서', icons: _ITEM_ICON_RAW[0].icons.slice() },
+  { label:'🎓 교육·학습', icons: _ITEM_ICON_RAW[1].icons.slice() },
+  { label:'💼 업무·비즈니스', icons: _ITEM_ICON_RAW[2].icons.slice() },
+  { label:'💻 IT·창작', icons: _mergeIconLists(_ITEM_ICON_RAW[3].icons, _ITEM_ICON_RAW[4].icons) },
+  { label:'🌟 생활·감정', icons: _mergeIconLists(_ITEM_ICON_RAW[5].icons, _ITEM_ICON_RAW[6].icons, _ITEM_ICON_RAW[7].icons) },
+];
+
+/** 카테고리 편집 — 항목 피커와 동일 풀 + Google Drive */
+const CAT_ICON_SETS = ITEM_ICON_SETS.map((set, i) => ({
+  label: set.label,
+  icons: i === 0 ? ['__gdrive__', ...set.icons] : set.icons.slice(),
+}));
 
 let _icpSelected = '';
 let _icpTabIdx   = 0;
@@ -6376,6 +6416,7 @@ function _icpRenderTab(tabIdx) {
   grid.innerHTML = '';
   const q = (_icpFilter || '').trim();
   const icons = _iconSetFilter(set, q);
+  _layoutIconGrid(grid, 38, icons.length);
   if (!icons.length) {
     const empty = document.createElement('div');
     empty.style.cssText = 'grid-column:1/-1;padding:12px;text-align:center;font-size:11.5px;color:var(--text4)';
@@ -6434,17 +6475,21 @@ function showIconPicker(x, y) {
       if (set.icons.includes(_icpSelected)) startTab = i;
     });
   }
-  _icpRenderTab(startTab);
-
   const popup = document.getElementById('icpPopup');
   popup.style.visibility = 'hidden';
   popup.style.display = 'flex';
-  const pw = popup.offsetWidth  || 480;
+  _icpRenderTab(startTab);
+  const pw = popup.offsetWidth  || 600;
   const ph = popup.offsetHeight || 520;
   popup.style.left = Math.min(x, window.innerWidth  - pw - 8) + 'px';
   popup.style.top  = Math.min(y, window.innerHeight - ph - 8) + 'px';
   popup.style.visibility = '';
   document.getElementById('icpOverlay').classList.add('icp-open');
+  requestAnimationFrame(() => {
+    const grid = document.getElementById('icpGrid');
+    const icons = _iconSetFilter(ITEM_ICON_SETS[_icpTabIdx], (_icpFilter || '').trim());
+    _layoutIconGrid(grid, 38, icons.length);
+  });
 }
 
 function closeIconPicker() {
@@ -6467,12 +6512,17 @@ function icpToggleCustomMenu(e) {
   const menu = document.getElementById('icpCustomMenu');
   menu.classList.toggle('icm-open');
 }
-document.addEventListener('click', () => {
-  document.getElementById('icpCustomMenu')?.classList.remove('icm-open');
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('icpCustomMenu');
+  const wrap = document.querySelector('.icp-custom-wrap');
+  if (menu?.classList.contains('icm-open') && wrap && !wrap.contains(e.target)) {
+    menu.classList.remove('icm-open');
+  }
 });
 
 /* 파일 선택 */
-function icpTriggerUpload() {
+function icpTriggerUpload(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
   document.getElementById('icpCustomMenu').classList.remove('icm-open');
   document.getElementById('icpFileInput').value = '';
   document.getElementById('icpFileInput').click();
@@ -6489,37 +6539,46 @@ function icpTriggerUpload() {
      6. _icpSetImage()          — 아이콘 피커 UI 반영
 ════════════════════════════════════════════════════════════════ */
 
+/** Windows 화면 캡처 도구 실행 (ms-screenclip 우선, 폴백: 가위채기) */
+async function _launchScreenCapture() {
+  const tries = ['ms-screenclip:'];
+  if (navigator.platform?.toLowerCase().includes('win')) {
+    tries.push('C:\\Windows\\System32\\SnippingTool.exe /clip');
+  }
+  for (const path of tries) {
+    const r = await openPath(path);
+    if (!r?.error) return true;
+    console.warn('[icpCapture] launch failed:', path, r?.error);
+  }
+  return false;
+}
+
 /**
- * 화면 캡처 시작
- * plugin-shell 로 ms-screenclip: 프로토콜 실행 →
- * 창 포커스 복귀 시 클립보드 이미지 자동 적용
+ * 화면 캡처 시작 — 메뉴에서 「캡처」 선택 시 즉시 도구 실행
  */
-async function icpStartCapture() {
-  document.getElementById('icpCustomMenu').classList.remove('icm-open');
+async function icpStartCapture(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  document.getElementById('icpCustomMenu')?.classList.remove('icm-open');
 
   const popup   = document.getElementById('icpPopup');
   const overlay = document.getElementById('icpOverlay');
   const win     = window.__TAURI__.window.getCurrentWindow();
-  if (popup)   popup.style.visibility = 'hidden';
-  if (overlay) overlay.classList.remove('icp-open');
+
+  const launched = await _launchScreenCapture();
+  if (!launched) {
+    showToast('❌ 캡처 도구를 열 수 없어요 — 파일 선택을 이용해 주세요');
+    return;
+  }
 
   showToast('📸 캡처할 영역을 드래그하세요...', 20000);
 
-  try {
-    await win.hide();
-  } catch (e) {
-    console.warn('[icpCapture] hide:', e);
-  }
+  if (popup)   popup.style.visibility = 'hidden';
+  if (overlay) overlay.classList.remove('icp-open');
 
   try {
-    await openPath('ms-screenclip:');
-  } catch (e) {
-    console.error('[icpCapture] ms-screenclip 실행 실패:', e);
-    try { await win.show(); await win.setFocus(); } catch {}
-    if (popup)   popup.style.visibility = '';
-    if (overlay) overlay.classList.add('icp-open');
-    showToast('❌ 캡처 도구를 열 수 없어요 — 파일 선택을 이용해 주세요');
-    return;
+    await win.hide();
+  } catch (err) {
+    console.warn('[icpCapture] hide:', err);
   }
 
   await _icpWaitFocusRestore();
@@ -6813,33 +6872,6 @@ function renderIcon(container, iconValue, svgSize) {
   }
 }
 
-const CAT_ICON_SETS = [
-  { label:'☁️ Drive/클라우드', icons:[
-    '__gdrive__','☁️','🌐','💾','🔗','📡','🔌','📲','💻','🖥️',
-    '📱','🔐','🔒','🛡️','📧','📨','📩','✉️','📬','📂',
-  ]},
-  { label:'📚 교육/학교', icons:[
-    '📚','🎓','🏫','🏛️','🔬','🧪','📐','📏','📖','✏️',
-    '📝','📋','📌','🔖','🎯','🏆','⭐','💡','🔍','🧩',
-    '📅','🗓️','📆','🗒️','🧑‍🏫','👨‍🎓','👩‍🎓','🎒','🏅','🥇',
-  ]},
-  { label:'💼 업무/문서', icons:[
-    '💼','📊','📈','📁','🗂️','📄','📃','📑','📎','🖇️',
-    '💰','💵','💳','🤝','📞','☎️','📠','🗺️','📋','⚖️',
-    '🖥️','🖨️','🏢','🏗️','🧾','📌','🔑','🗝️','👔','📟',
-  ]},
-  { label:'🎯 심볼/알림', icons:[
-    '⭐','🌟','💫','✨','🔥','⚡','🔔','📢','📣','💬',
-    '🎯','💡','🔮','💎','❤️','💜','🧡','💛','🌱','🚀',
-    '🏆','🥇','🎖️','🔍','📌','🔖','⚠️','✅','❌','⭕',
-  ]},
-  { label:'🎨 취미/생활', icons:[
-    '🎨','🎭','🎬','🎵','🎶','🎸','📷','📸','☕','🍵',
-    '🏠','🏡','🚗','✈️','🌍','🗺️','🌸','🍀','🎁','🎪',
-    '🖼️','🎧','🎤','🏃','⚽','🎮','🧩','🌈','🌙','🍕',
-  ]},
-];
-
 const CEP_COLORS = [
   '#ffb3b3','#ffc998','#ffe08a','#a7f3c0','#93c5fd','#a5b4fc','#d8b4fe',
   '#f87171','#fb923c','#fbbf24','#34d399','#60a5fa','#818cf8','#c084fc',
@@ -6861,6 +6893,7 @@ function _cepRenderTab(tabIdx) {
   grid.innerHTML = '';
   const q = (_cepFilter || '').trim();
   const icons = _iconSetFilter(set, q);
+  _layoutIconGrid(grid, 32, icons.length);
   if (!icons.length) {
     const empty = document.createElement('div');
     empty.style.cssText = 'grid-column:1/-1;padding:10px;text-align:center;font-size:11px;color:var(--text4)';
@@ -6929,6 +6962,14 @@ function openCatEditPopup(e, catIdx) {
     });
   }
   _cepRenderTab(startTab);
+  requestAnimationFrame(() => {
+    const grid = document.getElementById('cepIconGrid');
+    const set = CAT_ICON_SETS[_cepTabIdx];
+    if (grid && set) {
+      const icons = _iconSetFilter(set, (_cepFilter || '').trim());
+      _layoutIconGrid(grid, 32, icons.length);
+    }
+  });
 
   // 색상 팔레트
   const colorRow = document.getElementById('cepColorRow');

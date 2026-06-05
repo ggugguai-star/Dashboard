@@ -1,11 +1,1 @@
-{
-    "platforms":  {
-                      "windows-x86_64":  {
-                                             "signature":  "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZ0dyYzlqVXlzbEFGOU5KdDNaQ1F6QmNRdkZIdmxndjRHeWRIcFc2dkVDZGFHZzNhY2kyWEl6T1ZhTm5QL3FrZmNJem56L1JHWkVtbFUzZGxmS3lWSS9rMTdSbTJPYXdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMjkwMDA4CWZpbGU6ZGFzaGJvYXJkXzIuMC4zX3g2NC1zZXR1cC5leGUKTG4vS0tabCs0N3dyYVpqMXRwdklxMG4zeGh4MUJUSjUveGFhb2dqYTAyR3NueDRKSGRzT1VvZFN2VTRTUlN2SmlOWUkzYVU0MnFVaE5XTTE2enZvQ1E9PQo=",
-                                             "url":  "https://github.com/ggugguai-star/Dashboard/releases/download/v2.0.3/dashboard_2.0.3_x64-setup.exe"
-                                         }
-                  },
-    "pub_date":  "2026-06-01T05:00:08Z",
-    "version":  "v2.0.3",
-    "notes":  "Tauri v2 P3: diag-p3, updater, screen capture QA"
-}
+{"platforms":{"windows-x86_64":{"signature":"dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSMlU4elJWMTNraWoybWV2bU9SbTFhNWVCUjRoaVRqUHkya283blFXU1ZsVHdZeUY4cloxblgyc2RSRFI2SlRkMjh2S3M3aDZ4a1JaZTB4SkFjMGdreGJqTTAyaGR0M1FNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNjI1NzQ2CWZpbGU6ZGFzaGJvYXJkXzIuMS4yX3g2NC1zZXR1cC5leGUKVmpFTHhWUGtMYnJHdUpPUmtPU21BRFZkSzkvZVNyUEhoLzJtMFRDd0owY3VtdzlGZkFiUkhvQXF1WVhnanlJaUJHTDZ2SytrWE93dGVCbnE3OEluRHc9PQo=","url":"https://github.com/ggugguai-star/Dashboard/releases/download/v2.1.2/dashboard_2.1.2_x64-setup.exe"}},"pub_date":"2026-06-05T02:16:14Z","version":"v2.1.2","notes":"v2.1.2 - 아이콘 피커 5탭 재분류(전체 이모지), 화면 캡처 즉시 실행, 트레이 중복 수정. v2.1.1에서 자동 업데이트."}
