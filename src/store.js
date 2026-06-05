@@ -26,17 +26,31 @@ const WIDGET_DEFAULTS = {
   drive: { w: 3, h: 3, minW: 3, minH: 3 },
   todo: { w: 3, h: 4, minW: 3, minH: 4 },
   category: { w: 2, h: 3, minW: 2, minH: 3 },
+  clock: { w: 2, h: 2, minW: 2, minH: 2 },
+  sticky: { w: 2, h: 2, minW: 2, minH: 2 },
+  pomodoro: { w: 2, h: 2, minW: 2, minH: 2 },
+  dday: { w: 2, h: 2, minW: 2, minH: 2 },
 };
 
-const TYPE_ORDER = { calendar: 0, drive: 1, todo: 2, category: 3 };
+const TYPE_ORDER = {
+  calendar: 0, drive: 1, todo: 2, category: 3,
+  clock: 4, sticky: 5, pomodoro: 6, dday: 7,
+};
 
-const TYPE_PREFIX = { calendar: 'cal', drive: 'wk', todo: 'memo', category: 'cat' };
+const TYPE_PREFIX = {
+  calendar: 'cal', drive: 'wk', todo: 'memo', category: 'cat',
+  clock: 'clock', sticky: 'note', pomodoro: 'pomo', dday: 'dday',
+};
 
 const WIDGET_TITLES = {
   calendar: '내 캘린더',
   drive: 'Weekly Plan',
   todo: '메모 · 할 일',
   category: '카테고리',
+  clock: '시계',
+  sticky: '스티키 메모',
+  pomodoro: '뽀모도로',
+  dday: 'D-Day',
 };
 
 function stateWidgetsToLayout(widgets) {
@@ -509,6 +523,30 @@ export function createWidget(type, widgets) {
       catType: 'normal',
     };
   }
+  if (type === 'clock') {
+    return {
+      ...base,
+      title: WIDGET_TITLES.clock,
+      config: { tz: 'Asia/Seoul', format24: true },
+    };
+  }
+  if (type === 'sticky') {
+    return { ...base, title: WIDGET_TITLES.sticky, text: '' };
+  }
+  if (type === 'pomodoro') {
+    return {
+      ...base,
+      title: WIDGET_TITLES.pomodoro,
+      config: { workMin: 25, breakMin: 5, phase: 'idle', endsAt: null },
+    };
+  }
+  if (type === 'dday') {
+    return {
+      ...base,
+      title: WIDGET_TITLES.dday,
+      config: { date: '2026-12-31', label: '마감' },
+    };
+  }
   throw new Error(`Unknown widget type: ${type}`);
 }
 
@@ -549,6 +587,10 @@ export function updateWidgetSource(state, widgetId, patch) {
     }
     if (patch.color !== undefined) updated.color = patch.color;
     if (patch.icon !== undefined) updated.icon = patch.icon;
+    if (patch.config !== undefined) {
+      updated.config = { ...(w.config || {}), ...patch.config };
+    }
+    if (patch.text !== undefined) updated.text = patch.text;
     return updated;
   });
   return next;

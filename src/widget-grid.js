@@ -30,6 +30,8 @@ export const TIER_HEIGHT_SPACIOUS = 260;
 
 const CATEGORY_MINMAX = { compact: 100, normal: 140, spacious: 180 };
 
+const LOCAL_WIDGET_TYPES = ['clock', 'sticky', 'pomodoro', 'dday'];
+
 export function setContentSyncPaused(v) {
   _contentSyncPaused = !!v;
 }
@@ -227,7 +229,8 @@ function countCategoryWidgets(widgets) {
 
 function resolveAnchorNode(widget, anchors, typeIndex, categoryCount) {
   const type = widget.type;
-  if (type === 'calendar' || type === 'drive' || type === 'todo') {
+  if (type === 'calendar' || type === 'drive' || type === 'todo'
+    || LOCAL_WIDGET_TYPES.includes(type)) {
     const list = anchors[type] || [];
     const node = list[typeIndex[type] ?? 0];
     if (node) typeIndex[type] = (typeIndex[type] ?? 0) + 1;
@@ -678,7 +681,10 @@ export function renderGrid(container, state, options = {}) {
 
   canvas.style.height = `${computeGridHeight(widgets, cellSize, gap)}px`;
 
-  const typeIndex = { calendar: 0, drive: 0, todo: 0, category: 0 };
+  const typeIndex = {
+    calendar: 0, drive: 0, todo: 0, category: 0,
+    clock: 0, sticky: 0, pomodoro: 0, dday: 0,
+  };
   const categoryCount = countCategoryWidgets(widgets);
   const widgetById = new Map(widgets.map((w) => [w.id, w]));
 
@@ -749,23 +755,37 @@ function removeEditActionButtons(canvas) {
 /** DOM에서 기존 4종 패널 앵커 수집 (buildCatPanels·syncWidgetAnchors 이후 호출) */
 export function collectPanelAnchors(state = null) {
   if (typeof document === 'undefined') {
-    return { calendar: [], drive: [], todo: [], catZone: null, categoryPanels: [] };
+    return {
+      calendar: [], drive: [], todo: [],
+      clock: [], sticky: [], pomodoro: [], dday: [],
+      catZone: null, categoryPanels: [],
+    };
   }
   const pool = document.getElementById('widgetAnchorPool');
   if (pool && state?.widgets) {
     const calendar = [];
     const drive = [];
     const todo = [];
+    const clock = [];
+    const sticky = [];
+    const pomodoro = [];
+    const dday = [];
     for (const w of state.widgets) {
       const node = pool.querySelector(`[data-widget-id="${w.id}"]`);
       if (!node) continue;
       if (w.type === 'calendar') calendar.push(node);
       else if (w.type === 'drive') drive.push(node);
       else if (w.type === 'todo') todo.push(node);
+      else if (w.type === 'clock') clock.push(node);
+      else if (w.type === 'sticky') sticky.push(node);
+      else if (w.type === 'pomodoro') pomodoro.push(node);
+      else if (w.type === 'dday') dday.push(node);
     }
     const catZone = document.getElementById('catZone');
     const categoryPanels = catZone ? [...catZone.querySelectorAll(':scope > .cat-panel')] : [];
-    return { calendar, drive, todo, catZone, categoryPanels };
+    return {
+      calendar, drive, todo, clock, sticky, pomodoro, dday, catZone, categoryPanels,
+    };
   }
   const sideL = document.querySelector('.side-l');
   const gcs = sideL ? [...sideL.querySelectorAll(':scope > .gc')] : [];

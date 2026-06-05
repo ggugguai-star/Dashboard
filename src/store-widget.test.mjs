@@ -64,4 +64,30 @@ describe('createWidget', () => {
     assert.ok(w.color);
     assert.deepEqual(w.items, []);
   });
+
+  it('creates clock with tz config', () => {
+    const base = seedDefaultWidgets(createEmptyState());
+    const w = createWidget('clock', base.widgets);
+    assert.equal(w.type, 'clock');
+    assert.equal(w.config.tz, 'Asia/Seoul');
+    assert.equal(w.config.format24, true);
+  });
+
+  it('creates sticky with empty text', () => {
+    const w = createWidget('sticky', []);
+    assert.equal(w.text, '');
+    assert.match(w.id, /^note-\d+$/);
+  });
+
+  it('creates pomodoro with defaults', () => {
+    const w = createWidget('pomodoro', []);
+    assert.equal(w.config.workMin, 25);
+    assert.equal(w.config.phase, 'idle');
+  });
+
+  it('creates dday with date label', () => {
+    const w = createWidget('dday', []);
+    assert.equal(w.config.date, '2026-12-31');
+    assert.equal(w.config.label, '마감');
+  });
 });

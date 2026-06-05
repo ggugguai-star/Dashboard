@@ -749,6 +749,35 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .widget-cell[data-widget-tier="spacious"] .cp-name { font-size: 14px; }
 .widget-cell[data-widget-tier="spacious"] .item-lbl { font-size: 12.5px; }
 
+/* ── 로컬 위젯 (시계·스티키·뽀모도로·D-Day) ── */
+.gc.local-widget { height: 100%; min-height: 0; }
+.local-clock-body, .local-pomo-body, .local-dday-body {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 8px 10px; min-height: 0; text-align: center;
+}
+.local-clock-date { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+.local-clock-time { font-size: 22px; font-weight: 700; color: var(--text1); letter-spacing: 0.02em; }
+.local-sticky-text {
+  flex: 1; width: 100%; min-height: 60px; resize: none; border: none; outline: none;
+  background: transparent; font-size: 13px; line-height: 1.45; color: var(--text1);
+  padding: 8px 10px; font-family: inherit;
+}
+.local-pomo-time { font-size: 28px; font-weight: 700; color: var(--primary); }
+.local-pomo-phase { font-size: 12px; color: var(--text3); margin: 4px 0 8px; }
+.local-pomo-btns { display: flex; gap: 6px; }
+.local-dday-num { font-size: 32px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+.local-dday-label { font-size: 13px; color: var(--text2); margin-top: 6px; }
+.widget-cell[data-widget-tier="compact"] .local-clock-time { font-size: 16px; }
+.widget-cell[data-widget-tier="compact"] .local-clock-date { font-size: 11px; }
+.widget-cell[data-widget-tier="compact"] .local-sticky-text { font-size: 11px; }
+.widget-cell[data-widget-tier="compact"] .local-pomo-time { font-size: 22px; }
+.widget-cell[data-widget-tier="compact"] .local-pomo-phase { font-size: 11px; }
+.widget-cell[data-widget-tier="compact"] .local-dday-num { font-size: 24px; }
+.widget-cell[data-widget-tier="compact"] .local-dday-label { font-size: 11px; }
+.widget-cell[data-widget-tier="spacious"] .local-clock-time { font-size: 28px; }
+.widget-cell[data-widget-tier="spacious"] .local-pomo-time { font-size: 36px; }
+.widget-cell[data-widget-tier="spacious"] .local-dday-num { font-size: 42px; }
+
 /* ── 좌측 사이드 ── */
 .side-l {
   display: flex; flex-direction: column; gap: 10px;
@@ -3204,6 +3233,10 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <button type="button" class="widget-type-opt" data-widget-type="drive">🗓 Drive</button>
       <button type="button" class="widget-type-opt" data-widget-type="todo">✅ 할 일</button>
       <button type="button" class="widget-type-opt" data-widget-type="category">📚 카테고리</button>
+      <button type="button" class="widget-type-opt" data-widget-type="clock">🕐 시계</button>
+      <button type="button" class="widget-type-opt" data-widget-type="sticky">📌 메모</button>
+      <button type="button" class="widget-type-opt" data-widget-type="pomodoro">⏱ 뽀모도로</button>
+      <button type="button" class="widget-type-opt" data-widget-type="dday">📆 D-Day</button>
     </div>
     <div class="widget-source-actions" style="margin-top:14px">
       <button type="button" class="widget-edit-btn" id="widgetTypeCancel">취소</button>
@@ -3230,6 +3263,25 @@ body.item-reorder-active .item{cursor:grabbing !important}
     <div class="widget-source-field" id="wsfFolderWrap" style="display:none">
       <label for="wsfFolder">Drive 폴더 ID</label>
       <input type="text" id="wsfFolder" maxlength="120" placeholder="폴더 ID">
+    </div>
+    <div class="widget-source-field" id="wsfClockWrap" style="display:none">
+      <label for="wsfClockTz">타임존</label>
+      <select id="wsfClockTz"></select>
+      <label for="wsfClockFmt24" style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:12px">
+        <input type="checkbox" id="wsfClockFmt24" checked> 24시간 형식
+      </label>
+    </div>
+    <div class="widget-source-field" id="wsfPomoWrap" style="display:none">
+      <label for="wsfPomoWork">집중(분)</label>
+      <input type="number" id="wsfPomoWork" min="1" max="120" value="25">
+      <label for="wsfPomoBreak" style="margin-top:8px">휴식(분)</label>
+      <input type="number" id="wsfPomoBreak" min="1" max="60" value="5">
+    </div>
+    <div class="widget-source-field" id="wsfDdayWrap" style="display:none">
+      <label for="wsfDdayDate">목표일</label>
+      <input type="date" id="wsfDdayDate">
+      <label for="wsfDdayLabel" style="margin-top:8px">라벨</label>
+      <input type="text" id="wsfDdayLabel" maxlength="30" placeholder="마감">
     </div>
     <div class="widget-source-actions">
       <button type="button" class="widget-edit-btn" id="widgetSourceCancel">취소</button>
@@ -3517,6 +3569,7 @@ import {
   setContentSyncPaused,
   isContentSyncPaused,
 } from './widget-grid.js';
+import { computeDday, formatPomoTime } from './local-widgets.js';
 
 /* ── Google Calendar 공유 캐시 (단계 8) ── */
 const _gcalCache = createGoogleCache();
@@ -5549,6 +5602,314 @@ function syncCatsFromWidgetState(state){
   });
 }
 
+const CLOCK_TIMEZONES = [
+  { id: 'Asia/Seoul', label: '서울 (KST)' },
+  { id: 'Asia/Tokyo', label: '도쿄 (JST)' },
+  { id: 'Asia/Shanghai', label: '상하이 (CST)' },
+  { id: 'Asia/Hong_Kong', label: '홍콩' },
+  { id: 'Asia/Singapore', label: '싱가포르' },
+  { id: 'Europe/London', label: '런던 (GMT/BST)' },
+  { id: 'Europe/Paris', label: '파리 (CET)' },
+  { id: 'Europe/Berlin', label: '베를린' },
+  { id: 'America/New_York', label: '뉴욕 (ET)' },
+  { id: 'America/Chicago', label: '시카고 (CT)' },
+  { id: 'America/Los_Angeles', label: 'LA (PT)' },
+  { id: 'America/Sao_Paulo', label: '상파울루' },
+  { id: 'Australia/Sydney', label: '시드니' },
+  { id: 'Pacific/Auckland', label: '오클랜드' },
+  { id: 'UTC', label: 'UTC' },
+];
+
+let _localClockTimer = null;
+let _localPomoTimer = null;
+const _stickySaveTimers = new Map();
+
+function _stopPointerOnLocalInput(el) {
+  if (!el) return;
+  el.addEventListener('mousedown', (e) => e.stopPropagation());
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+}
+
+function createLocalWidgetNode(widget){
+  const sid = widget.id;
+  const node = document.createElement('div');
+  node.className = 'gc local-widget';
+  node.dataset.widgetId = sid;
+  node.dataset.widgetType = widget.type;
+  node.style.display = 'flex';
+  node.style.flexDirection = 'column';
+
+  const ch = document.createElement('div');
+  ch.className = 'ch';
+  const icons = { clock: '🕐', sticky: '📌', pomodoro: '⏱', dday: '📆' };
+  const chIcon = document.createElement('span');
+  chIcon.className = 'ch-icon';
+  chIcon.textContent = icons[widget.type] || '◻';
+  const chTitle = document.createElement('span');
+  chTitle.className = 'ch-title';
+  chTitle.textContent = widget.title || '';
+  ch.appendChild(chIcon);
+  ch.appendChild(chTitle);
+  node.appendChild(ch);
+
+  if (widget.type === 'clock') {
+    const body = document.createElement('div');
+    body.className = 'local-clock-body';
+    const disp = document.createElement('div');
+    disp.className = 'local-clock-display';
+    disp.id = `localClock_${sid}`;
+    body.appendChild(disp);
+    node.appendChild(body);
+  } else if (widget.type === 'sticky') {
+    const ta = document.createElement('textarea');
+    ta.className = 'local-sticky-text';
+    ta.id = `localSticky_${sid}`;
+    ta.placeholder = '메모를 입력하세요...';
+    ta.maxLength = 2000;
+    _stopPointerOnLocalInput(ta);
+    node.appendChild(ta);
+  } else if (widget.type === 'pomodoro') {
+    const body = document.createElement('div');
+    body.className = 'local-pomo-body';
+    const timeEl = document.createElement('div');
+    timeEl.className = 'local-pomo-time';
+    timeEl.id = `localPomoTime_${sid}`;
+    const phaseEl = document.createElement('div');
+    phaseEl.className = 'local-pomo-phase';
+    phaseEl.id = `localPomoPhase_${sid}`;
+    const btns = document.createElement('div');
+    btns.className = 'local-pomo-btns';
+    const startBtn = document.createElement('button');
+    startBtn.type = 'button';
+    startBtn.className = 'nb';
+    startBtn.id = `localPomoStart_${sid}`;
+    startBtn.textContent = '시작';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'nb';
+    resetBtn.id = `localPomoReset_${sid}`;
+    resetBtn.textContent = '리셋';
+    _stopPointerOnLocalInput(startBtn);
+    _stopPointerOnLocalInput(resetBtn);
+    btns.appendChild(startBtn);
+    btns.appendChild(resetBtn);
+    body.appendChild(timeEl);
+    body.appendChild(phaseEl);
+    body.appendChild(btns);
+    node.appendChild(body);
+  } else if (widget.type === 'dday') {
+    const body = document.createElement('div');
+    body.className = 'local-dday-body';
+    const numEl = document.createElement('div');
+    numEl.className = 'local-dday-num';
+    numEl.id = `localDdayNum_${sid}`;
+    const lblEl = document.createElement('div');
+    lblEl.className = 'local-dday-label';
+    lblEl.id = `localDdayLabel_${sid}`;
+    body.appendChild(numEl);
+    body.appendChild(lblEl);
+    node.appendChild(body);
+  }
+  return node;
+}
+
+function renderClockWidget(w){
+  const el = document.getElementById(`localClock_${w.id}`);
+  if (!el) return;
+  const tz = w.config?.tz || 'Asia/Seoul';
+  const fmt24 = w.config?.format24 !== false;
+  try {
+    const now = new Date();
+    const dateFmt = new Intl.DateTimeFormat('ko-KR', {
+      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short',
+    });
+    const timeFmt = new Intl.DateTimeFormat('ko-KR', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: !fmt24,
+    });
+    el.innerHTML = `<div class="local-clock-date">${dateFmt.format(now)}</div>`
+      + `<div class="local-clock-time">${timeFmt.format(now)}</div>`;
+  } catch {
+    el.textContent = '잘못된 타임존';
+  }
+}
+
+function renderDdayWidget(w){
+  const numEl = document.getElementById(`localDdayNum_${w.id}`);
+  const lblEl = document.getElementById(`localDdayLabel_${w.id}`);
+  if (!numEl || !lblEl) return;
+  const days = computeDday(w.config?.date || '');
+  if (days === null) {
+    numEl.textContent = '—';
+  } else if (days === 0) {
+    numEl.textContent = 'D-Day';
+  } else if (days > 0) {
+    numEl.textContent = `D-${days}`;
+  } else {
+    numEl.textContent = `D+${Math.abs(days)}`;
+  }
+  lblEl.textContent = w.config?.label || w.title || 'D-Day';
+}
+
+function _pomoRemainingSec(w){
+  const cfg = w.config || {};
+  if (cfg.phase === 'idle' || !cfg.endsAt) {
+    return (cfg.workMin ?? 25) * 60;
+  }
+  return Math.max(0, Math.ceil((cfg.endsAt - Date.now()) / 1000));
+}
+
+function renderPomodoroWidget(w){
+  const timeEl = document.getElementById(`localPomoTime_${w.id}`);
+  const phaseEl = document.getElementById(`localPomoPhase_${w.id}`);
+  const startBtn = document.getElementById(`localPomoStart_${w.id}`);
+  if (!timeEl || !phaseEl) return;
+  const cfg = w.config || {};
+  const phase = cfg.phase || 'idle';
+  const remain = _pomoRemainingSec(w);
+  timeEl.textContent = formatPomoTime(remain);
+  const phaseLabels = { idle: '대기', work: '집중', break: '휴식' };
+  phaseEl.textContent = phaseLabels[phase] || '대기';
+  if (startBtn) {
+    startBtn.textContent = phase === 'idle' ? '시작' : '일시정지';
+  }
+}
+
+function _ensurePomoTimer(){
+  if (_localPomoTimer) return;
+  _localPomoTimer = setInterval(() => {
+    tickAllPomodoros();
+  }, 1000);
+}
+
+function _stopPomoTimerIfIdle(){
+  const active = (_widgetGridState?.widgets || []).some(
+    (w) => w.type === 'pomodoro' && w.config?.phase && w.config.phase !== 'idle' && w.config.endsAt,
+  );
+  if (!active && _localPomoTimer) {
+    clearInterval(_localPomoTimer);
+    _localPomoTimer = null;
+  }
+}
+
+function tickAllPomodoros(){
+  if (!_widgetGridState?.widgets) return;
+  let changed = false;
+  for (const w of _widgetGridState.widgets.filter((x) => x.type === 'pomodoro')) {
+    const cfg = w.config || {};
+    if (cfg.phase === 'idle' || !cfg.endsAt) continue;
+    if (Date.now() < cfg.endsAt) {
+      renderPomodoroWidget(w);
+      continue;
+    }
+    if (cfg.phase === 'work') {
+      showToast('⏱ 집중 시간 완료! 휴식하세요');
+      queueAlarmNotif({ type: 'pomo', label: '집중 완료', dt: new Date().toISOString() });
+      cfg.phase = 'break';
+      cfg.endsAt = Date.now() + (cfg.breakMin ?? 5) * 60_000;
+    } else if (cfg.phase === 'break') {
+      showToast('✅ 휴식 완료!');
+      cfg.phase = 'idle';
+      cfg.endsAt = null;
+    }
+    renderPomodoroWidget(w);
+    changed = true;
+  }
+  if (changed && _widgetGridState) void saveState(_widgetGridState);
+  _stopPomoTimerIfIdle();
+}
+
+function startPomodoroWidget(widgetId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w || w.type !== 'pomodoro') return;
+  if (!w.config) w.config = {};
+  const cfg = w.config;
+  if (cfg.phase === 'idle') {
+    cfg.phase = 'work';
+    cfg.endsAt = Date.now() + (cfg.workMin ?? 25) * 60_000;
+  } else {
+    cfg.phase = 'idle';
+    cfg.endsAt = null;
+  }
+  renderPomodoroWidget(w);
+  _ensurePomoTimer();
+  void saveState(_widgetGridState);
+}
+
+function resetPomodoroWidget(widgetId){
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w || w.type !== 'pomodoro') return;
+  if (!w.config) w.config = {};
+  w.config.phase = 'idle';
+  w.config.endsAt = null;
+  renderPomodoroWidget(w);
+  void saveState(_widgetGridState);
+  _stopPomoTimerIfIdle();
+}
+
+function bindStickyWidget(w){
+  const ta = document.getElementById(`localSticky_${w.id}`);
+  if (!ta) return;
+  ta.value = w.text || '';
+  ta.oninput = () => {
+    w.text = ta.value;
+    const prev = _stickySaveTimers.get(w.id);
+    if (prev) clearTimeout(prev);
+    _stickySaveTimers.set(w.id, setTimeout(() => {
+      _stickySaveTimers.delete(w.id);
+      if (_widgetGridState) void saveState(_widgetGridState);
+    }, 300));
+  };
+}
+
+function bindPomodoroWidget(w){
+  const startBtn = document.getElementById(`localPomoStart_${w.id}`);
+  const resetBtn = document.getElementById(`localPomoReset_${w.id}`);
+  if (startBtn) startBtn.onclick = (e) => { e.stopPropagation(); startPomodoroWidget(w.id); };
+  if (resetBtn) resetBtn.onclick = (e) => { e.stopPropagation(); resetPomodoroWidget(w.id); };
+  renderPomodoroWidget(w);
+  if (w.config?.phase && w.config.phase !== 'idle' && w.config.endsAt) _ensurePomoTimer();
+}
+
+function stopLocalWidgetTimers(){
+  if (_localClockTimer) { clearInterval(_localClockTimer); _localClockTimer = null; }
+  if (_localPomoTimer) { clearInterval(_localPomoTimer); _localPomoTimer = null; }
+  for (const t of _stickySaveTimers.values()) clearTimeout(t);
+  _stickySaveTimers.clear();
+}
+
+function initLocalWidgetRuntimes(state){
+  stopLocalWidgetTimers();
+  const widgets = state?.widgets || [];
+  for (const w of widgets) {
+    if (w.type === 'clock') renderClockWidget(w);
+    else if (w.type === 'sticky') bindStickyWidget(w);
+    else if (w.type === 'pomodoro') bindPomodoroWidget(w);
+    else if (w.type === 'dday') renderDdayWidget(w);
+  }
+  if (widgets.some((w) => w.type === 'clock')) {
+    _localClockTimer = setInterval(() => {
+      for (const w of (_widgetGridState?.widgets || []).filter((x) => x.type === 'clock')) {
+        renderClockWidget(w);
+      }
+    }, 1000);
+  }
+  if (widgets.some((w) => w.type === 'pomodoro' && w.config?.phase !== 'idle' && w.config?.endsAt)) {
+    _ensurePomoTimer();
+  }
+}
+
+function _populateClockTzSelect(sel, selected){
+  if (!sel) return;
+  sel.innerHTML = '';
+  for (const z of CLOCK_TIMEZONES) {
+    const opt = document.createElement('option');
+    opt.value = z.id;
+    opt.textContent = z.label;
+    sel.appendChild(opt);
+  }
+  sel.value = selected || 'Asia/Seoul';
+}
+
 function syncWidgetAnchors(state){
   _ensureWidgetAnchorTemplates();
   const pool = document.getElementById('widgetAnchorPool');
@@ -5564,6 +5925,8 @@ function syncWidgetAnchors(state){
     } else if (w.type === 'todo') {
       const n = _cloneTodoAnchor(w);
       if (n) pool.appendChild(n);
+    } else if (w.type === 'clock' || w.type === 'sticky' || w.type === 'pomodoro' || w.type === 'dday') {
+      pool.appendChild(createLocalWidgetNode(w));
     }
   }
   syncCatsFromWidgetState(state);
@@ -5936,6 +6299,7 @@ async function _remountWidgetGridState(){
     renderCalForWidget(w.id);
   }
   renderAllTodoWidgets();
+  initLocalWidgetRuntimes(_widgetGridState);
   if (isEditMode()) {
     enterEditMode(mount, _widgetGridState, {
       onEsc: () => { void _finishWidgetEdit(true); },
@@ -5967,6 +6331,8 @@ async function addWidgetByType(type){
 async function deleteWidgetById(widgetId){
   if (!_widgetGridState) return;
   if (!confirm('이 위젯을 삭제할까요?')) return;
+  const prev = _stickySaveTimers.get(widgetId);
+  if (prev) { clearTimeout(prev); _stickySaveTimers.delete(widgetId); }
   _widgetGridState = removeWidget(_widgetGridState, widgetId);
   _calWidgetState.delete(widgetId);
   await _remountWidgetGridState();
@@ -5992,11 +6358,17 @@ async function openWidgetSourceDialog(widgetId){
   const calWrap = document.getElementById('wsfCalendarWrap');
   const taskWrap = document.getElementById('wsfTaskListWrap');
   const folderWrap = document.getElementById('wsfFolderWrap');
+  const clockWrap = document.getElementById('wsfClockWrap');
+  const pomoWrap = document.getElementById('wsfPomoWrap');
+  const ddayWrap = document.getElementById('wsfDdayWrap');
   if (!dlg || !titleInp) return;
   titleInp.value = w.title || '';
   calWrap.style.display = 'none';
   taskWrap.style.display = 'none';
   folderWrap.style.display = 'none';
+  clockWrap.style.display = 'none';
+  pomoWrap.style.display = 'none';
+  ddayWrap.style.display = 'none';
   if (w.type === 'calendar') {
     calWrap.style.display = '';
     const sel = document.getElementById('wsfCalendar');
@@ -6034,6 +6406,20 @@ async function openWidgetSourceDialog(widgetId){
     document.getElementById('wsfFolder').value = w.source?.folderId || '';
   } else if (w.type === 'category') {
     titleInp.placeholder = '카테고리 이름';
+  } else if (w.type === 'clock') {
+    clockWrap.style.display = '';
+    _populateClockTzSelect(document.getElementById('wsfClockTz'), w.config?.tz);
+    document.getElementById('wsfClockFmt24').checked = w.config?.format24 !== false;
+  } else if (w.type === 'pomodoro') {
+    pomoWrap.style.display = '';
+    document.getElementById('wsfPomoWork').value = w.config?.workMin ?? 25;
+    document.getElementById('wsfPomoBreak').value = w.config?.breakMin ?? 5;
+  } else if (w.type === 'dday') {
+    ddayWrap.style.display = '';
+    document.getElementById('wsfDdayDate').value = w.config?.date || '';
+    document.getElementById('wsfDdayLabel').value = w.config?.label || '';
+  } else if (w.type === 'sticky') {
+    titleInp.placeholder = '메모 제목';
   }
   dlg.classList.add('open');
 }
@@ -6055,6 +6441,21 @@ async function saveWidgetSourceDialog(){
     patch.source = { taskListId: document.getElementById('wsfTaskList')?.value || '' };
   } else if (w.type === 'drive') {
     patch.source = { folderId: document.getElementById('wsfFolder')?.value?.trim() || '' };
+  } else if (w.type === 'clock') {
+    patch.config = {
+      tz: document.getElementById('wsfClockTz')?.value || 'Asia/Seoul',
+      format24: document.getElementById('wsfClockFmt24')?.checked !== false,
+    };
+  } else if (w.type === 'pomodoro') {
+    patch.config = {
+      workMin: parseInt(document.getElementById('wsfPomoWork')?.value, 10) || 25,
+      breakMin: parseInt(document.getElementById('wsfPomoBreak')?.value, 10) || 5,
+    };
+  } else if (w.type === 'dday') {
+    patch.config = {
+      date: document.getElementById('wsfDdayDate')?.value || '2026-12-31',
+      label: document.getElementById('wsfDdayLabel')?.value?.trim() || '마감',
+    };
   }
   const savedId = _widgetSourceEditId;
   _widgetGridState = updateWidgetSource(_widgetGridState, savedId, patch);
@@ -6064,6 +6465,12 @@ async function saveWidgetSourceDialog(){
   if (w.type === 'calendar') await syncAllCalendarWidgets();
   if (w.type === 'drive') await syncAllDriveWidgets();
   if (w.type === 'todo') renderTodoListForWidget(savedId);
+  if (w.type === 'clock' || w.type === 'dday' || w.type === 'pomodoro') {
+    const nw = _widgetGridState.widgets.find((x) => x.id === savedId);
+    if (nw?.type === 'clock') renderClockWidget(nw);
+    if (nw?.type === 'dday') renderDdayWidget(nw);
+    if (nw?.type === 'pomodoro') renderPomodoroWidget(nw);
+  }
   showToast('✅ 설정이 저장됐어요');
 }
 
@@ -6153,6 +6560,7 @@ async function initWidgetGrid(){
       renderCalForWidget(w.id);
     }
     renderAllTodoWidgets();
+    initLocalWidgetRuntimes(state);
 
     const editBtn = document.getElementById('widgetEditBtn');
     if (editBtn && !editBtn.dataset.bound) {
