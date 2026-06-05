@@ -261,8 +261,28 @@ function getCanvas(container) {
   return container?.querySelector(':scope > .widget-grid-canvas') ?? null;
 }
 
-function applyWidgetsGeometry(canvas, widgets, metrics) {
+function setCanvasInteracting(canvas, active) {
   if (!canvas) return;
+  canvas.classList.toggle('is-interacting', !!active);
+}
+
+function suppressReflowTransition(canvas) {
+  if (!canvas) return;
+  canvas.classList.add('no-reflow-transition');
+  if (typeof requestAnimationFrame !== 'function') {
+    canvas.classList.remove('no-reflow-transition');
+    return;
+  }
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      canvas.classList.remove('no-reflow-transition');
+    });
+  });
+}
+
+function applyWidgetsGeometry(canvas, widgets, metrics, options = {}) {
+  if (!canvas) return;
+  if (options.suppressTransition) suppressReflowTransition(canvas);
   const widgetById = new Map(widgets.map((w) => [w.id, w]));
   canvas.querySelectorAll('.widget-cell').forEach((shell) => {
     const w = widgetById.get(shell.dataset.widgetId);
@@ -271,11 +291,11 @@ function applyWidgetsGeometry(canvas, widgets, metrics) {
   canvas.style.height = `${computeGridHeight(widgets, metrics.cellSize, metrics.gap)}px`;
 }
 
-function updateAllShellGeometry(container, state, metrics) {
+function updateAllShellGeometry(container, state, metrics, options = {}) {
   const canvas = getCanvas(container);
   if (!canvas) return;
   const widgets = Array.isArray(state?.widgets) ? state.widgets : [];
-  applyWidgetsGeometry(canvas, widgets, metrics);
+  applyWidgetsGeometry(canvas, widgets, metrics, options);
 }
 
 function ensureDragHandles(canvas) {
@@ -468,6 +488,7 @@ function attachDragHandlers(container, state) {
     handle.setPointerCapture(e.pointerId);
 
     const metrics = renderGrid(container, state, { layoutOnly: true });
+    setCanvasInteracting(canvas, true);
     _dragSession = {
       pointerId: e.pointerId,
       widgetId,
@@ -514,6 +535,7 @@ function attachDragHandlers(container, state) {
     }
 
     session.shell.classList.remove('is-dragging');
+    setCanvasInteracting(canvas, false);
     commitDrag(state, container, session);
   };
 
@@ -524,7 +546,8 @@ function attachDragHandlers(container, state) {
     _dragSession = null;
     cancelAnimationFrame(session.raf);
     session.shell.classList.remove('is-dragging');
-    updateAllShellGeometry(container, state, session.metrics);
+    setCanvasInteracting(canvas, false);
+    updateAllShellGeometry(container, state, session.metrics, { suppressTransition: true });
   };
 
   for (const handle of handles) {
@@ -546,6 +569,7 @@ function attachDragHandlers(container, state) {
       cancelAnimationFrame(_dragSession.raf);
       _dragSession = null;
     }
+    setCanvasInteracting(canvas, false);
     clearDragVisuals(canvas);
   };
 }
@@ -569,6 +593,7 @@ function attachResizeHandlers(container, state) {
     handle.setPointerCapture(e.pointerId);
 
     const metrics = renderGrid(container, state, { layoutOnly: true });
+    setCanvasInteracting(canvas, true);
     _resizeSession = {
       pointerId: e.pointerId,
       widgetId,
@@ -615,6 +640,7 @@ function attachResizeHandlers(container, state) {
     }
 
     session.shell.classList.remove('is-resizing');
+    setCanvasInteracting(canvas, false);
     commitResize(state, container, session);
   };
 
@@ -626,7 +652,8 @@ function attachResizeHandlers(container, state) {
     cancelAnimationFrame(session.raf);
     session.shell.classList.remove('is-resizing');
     hideResizeGhost(canvas);
-    updateAllShellGeometry(container, state, session.metrics);
+    setCanvasInteracting(canvas, false);
+    updateAllShellGeometry(container, state, session.metrics, { suppressTransition: true });
   };
 
   for (const handle of handles) {
@@ -648,6 +675,7 @@ function attachResizeHandlers(container, state) {
       cancelAnimationFrame(_resizeSession.raf);
       _resizeSession = null;
     }
+    setCanvasInteracting(canvas, false);
     clearResizeVisuals(canvas);
   };
 }
@@ -689,13 +717,11 @@ export function renderGrid(container, state, options = {}) {
   const widgetById = new Map(widgets.map((w) => [w.id, w]));
 
   if (layoutOnly) {
-    canvas.querySelectorAll('.widget-cell').forEach((shell) => {
-      const widget = widgetById.get(shell.dataset.widgetId);
-      if (widget) applyShellGeometry(shell, widget, cellSize, gap);
-    });
+    applyWidgetsGeometry(canvas, widgets, metrics, { suppressTransition: true });
     return metrics;
   }
 
+  suppressReflowTransition(canvas);
   canvas.innerHTML = '';
   for (const widget of widgets) {
     const shell = document.createElement('div');
@@ -947,7 +973,13 @@ export function exitEditMode(rootEl, state) {
     removeDragHandles(canvas);
     removeResizeHandles(canvas);
     removeEditActionButtons(canvas);
-    updateAllShellGeometry(rootEl, state, renderGrid(rootEl, state, { layoutOnly: true }));
+    updateAllShellGeometry(
+      rootEl,
+      state,
+      renderGrid(rootEl, state, { layoutOnly: true }),
+      { suppressTransition: true },
+    );
+    setCanvasInteracting(canvas, false);
   }
 
   _editMode = false;
