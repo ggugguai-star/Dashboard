@@ -480,40 +480,37 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .tb-btn-scale .scale-icon { font-size: 13px; }
 
-/* ── 메인 레이아웃 ── */
-.main-layout {
-  flex: 1; display: grid;
-  grid-template-columns: 310px 1fr;
-  min-height: 0;
-}
-
-/* ── 위젯 그리드 (USE_WIDGET_GRID=1) ── */
+/* ── 위젯 그리드 (기본·유일 레이아웃) ── */
 .widget-grid-root {
-  display: none;
+  display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
   padding: 12px 14px;
 }
-#dashboard.widget-grid-active .main-layout { display: none !important; }
-#dashboard.widget-grid-active .widget-grid-root { display: flex; }
-.widget-edit-toolbar {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  padding: 0 0 10px;
-  flex-shrink: 0;
+.widget-cell.widget-layout-editing {
+  z-index: 25;
+  outline: 2px solid rgba(110,91,242,0.55);
+  outline-offset: 2px;
 }
-#dashboard.widget-grid-active .widget-edit-toolbar { display: flex; }
-#dashboard.widget-grid-editing .widget-edit-toolbar {
-  padding: 8px 10px;
-  margin: 0 0 10px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgba(236,232,255,0.55), rgba(255,255,255,0.42));
-  border: 1px solid rgba(110,91,242,0.18);
-  box-shadow: var(--shadow-soft), inset 0 1px 0 var(--glass-highlight);
+.widget-done-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 40;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  -webkit-app-region: no-drag;
 }
+.widget-done-btn:hover { filter: brightness(1.06); }
 .widget-glass-chip {
   position: relative;
   background: linear-gradient(135deg, var(--glass-fill-strong), var(--glass-fill));
@@ -671,7 +668,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   justify-content: flex-end;
   margin-top: 14px;
 }
-#widgetAnchorPool, #widgetAnchorTemplates { display: none !important; }
+#widgetAnchorPool, #widgetAnchorTemplates, #catZone { display: none !important; }
 .widget-grid-mount {
   flex: 1;
   min-height: 0;
@@ -692,7 +689,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
     linear-gradient(rgba(110,91,242,0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(110,91,242,0.04) 1px, transparent 1px),
     rgba(236,232,255,0.28);
-  background-size: 24px 24px, 24px 24px, auto;
+  background-size: var(--edit-grid-step, 80px) var(--edit-grid-step, 80px), auto;
   outline: 1px dashed rgba(110,91,242,0.16);
   outline-offset: -1px;
 }
@@ -826,7 +823,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   min-height: 0;
 }
 
-/* ── 위젯 tier 반응형 (USE_WIDGET_GRID, 본문 ≥11px) ── */
+/* ── 위젯 tier 반응형 (본문 ≥11px) ── */
 .widget-cell[data-widget-tier="compact"] .cal-grid-wrap { padding: 6px 8px 4px; }
 .widget-cell[data-widget-tier="compact"] .cday { font-size: 11px; padding: 4px 1px; }
 .widget-cell[data-widget-tier="compact"] .cev { font-size: 11px; padding: 3px 6px; }
@@ -971,6 +968,10 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   flex: 1; min-height: 36px; max-height: 80px; resize: none; border: none; outline: none;
   background: rgba(255,255,255,0.04); border-radius: 10px; padding: 8px 10px;
   font-size: 12px; color: var(--text1); font-family: inherit;
+  -webkit-app-region: no-drag;
+}
+.gem-attach-btn, .gem-send-btn, .gem-new-chat, .gem-chat-item {
+  -webkit-app-region: no-drag;
 }
 .gem-attach-btn, .gem-send-btn {
   flex-shrink: 0; border: none; border-radius: 10px; padding: 8px 10px; cursor: pointer;
@@ -1960,6 +1961,24 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: rgba(196,181,253,0.22); border-color: rgba(139,92,246,0.4); color: #5b21b6;
 }
 
+/* 설정 — 위젯 목록 */
+.sp-widget-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+.sp-widget-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 14px;
+  background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.82);
+}
+.sp-widget-row-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.sp-widget-row-meta { flex: 1; min-width: 0; }
+.sp-widget-row-title { font-size: 13.5px; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-widget-row-type { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.sp-widget-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.sp-widget-act {
+  border: none; border-radius: 10px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+  background: rgba(139,92,246,0.12); color: var(--text1);
+}
+.sp-widget-act.del { background: rgba(239,68,68,0.1); color: #b91c1c; }
+
 /* 카테고리 편집 */
 .cat-edit-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
 .cat-edit-row {
@@ -2112,9 +2131,10 @@ body.item-reorder-active .item{cursor:grabbing !important}
   -webkit-backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: center;
   opacity: 0; visibility: hidden;
+  pointer-events: none;
   transition: opacity .22s, visibility .22s;
 }
-.cat-edit-popup.cep-open { opacity: 1; visibility: visible; }
+.cat-edit-popup.cep-open { opacity: 1; visibility: visible; pointer-events: auto; }
 .cep-panel {
   background: rgba(255,255,255,0.96);
   backdrop-filter: none;
@@ -2874,6 +2894,20 @@ body.item-reorder-active .item{cursor:grabbing !important}
 </head>
 <body>
 
+<script>
+  /* 모듈 로드 완료 전 클릭이 무시되는 것처럼 보이는 현상 완화 */
+  window.__dashReady = false;
+  document.documentElement.classList.add('dash-booting');
+  window.__moduleBootErr = null;
+  window.addEventListener('error', (e) => {
+    if (e.target && e.target.tagName === 'SCRIPT') {
+      window.__moduleBootErr = e.message || 'script load error';
+      const t = document.getElementById('toast');
+      if (t) { t.textContent = '⚠️ 앱 로드 실패: ' + window.__moduleBootErr; t.classList.add('show'); }
+    }
+  });
+</script>
+
 <div class="bg-wrap"></div>
 
 <!-- 스케일 힌트 -->
@@ -2989,7 +3023,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
           </div>
 
           <!-- 로그인 버튼 -->
-          <button class="s-connect-btn" id="setupConnBtn" onclick="doSetupGoogleConnect()">
+          <button class="s-connect-btn" id="setupConnBtn">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                  style="width:18px;height:18px;vertical-align:middle;margin-right:8px" onerror="this.style.display='none'">
             Google 계정으로 로그인
@@ -3004,7 +3038,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
             text-align:left;line-height:1.8;word-break:break-all;
             max-height:90px;overflow-y:auto"></div>
 
-          <div class="skip-txt" onclick="nextSetupStep()">연동 없이 계속하기 →</div>
+          <div class="skip-txt">연동 없이 계속하기 →</div>
         </div>
 
         <!-- STEP 2 — Drive 폴더 -->
@@ -3031,8 +3065,8 @@ body.item-reorder-active .item{cursor:grabbing !important}
 
       <!-- 하단 버튼 -->
       <div class="setup-footer">
-        <button class="btn-back" id="btnBack" style="display:none" onclick="prevSetupStep()">←</button>
-        <button class="btn-next" id="btnNext" onclick="nextSetupStep()">다음 →</button>
+        <button class="btn-back" id="btnBack" style="display:none">←</button>
+        <button class="btn-next" id="btnNext">다음 →</button>
       </div>
 
     </div>
@@ -3041,7 +3075,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
 
 
   <!-- ══ MAIN DASHBOARD ══ -->
-  <div class="dashboard" id="dashboard">
+  <div class="dashboard widget-grid-active" id="dashboard">
 
     <!-- 헤더 -->
     <div class="topbar" data-tauri-drag-region>
@@ -3096,37 +3130,17 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <div class="sf-settings-btn" onclick="reopenSetup()" title="전체 설정">⚙</div>
     </div>
 
-    <!-- 위젯 그리드 (USE_WIDGET_GRID=1 시 표시) -->
+    <!-- 위젯 그리드 (기본·유일 레이아웃) -->
     <div class="widget-grid-root" id="widgetGridRoot">
-      <div class="widget-edit-toolbar" id="widgetEditToolbar">
-        <button type="button" class="widget-edit-btn" id="widgetEditBtn">편집</button>
-        <button type="button" class="widget-add-btn" id="widgetAddBtn">+ 위젯</button>
-        <button type="button" class="widget-backup-btn" id="widgetExportBtn">📤 보내기</button>
-        <button type="button" class="widget-backup-btn" id="widgetImportBtn">📥 가져오기</button>
-        <label class="widget-backup-keys" title="API 키 포함">
-          <input type="checkbox" id="widgetExportIncludeKeys" checked> API 키
-        </label>
-      </div>
-      <div id="widgetAnchorTemplates" aria-hidden="true"></div>
-      <div id="widgetAnchorPool" aria-hidden="true"></div>
-      <div class="widget-grid-mount" id="widgetGridMount"></div>
-    </div>
-
-    <!-- 메인 레이아웃 (기본 / flag OFF) -->
-    <div class="main-layout">
-
-      <!-- ── 좌측 사이드 ── -->
-      <div class="side-l">
-
-        <!-- ① 월 달력 -->
+      <div id="widgetAnchorTemplates" aria-hidden="true">
         <div class="gc" data-widget-template="calendar">
           <div class="ch">
-            <span class="ch-icon ch-icon-gcal" onclick="openGoogleCalendar()" title="Google 캘린더 열기">📅</span>
-            <span class="ch-title" id="calTitle2"></span>
+            <span class="ch-icon ch-icon-gcal" title="Google 캘린더 열기">📅</span>
+            <span class="ch-title">내 캘린더</span>
             <div class="ch-nav">
-              <button class="nb" onclick="calMove(-1)">‹</button>
-              <button class="nb today-nb" onclick="calReset()">오늘</button>
-              <button class="nb" onclick="calMove(1)">›</button>
+              <button type="button" class="nb">‹</button>
+              <button type="button" class="nb today-nb">오늘</button>
+              <button type="button" class="nb">›</button>
             </div>
           </div>
           <div class="cal-grid-wrap">
@@ -3134,65 +3148,50 @@ body.item-reorder-active .item{cursor:grabbing !important}
               <div class="cdow">일</div><div class="cdow">월</div><div class="cdow">화</div>
               <div class="cdow">수</div><div class="cdow">목</div><div class="cdow">금</div><div class="cdow">토</div>
             </div>
-            <div class="cal-dates" id="calDates"></div>
+            <div class="cal-dates"></div>
           </div>
-          <div class="cal-events-box" id="calEvBox"></div>
+          <div class="cal-events-box"></div>
         </div>
-
-        <!-- ② Weekly Plan -->
         <div class="gc" data-widget-template="drive">
           <div class="ch">
-            <span class="ch-icon ch-icon-drive" id="weeklyDriveIcon"
-                  onclick="openWeeklyDriveFolder()" title="Google Drive 폴더 열기">🗓</span>
-            <span class="ch-title ch-title-editable" id="weeklyPlanTitle"
-                  onclick="startEditWeeklyTitle(this)"
-                  onblur="saveWeeklyTitle(this)"
-                  onkeydown="weeklyTitleKey(event,this)"
-                  title="클릭하여 제목 편집">Weekly Plan</span>
-            <button class="nb nb-spin" onclick="driveRefresh('weekly')" title="새로고침"><span class="sync-ico">↻</span></button>
+            <span class="ch-icon ch-icon-drive" title="Google Drive 폴더 열기">🗓</span>
+            <span class="ch-title">Weekly Plan</span>
+            <button type="button" class="nb nb-spin" title="새로고침"><span class="sync-ico">↻</span></button>
           </div>
           <div class="img-view" style="position:relative;overflow:hidden">
-            <div class="img-mock" id="driveMock_weekly" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%">
+            <div class="img-mock" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%">
               <div style="font-size:28px">📅</div>
               <div style="font-size:13px;color:var(--text3);text-align:center;line-height:1.7">
                 Google Drive 폴더의<br>이미지가 여기에 표시돼요<br>
                 <span style="font-size:11px;color:var(--text4)">(손글씨 플래너 사진 등)</span>
               </div>
             </div>
-            <img id="driveImg_weekly" src="" alt=""
-                 class="drive-zoomable"
-                 style="display:none;width:100%;height:100%;object-fit:contain;border-radius:10px"
-                 onclick="toggleDriveZoom(this)">
+            <img src="" alt="" class="drive-zoomable"
+                 style="display:none;width:100%;height:100%;object-fit:contain;border-radius:10px">
           </div>
           <div class="img-nav-row">
-            <button class="nb" onclick="drivePrev('weekly')">‹</button>
-            <span class="img-cnt" id="driveCount_weekly">— / —</span>
-            <button class="nb" onclick="driveNext('weekly')">›</button>
+            <button type="button" class="nb">‹</button>
+            <span class="img-cnt">— / —</span>
+            <button type="button" class="nb">›</button>
           </div>
         </div>
-
-        <!-- ③ 메모 · 할 일 (투두리스트) -->
         <div class="gc" data-widget-template="todo" style="display:flex;flex-direction:column">
           <div class="ch">
-            <span class="ch-icon ch-icon-gtask" onclick="openPath('https://tasks.google.com')" title="Google Tasks 열기">✅</span>
+            <span class="ch-icon ch-icon-gtask" title="Google Tasks 열기">✅</span>
             <span class="ch-title">메모 · 할 일</span>
-            <button class="nb" onclick="clearDoneTodos()" title="완료 항목 정리" style="font-size:11px;padding:3px 8px">정리</button>
-            <button class="todo-sync-btn" id="todoSyncBtn" onclick="syncGoogleTasks()" title="Google Tasks 동기화" style="display:none"><span class="sync-ico">↻</span></button>
+            <button type="button" class="nb" title="완료 항목 정리" style="font-size:11px;padding:3px 8px">정리</button>
+            <button type="button" class="todo-sync-btn" title="Google Tasks 동기화" style="display:none"><span class="sync-ico">↻</span></button>
           </div>
-          <div class="todo-list" id="todoList"></div>
+          <div class="todo-list"></div>
           <div class="todo-input-row">
-            <input class="todo-input" id="todoInput" type="text"
-                   placeholder="할 일 입력 후 Enter ↵" maxlength="80"
-                   onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoItem();}">
-            <button class="todo-add-btn" onclick="addTodoItem()" title="추가">+</button>
+            <input class="todo-input" type="text" placeholder="할 일 입력 후 Enter ↵" maxlength="80">
+            <button type="button" class="todo-add-btn" title="추가">+</button>
           </div>
         </div>
-
       </div>
-
-      <!-- ── 카테고리 패널 5개 ── -->
-      <div class="cat-zone" id="catZone"></div>
-
+      <div id="widgetAnchorPool" aria-hidden="true"></div>
+      <div class="cat-zone" id="catZone" aria-hidden="true"></div>
+      <div class="widget-grid-mount" id="widgetGridMount"></div>
     </div>
   </div>
   <!-- ══ /DASHBOARD ══ -->
@@ -3283,7 +3282,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
     <!-- 탭 -->
     <div class="sp-tabs">
       <div class="sp-tab sp-tab-active" data-tab="display" onclick="switchSpTab('display')">🖥 화면</div>
-      <div class="sp-tab" data-tab="categories" onclick="switchSpTab('categories')">🗂 카테고리</div>
+      <div class="sp-tab" data-tab="widgets" onclick="switchSpTab('widgets')">🧩 위젯</div>
       <div class="sp-tab" data-tab="google" onclick="switchSpTab('google')">🔗 Google</div>
       <div class="sp-tab" data-tab="appconfig" onclick="switchSpTab('appconfig')">⚙ 앱</div>
     </div>
@@ -3335,17 +3334,17 @@ body.item-reorder-active .item{cursor:grabbing !important}
 
       </div>
 
-      <!-- ── 탭 2: 카테고리 ── -->
-      <div class="sp-tab-pane" id="sppane-categories">
+      <!-- ── 탭 2: 위젯 ── -->
+      <div class="sp-tab-pane" id="sppane-widgets">
         <div class="sp-section">
-          <div class="sp-sec-title">카테고리 편집</div>
-          <div class="cat-edit-list" id="spCatList"></div>
-          <div class="cat-add-row" onclick="spAddCat()">
+          <div class="sp-sec-title">위젯 관리</div>
+          <p class="sp-inp-hint" style="margin:-4px 0 10px">추가·설정·삭제는 여기서 할 수 있어요. 크기·위치 변경은 위젯을 <strong>길게 누른 뒤</strong> 조절하고 「완료」를 누르세요.</p>
+          <div class="sp-widget-list" id="spWidgetList"></div>
+          <div class="cat-add-row" id="spAddWidgetBtn">
             <span style="font-size:18px;line-height:1">+</span>
-            <span>카테고리 추가</span>
+            <span>위젯 추가</span>
           </div>
         </div>
-        <!-- 컬러 팔레트 팝오버 -->
         <div class="sp-color-palette" id="colorPalette"></div>
       </div>
 
@@ -3856,7 +3855,7 @@ import {
   DEFAULT_LIST_TTL_MS,
 } from './google-cache.js';
 import {
-  loadState, saveState, addWidget, removeWidget, updateWidgetSource,
+  loadState, saveState, addWidget, removeWidget, updateWidgetSource, normalizeWidgetLayout,
   updateStateSecrets, createGeminiChat, appendGeminiMessage, updateGeminiChatTitle,
   deleteGeminiChat, setActiveGeminiChat, listGeminiChatsForWidget, getGeminiChat,
   exportState, importState, DEFAULT_GEMINI_MODEL,
@@ -3869,6 +3868,7 @@ import {
   enterEditMode,
   exitEditMode,
   isEditMode,
+  getEditFocusWidgetId,
   isLayoutDirty,
   setContentSyncPaused,
   isContentSyncPaused,
@@ -3907,19 +3907,14 @@ let _activeCalendarWidgetId = null;
 const _calWidgetState = new Map();
 
 function resolvePrimaryCalendarId() {
-  if (isWidgetGridEnabled() && _widgetGridState?.widgets) {
-    const wid = _activeCalendarWidgetId
-      || _widgetGridState.widgets.find((w) => w.type === 'calendar')?.id;
-    const w = _widgetGridState.widgets.find((x) => x.id === wid);
-    if (w?.source?.calendarId) return w.source.calendarId;
-    const first = _widgetGridState.widgets.find((x) => x.type === 'calendar');
-    if (first?.source?.calendarId) return first.source.calendarId;
-  }
   const widgets = _widgetGridState?.widgets;
-  if (Array.isArray(widgets)) {
-    const cal = widgets.find((w) => w.type === 'calendar');
-    if (cal?.source?.calendarId) return cal.source.calendarId;
-  }
+  if (!Array.isArray(widgets)) return 'primary';
+  const wid = _activeCalendarWidgetId
+    || widgets.find((w) => w.type === 'calendar')?.id;
+  const w = widgets.find((x) => x.id === wid);
+  if (w?.source?.calendarId) return w.source.calendarId;
+  const first = widgets.find((x) => x.type === 'calendar');
+  if (first?.source?.calendarId) return first.source.calendarId;
   return 'primary';
 }
 
@@ -4074,7 +4069,7 @@ function commitItemPointerReorder() {
     ok = moveItemToCatEnd(pr.srcCat, pr.srcItem, pr.dropCat);
   }
   if (ok) {
-    saveState();
+    saveLegacyAppData();
     buildCatPanels();
   }
   return ok;
@@ -4579,8 +4574,6 @@ function injectScaleStyle(){
     .tb-date         { font-size: ${Math.round(18*r)}px !important; }
     .g-chip          { font-size: ${Math.round(11*r)}px !important; padding: ${Math.round(4*r)}px ${Math.round(12*r)}px !important; }
     .tb-btn          { width:${Math.round(34*r)}px !important; height:${Math.round(34*r)}px !important; font-size:${Math.round(14*r)}px !important; }
-    .main-layout     { grid-template-columns: ${Math.round(280*r)}px 1fr !important; }
-    .side-l          { padding: ${Math.round(10*r)}px ${Math.round(8*r)}px ${Math.round(10*r)}px ${Math.round(12*r)}px !important; gap: ${Math.round(8*r)}px !important; }
     .gc              { border-radius: ${Math.round(20*r)}px !important; }
     .ch              { padding: ${Math.round(11*r)}px ${Math.round(14*r)}px ${Math.round(9*r)}px !important; }
     .ch-icon         { font-size: ${Math.round(15*r)}px !important; }
@@ -4719,15 +4712,31 @@ let spCats = [];
 let spScale = 100;
 let activePaletteCatIdx = -1;
 
+const SP_WIDGET_TYPE_LABELS = {
+  calendar: '캘린더', drive: 'Weekly Plan', todo: '메모 · 할 일', category: '카테고리',
+  clock: '시계', sticky: '스티키 메모', pomodoro: '뽀모도로', dday: 'D-Day',
+  weather: '날씨', gemini: 'Gemini',
+};
+const SP_WIDGET_TYPE_ICONS = {
+  calendar: '📅', drive: '📁', todo: '✅', category: '📚', clock: '🕐', sticky: '📝',
+  pomodoro: '🍅', dday: '📆', weather: '🌤', gemini: '🤖',
+};
+
 function openSettings(){
-  // 현재 상태를 임시 복사
-  spCats = CATS.map(c => ({ ...c }));
   spScale = userScale;
 
   // UI 초기화
-  renderSpCatList();
+  renderSpWidgetList();
   syncSpScaleUI(spScale);
   buildColorPalette();
+  const addW = document.getElementById('spAddWidgetBtn');
+  if (addW && !addW.dataset.bound) {
+    addW.dataset.bound = '1';
+    addW.addEventListener('click', () => {
+      closeSettings();
+      openWidgetTypePicker();
+    });
+  }
 
   // 탭 초기화
   switchSpTab('display');
@@ -4796,7 +4805,85 @@ function syncSpScaleUI(val){
   });
 }
 
-/* ── 카테고리 편집 ── */
+/* ── 설정: 위젯 목록 ── */
+function renderSpWidgetList() {
+  const list = document.getElementById('spWidgetList');
+  if (!list) return;
+  list.innerHTML = '';
+  const widgets = _widgetGridState?.widgets || [];
+  if (!widgets.length) {
+    list.innerHTML = '<p class="sp-inp-hint">등록된 위젯이 없습니다. 아래에서 추가하세요.</p>';
+    return;
+  }
+  for (const w of widgets) {
+    const row = document.createElement('div');
+    row.className = 'sp-widget-row';
+    row.dataset.widgetId = w.id;
+
+    const icon = document.createElement('div');
+    icon.className = 'sp-widget-row-icon';
+    icon.textContent = w.type === 'category' ? (w.icon || SP_WIDGET_TYPE_ICONS.category) : (SP_WIDGET_TYPE_ICONS[w.type] || '🧩');
+
+    const meta = document.createElement('div');
+    meta.className = 'sp-widget-row-meta';
+    const title = document.createElement('div');
+    title.className = 'sp-widget-row-title';
+    title.textContent = w.title || w.id;
+    const type = document.createElement('div');
+    type.className = 'sp-widget-row-type';
+    type.textContent = `${SP_WIDGET_TYPE_LABELS[w.type] || w.type} · ${w.id}`;
+    meta.appendChild(title);
+    meta.appendChild(type);
+
+    const actions = document.createElement('div');
+    actions.className = 'sp-widget-row-actions';
+    const cfgBtn = document.createElement('button');
+    cfgBtn.type = 'button';
+    cfgBtn.className = 'sp-widget-act';
+    cfgBtn.textContent = '설정';
+    cfgBtn.addEventListener('click', () => { void spConfigureWidget(w.id); });
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'sp-widget-act del';
+    delBtn.textContent = '삭제';
+    delBtn.addEventListener('click', () => { void spDeleteWidget(w.id); });
+    actions.appendChild(cfgBtn);
+    actions.appendChild(delBtn);
+
+    row.appendChild(icon);
+    row.appendChild(meta);
+    row.appendChild(actions);
+    list.appendChild(row);
+  }
+}
+
+async function spConfigureWidget(widgetId) {
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  if (!w) return;
+  if (w.type === 'category') {
+    const m = /^cat-(\d+)$/.exec(w.id || '');
+    const idx = m ? parseInt(m[1], 10) - 1 : CATS.findIndex((c) => c.name === w.title);
+    if (idx >= 0 && CATS[idx]) {
+      closeSettings();
+      openCatEditPopup({ clientX: 0, clientY: 0, stopPropagation() {} }, idx);
+      return;
+    }
+  }
+  closeSettings();
+  await openWidgetSourceDialog(widgetId);
+}
+
+async function spDeleteWidget(widgetId) {
+  if (!_widgetGridState) return;
+  const w = _widgetGridState.widgets.find((x) => x.id === widgetId);
+  if (!w) return;
+  const label = w.title || SP_WIDGET_TYPE_LABELS[w.type] || widgetId;
+  if (!confirm(`「${label}」 위젯을 삭제할까요?`)) return;
+  await deleteWidgetById(widgetId, { confirm: false });
+  renderSpWidgetList();
+}
+
+/* ── 카테고리 편집 (레거시 — 카테고리 편집 팝업용) ── */
 function renderSpCatList(){
   const list = document.getElementById('spCatList');
   list.innerHTML = '';
@@ -5020,28 +5107,7 @@ async function applySettings(){
     // 1) 배율 적용
     applyScale(spScale);
 
-    // 2) 카테고리 적용 — 색상으로 기존 카테고리 매핑 (삭제된 카테고리 항목은 버림)
-    const oldCats = CATS.map(c => ({ color: c.color, items: c.items || [], type: c.type || 'normal', driveRootId: c.driveRootId || '' }));
-    while(CATS.length > 0) CATS.pop();
-    spCats.forEach(sc => {
-      const orig = oldCats.find(c => c.color === sc.color);
-      CATS.push({
-        ...sc,
-        items:       orig ? orig.items : [],
-        lightColor:  lightenColor(sc.color),
-        tc:          darkenColor(sc.color),
-        type:        orig ? orig.type : 'normal',
-        driveRootId: orig ? orig.driveRootId : '',
-      });
-    });
-
-    // 카테고리 열 수 업데이트
-    document.getElementById('catZone').style.gridTemplateColumns = `repeat(${CATS.length},1fr)`;
-
-    // 3) 카테고리 패널 재렌더
-    buildCatPanels();
-
-    // 4) Drive 폴더 ID 저장
+    // 2) Drive 폴더 ID 저장
     const wId = document.getElementById('spWeeklyId')?.value?.trim() || '';
     const mId = document.getElementById('spMemoId')?.value?.trim()   || '';
     localStorage.setItem('driveWeeklyId', wId);
@@ -5593,13 +5659,8 @@ async function saveEvDialog(){
       invalidateCalendarEventsCache(calId);
       closeEvDialog();
       showToast(evdEditingId ? '✅ 일정이 수정됐어요!' : '✅ 일정이 추가됐어요!');
-      if (isWidgetGridEnabled() && _widgetGridState) {
-        await syncAllCalendarWidgets();
-        if (_activeCalendarWidgetId) renderCalForWidget(_activeCalendarWidgetId);
-      } else {
-        await syncCalendarSilent();
-        renderCal();
-      }
+      await syncAllCalendarWidgets();
+      if (_activeCalendarWidgetId) renderCalForWidget(_activeCalendarWidgetId);
     }
   } catch(e){
     showToast('❌ ' + e.message);
@@ -5649,13 +5710,8 @@ async function cevCtxDelete(){
       if(calAlarms[ev.id]){ delete calAlarms[ev.id]; saveCalAlarms(); }
       invalidateCalendarEventsCache(calId);
       showToast('✅ 일정이 삭제됐어요!');
-      if (isWidgetGridEnabled() && _widgetGridState) {
-        await syncAllCalendarWidgets();
-        if (_activeCalendarWidgetId) renderCalForWidget(_activeCalendarWidgetId);
-      } else {
-        await syncCalendarSilent();
-        renderCal();
-      }
+      await syncAllCalendarWidgets();
+      if (_activeCalendarWidgetId) renderCalForWidget(_activeCalendarWidgetId);
     }
   } catch(e){ showToast('❌ ' + e.message); }
 }
@@ -5745,28 +5801,9 @@ async function doSync(){
     return;
   }
 
-  if (isWidgetGridEnabled() && _widgetGridState) {
-    await syncAllCalendarWidgets();
-    btn.classList.remove('spinning');
-    showToast('✅ 동기화 완료');
-    return;
-  }
-
-  const from = new Date(CY, CM - 1, 1).toISOString();
-  const to   = new Date(CY, CM + 2, 0, 23, 59, 59).toISOString();
-
-  const result = await fetchCalendarEventsCached(resolvePrimaryCalendarId(), from, to);
+  await syncAllCalendarWidgets();
   btn.classList.remove('spinning');
-
-  if (result.error) {
-    showToast('❌ 동기화 실패: ' + result.error);
-    return;
-  }
-
-  gcalEvents = buildEventMap(result.events || []);
-  syncGcalToWindow();
-  renderCal();
-  showToast(`✅ 동기화 완료 — ${result.events.length}개 일정`);
+  showToast('✅ 동기화 완료');
 }
 
 function launchDashboard(){
@@ -5785,6 +5822,44 @@ function launchDashboard(){
   initDashboard();
 }
 
+/** 초기 설정 화면 — onclick 외 addEventListener 백업 (모듈 지연·CSP 대비) */
+function _bindSetupUiOnce() {
+  const bind = (el, fn) => {
+    if (!el || el.dataset.boundClick) return;
+    el.dataset.boundClick = '1';
+    el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
+  };
+  bind(document.getElementById('btnNext'), () => nextSetupStep());
+  bind(document.getElementById('btnBack'), () => prevSetupStep());
+  bind(document.getElementById('setupConnBtn'), () => { void doSetupGoogleConnect(); });
+  bind(document.querySelector('#setupOverlay .skip-txt'), () => nextSetupStep());
+  document.querySelectorAll('#sp0 .res-card').forEach((el) => {
+    if (el.dataset.boundClick) return;
+    el.dataset.boundClick = '1';
+    el.addEventListener('click', () => selRes(el));
+  });
+  document.querySelectorAll('#sp0 .cnum').forEach((el) => {
+    if (el.dataset.boundClick) return;
+    el.dataset.boundClick = '1';
+    el.addEventListener('click', () => selCat(el));
+  });
+  document.querySelectorAll('#sp0 .scale-preset').forEach((el) => {
+    if (el.dataset.boundClick) return;
+    el.dataset.boundClick = '1';
+    el.addEventListener('click', () => {
+      const v = parseInt(el.querySelector('div')?.textContent || '', 10);
+      if (!isNaN(v)) setScalePreset(v, el);
+    });
+  });
+}
+
+/* 초기 화면 핸들러 — 모듈 앞부분에서 먼저 window에 노출 */
+Object.assign(window, {
+  nextSetupStep, prevSetupStep, launchDashboard,
+  selCat, selRes, setScalePreset, onSetupSliderInput,
+  doSetupGoogleConnect, setAutoLaunch,
+});
+
 /* checkSetupDone — window 전역 노출(Object.assign) 이후 맨 아래에서 실행 */
 
 /* ── 위젯 그리드 (단계 9: 추가/삭제 + 소스 바인딩 + 다중 인스턴스) ── */
@@ -5794,42 +5869,105 @@ let _widgetAnchorTemplatesReady = false;
 let _widgetSourceEditId = null;
 
 function _hideWidgetEditUi(){
-  const toolbar = document.getElementById('widgetEditToolbar');
-  const btn = document.getElementById('widgetEditBtn');
   const dashboard = document.getElementById('dashboard');
-  if (toolbar) toolbar.style.display = 'none';
-  if (btn) {
-    btn.textContent = '편집';
-    btn.classList.remove('is-active');
-  }
   if (dashboard) dashboard.classList.remove('widget-grid-editing');
+  document.getElementById('widgetGridMount')?.querySelectorAll('.widget-layout-editing').forEach((el) => {
+    el.classList.remove('widget-layout-editing');
+    el.querySelector('.widget-done-btn')?.remove();
+  });
 }
 
-function _updateWidgetEditBtn(editing){
-  const btn = document.getElementById('widgetEditBtn');
-  if (!btn) return;
-  btn.textContent = editing ? '완료' : '편집';
-  btn.classList.toggle('is-active', editing);
+let _widgetLongPressTimer = null;
+
+function _bindWidgetLongPressOnce() {
+  const mount = document.getElementById('widgetGridMount');
+  if (!mount || mount.dataset.longPressBound) return;
+  mount.dataset.longPressBound = '1';
+
+  const clearPress = () => {
+    if (_widgetLongPressTimer) {
+      clearTimeout(_widgetLongPressTimer);
+      _widgetLongPressTimer = null;
+    }
+  };
+
+  mount.addEventListener('pointerdown', (e) => {
+    if (isEditMode() || e.button !== 0) return;
+    if (e.target.closest(
+      'button, input, textarea, a, select, .item, .nb, .ch-nav, .cp-gear, .cp-icon, '
+      + '.todo-chk, .todo-add-row, .gem-input-row, .gem-sidebar, .widget-drag-handle, '
+      + '.widget-resize-handle, .widget-done-btn',
+    )) return;
+    const shell = e.target.closest('.widget-cell');
+    if (!shell?.dataset?.widgetId) return;
+    const widgetId = shell.dataset.widgetId;
+    clearPress();
+    _widgetLongPressTimer = setTimeout(() => {
+      _widgetLongPressTimer = null;
+      startWidgetLayoutEdit(widgetId);
+    }, 520);
+  });
+
+  for (const evt of ['pointerup', 'pointercancel', 'pointerleave']) {
+    mount.addEventListener(evt, clearPress);
+  }
+}
+
+function _mountWidgetDoneBtn(shell) {
+  shell?.querySelector('.widget-done-btn')?.remove();
+  if (!shell) return;
+  shell.classList.add('widget-layout-editing');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'widget-done-btn';
+  btn.textContent = '완료';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    void finishWidgetLayoutEdit(true);
+  });
+  shell.appendChild(btn);
+}
+
+function startWidgetLayoutEdit(widgetId) {
+  if (isEditMode() || !_widgetGridState) return;
+  const mount = document.getElementById('widgetGridMount');
+  const shell = mount?.querySelector(`.widget-cell[data-widget-id="${widgetId}"]`);
+  if (!mount || !shell) return;
+  if (typeof navigator.vibrate === 'function') navigator.vibrate(12);
+  enterEditMode(mount, _widgetGridState, {
+    focusWidgetId: widgetId,
+    onEsc: () => { void finishWidgetLayoutEdit(true); },
+  });
+  _mountWidgetDoneBtn(shell);
+}
+
+async function finishWidgetLayoutEdit(save = true) {
+  const mount = document.getElementById('widgetGridMount');
+  if (!mount || !_widgetGridState || !isEditMode()) return;
+  exitEditMode(mount, _widgetGridState);
+  _hideWidgetEditUi();
+  if (save) {
+    try {
+      await saveState(_widgetGridState, { immediate: true });
+    } catch (e) {
+      console.warn('[WidgetGrid] saveState failed:', e);
+    }
+  }
+  initGeminiWidgetRuntimes(_widgetGridState);
+  await _resumeDeferredContentSync();
 }
 
 function _ensureWidgetAnchorTemplates(){
   if (_widgetAnchorTemplatesReady) return;
   const box = document.getElementById('widgetAnchorTemplates');
-  if (!box) return;
-  box.innerHTML = '';
-  for (const type of ['calendar', 'drive', 'todo']) {
-    const src = document.querySelector(`.side-l > .gc[data-widget-template="${type}"]`);
-    if (src) box.appendChild(src.cloneNode(true));
-  }
+  if (!box?.querySelector('[data-widget-template]')) return;
   _widgetAnchorTemplatesReady = true;
 }
 
 function _getAnchorTemplate(type){
   const box = document.getElementById('widgetAnchorTemplates');
   if (!box) return null;
-  const nodes = [...box.querySelectorAll('.gc')];
-  const idx = { calendar: 0, drive: 1, todo: 2 }[type];
-  return nodes[idx] || null;
+  return box.querySelector(`.gc[data-widget-template="${type}"]`);
 }
 
 function _cloneCalendarAnchor(widget){
@@ -5907,6 +6045,8 @@ function _cloneTodoAnchor(widget){
   if (addBtn) addBtn.onclick = () => addTodoItemForWidget(sid);
   const clearBtn = node.querySelector('.ch .nb');
   if (clearBtn) clearBtn.onclick = () => clearDoneTodosForWidget(sid);
+  const syncBtn = node.querySelector('.todo-sync-btn');
+  if (syncBtn) syncBtn.onclick = () => syncGoogleTasks();
   return node;
 }
 
@@ -6407,8 +6547,11 @@ function initLocalWidgetRuntimes(state){
 
 function _stopPointerOnGeminiInput(el) {
   if (!el) return;
-  el.addEventListener('mousedown', (e) => e.stopPropagation());
-  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+  const stop = (e) => e.stopPropagation();
+  el.addEventListener('mousedown', stop);
+  el.addEventListener('pointerdown', stop);
+  el.addEventListener('click', stop);
+  el.addEventListener('focusin', stop);
 }
 
 function _getGeminiApiKey() {
@@ -6555,7 +6698,7 @@ function renderGeminiMessages(widgetId) {
   if (!box || !widget) return;
   const apiKey = _getGeminiApiKey();
   if (!apiKey) {
-    box.innerHTML = '<div class="gem-bubble system">API 키가 없습니다. 편집 모드에서 ⚙ 설정으로 키를 입력하거나 '
+    box.innerHTML = '<div class="gem-bubble system">API 키가 없습니다. 설정 → 위젯에서 Gemini를 선택해 키를 입력하거나 '
       + '<button type="button" class="gem-new-chat" id="gemInlineKeyGuide">무료 키 발급 방법</button>을 확인하세요.</div>';
     document.getElementById('gemInlineKeyGuide')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -6592,10 +6735,9 @@ function _setGeminiStreaming(widgetId, streaming) {
   const sendBtn = document.getElementById(`gemSend_${widgetId}`);
   const attachBtn = document.getElementById(`gemAttachBtn_${widgetId}`);
   const input = document.getElementById(`gemInput_${widgetId}`);
-  const paused = isContentSyncPaused();
-  if (sendBtn) sendBtn.disabled = paused || streaming;
-  if (attachBtn) attachBtn.disabled = paused || streaming;
-  if (input) input.disabled = paused || streaming;
+  if (sendBtn) sendBtn.disabled = !!streaming;
+  if (attachBtn) attachBtn.disabled = !!streaming;
+  if (input) input.disabled = !!streaming;
 }
 
 async function selectGeminiChat(widgetId, chatId) {
@@ -6611,6 +6753,12 @@ async function newGeminiChat(widgetId) {
   _widgetGridState = createGeminiChat(_widgetGridState, widgetId);
   renderGeminiChatList(widgetId);
   renderGeminiMessages(widgetId);
+  _setGeminiStreaming(widgetId, false);
+  const input = document.getElementById(`gemInput_${widgetId}`);
+  if (input) {
+    input.disabled = false;
+    input.focus();
+  }
   await saveState(_widgetGridState);
 }
 
@@ -6683,7 +6831,6 @@ async function _processAttachmentFile(filePath, fileName) {
 }
 
 async function pickGeminiAttachment(widgetId) {
-  if (isContentSyncPaused()) return;
   try {
     const picked = await tInvoke('plugin:dialog|open', {
       multiple: false,
@@ -6711,7 +6858,7 @@ async function pickGeminiAttachment(widgetId) {
 }
 
 async function sendGeminiMessage(widgetId) {
-  if (isContentSyncPaused() || !_widgetGridState) return;
+  if (!_widgetGridState) return;
   const apiKey = _getGeminiApiKey();
   if (!apiKey) {
     showToast('🤖 API 키를 먼저 설정하세요');
@@ -6858,7 +7005,7 @@ function syncWidgetAnchors(state){
   syncCatsFromWidgetState(state);
   buildCatPanels();
   const catZone = document.getElementById('catZone');
-  if (catZone && isWidgetGridEnabled()) {
+  if (catZone) {
     const n = state.widgets.filter((x) => x.type === 'category').length;
     if (n > 0) catZone.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
   }
@@ -7014,7 +7161,7 @@ async function syncCalendarForWidget(widgetId){
 }
 
 async function syncAllCalendarWidgets(){
-  if (!isWidgetGridEnabled() || isContentSyncPaused()) return;
+  if (isContentSyncPaused() || !_widgetGridState) return;
   if (!await isAuthenticated()) return;
   const widgets = (_widgetGridState?.widgets || []).filter((w) => w.type === 'calendar');
   const calIdToWidgetIds = new Map();
@@ -7208,7 +7355,7 @@ async function driveRefreshForWidget(widgetId){
 }
 
 async function syncAllDriveWidgets(){
-  if (!isWidgetGridEnabled() || isContentSyncPaused()) return;
+  if (isContentSyncPaused() || !_widgetGridState) return;
   for (const w of (_widgetGridState?.widgets || []).filter((x) => x.type === 'drive')) {
     await loadDriveImagesForWidget(w.id, w.source?.folderId || '');
   }
@@ -7238,34 +7385,6 @@ async function _getDashboardStateForExport() {
   }
 }
 
-async function _syncLegacyUiFromImportedState(state) {
-  syncCatsFromWidgetState(state);
-  buildCatPanels();
-  const catZone = document.getElementById('catZone');
-  const catN = (state?.widgets || []).filter((w) => w.type === 'category').length;
-  if (catZone && catN > 0) {
-    catZone.style.gridTemplateColumns = `repeat(${catN}, 1fr)`;
-  }
-  const firstTodo = (state?.widgets || []).find((w) => w.type === 'todo');
-  if (firstTodo && Array.isArray(firstTodo.items)) {
-    todoItems.length = 0;
-    firstTodo.items.forEach((t) => todoItems.push(t));
-    renderTodoList();
-  }
-  const driveW = (state?.widgets || []).find((w) => w.type === 'drive');
-  if (driveW) {
-    const fid = driveW.source?.folderId || '';
-    const spW = document.getElementById('spWeeklyId');
-    if (spW) spW.value = fid;
-    localStorage.setItem('driveWeeklyId', fid);
-  }
-  if (state?.settings?.driveMemoId != null) {
-    const spM = document.getElementById('spMemoId');
-    if (spM) spM.value = state.settings.driveMemoId;
-    localStorage.setItem('driveMemoId', state.settings.driveMemoId);
-  }
-}
-
 async function applyImportedDashboardState(imported) {
   const scale = imported?.settings?.scale ?? 100;
   spScale = scale;
@@ -7273,21 +7392,11 @@ async function applyImportedDashboardState(imported) {
   syncSpScaleUI(scale);
   applyScale(scale);
 
-  if (isWidgetGridEnabled()) {
-    await initWidgetGrid();
-    void fetchAllWeatherWidgets();
-    await syncAllCalendarWidgets();
-    await syncAllDriveWidgets();
-    await syncGoogleTasks(true);
-  } else {
-    _widgetGridState = imported;
-    await _syncLegacyUiFromImportedState(imported);
-    if (await isAuthenticated()) {
-      reloadDriveImages();
-      syncCalendarSilent();
-    }
-    await syncGoogleTasks(true);
-  }
+  await initWidgetGrid();
+  void fetchAllWeatherWidgets();
+  await syncAllCalendarWidgets();
+  await syncAllDriveWidgets();
+  await syncGoogleTasks(true);
 }
 
 async function exportDashboardState({ includeKeys = true } = {}) {
@@ -7346,24 +7455,13 @@ function _bindBackupUiOnce() {
     spImport.dataset.bound = '1';
     spImport.addEventListener('click', () => { void importDashboardState(); });
   }
-  const wExport = document.getElementById('widgetExportBtn');
-  if (wExport && !wExport.dataset.bound) {
-    wExport.dataset.bound = '1';
-    wExport.addEventListener('click', () => {
-      const inc = document.getElementById('widgetExportIncludeKeys')?.checked !== false;
-      void exportDashboardState({ includeKeys: inc });
-    });
-  }
-  const wImport = document.getElementById('widgetImportBtn');
-  if (wImport && !wImport.dataset.bound) {
-    wImport.dataset.bound = '1';
-    wImport.addEventListener('click', () => { void importDashboardState(); });
-  }
 }
 
 async function _remountWidgetGridState(){
   const mount = document.getElementById('widgetGridMount');
   if (!mount || !_widgetGridState) return;
+  const wasLayoutEditing = isEditMode();
+  const layoutEditFocusId = wasLayoutEditing ? getEditFocusWidgetId() : null;
   syncWidgetAnchors(_widgetGridState);
   const anchors = collectPanelAnchors(_widgetGridState);
   _widgetGridTeardown = remountWidgetGrid(mount, _widgetGridState, anchors, _widgetGridTeardown);
@@ -7374,12 +7472,12 @@ async function _remountWidgetGridState(){
   renderAllTodoWidgets();
   initLocalWidgetRuntimes(_widgetGridState);
   initGeminiWidgetRuntimes(_widgetGridState);
-  if (isEditMode()) {
+  if (wasLayoutEditing && layoutEditFocusId) {
     enterEditMode(mount, _widgetGridState, {
-      onEsc: () => { void _finishWidgetEdit(true); },
-      onSettings: (id) => openWidgetSourceDialog(id),
-      onDelete: (id) => void deleteWidgetById(id),
+      focusWidgetId: layoutEditFocusId,
+      onEsc: () => { void finishWidgetLayoutEdit(true); },
     });
+    _mountWidgetDoneBtn(mount.querySelector(`.widget-cell[data-widget-id="${layoutEditFocusId}"]`));
   }
 }
 
@@ -7394,17 +7492,21 @@ function closeWidgetTypePicker(){
 async function addWidgetByType(type){
   if (!_widgetGridState) return;
   _widgetGridState = addWidget(_widgetGridState, type);
+  _widgetGridState = normalizeWidgetLayout(_widgetGridState, { force: true });
   closeWidgetTypePicker();
   await _remountWidgetGridState();
   await saveState(_widgetGridState, { immediate: true });
   await syncAllCalendarWidgets();
   await syncAllDriveWidgets();
+  if (document.getElementById('settingsOverlay')?.classList.contains('sp-open')) {
+    renderSpWidgetList();
+  }
   showToast('✅ 위젯이 추가됐어요');
 }
 
-async function deleteWidgetById(widgetId){
+async function deleteWidgetById(widgetId, { confirm: askConfirm = true } = {}){
   if (!_widgetGridState) return;
-  if (!confirm('이 위젯을 삭제할까요?')) return;
+  if (askConfirm && !confirm('이 위젯을 삭제할까요?')) return;
   const prev = _stickySaveTimers.get(widgetId);
   if (prev) { clearTimeout(prev); _stickySaveTimers.delete(widgetId); }
   _widgetGridState = removeWidget(_widgetGridState, widgetId);
@@ -7608,52 +7710,13 @@ async function saveWidgetSourceDialog(){
 
 async function _resumeDeferredContentSync(){
   try {
-    if (isWidgetGridEnabled()) {
-      await syncAllCalendarWidgets();
-      await syncAllDriveWidgets();
-    } else {
-      await syncCalendarSilent();
-      reloadDriveImages();
-    }
+    await syncAllCalendarWidgets();
+    await syncAllDriveWidgets();
     await syncGoogleTasks(true);
-    if (isWidgetGridEnabled()) await fetchAllWeatherWidgets();
+    await fetchAllWeatherWidgets();
   } catch (e) {
     console.warn('[WidgetGrid] deferred sync resume failed:', e);
   }
-}
-
-async function _finishWidgetEdit(save = true){
-  const mount = document.getElementById('widgetGridMount');
-  if (!mount || !_widgetGridState || !isEditMode()) return;
-  exitEditMode(mount, _widgetGridState);
-  _updateWidgetEditBtn(false);
-  if (save) {
-    try {
-      await saveState(_widgetGridState, { immediate: true });
-    } catch (e) {
-      console.warn('[WidgetGrid] saveState on exit failed:', e);
-    }
-  }
-  setContentSyncPaused(false);
-  await _resumeDeferredContentSync();
-}
-
-async function toggleWidgetEdit(){
-  const mount = document.getElementById('widgetGridMount');
-  if (!mount || !_widgetGridState) return;
-
-  if (isEditMode()) {
-    await _finishWidgetEdit(true);
-    return;
-  }
-
-  enterEditMode(mount, _widgetGridState, {
-    onEsc: () => { void _finishWidgetEdit(true); },
-    onSettings: (id) => openWidgetSourceDialog(id),
-    onDelete: (id) => void deleteWidgetById(id),
-  });
-  setContentSyncPaused(true);
-  _updateWidgetEditBtn(true);
 }
 
 async function initWidgetGrid(){
@@ -7665,25 +7728,16 @@ async function initWidgetGrid(){
   if (isEditMode() && _widgetGridState) {
     exitEditMode(mount, _widgetGridState);
     setContentSyncPaused(false);
-  }
-  _updateWidgetEditBtn(false);
-
-  if (!isWidgetGridEnabled()) {
-    dashboard.classList.remove('widget-grid-active');
-    root.style.display = 'none';
-    _widgetGridState = null;
     _hideWidgetEditUi();
-    return;
   }
 
   try {
-    const state = await loadState();
+    let state = await loadState();
+    state = normalizeWidgetLayout(state);
     if (_widgetGridTeardown) _widgetGridTeardown();
     _widgetGridState = state;
     dashboard.classList.add('widget-grid-active');
     root.style.display = '';
-    const toolbar = document.getElementById('widgetEditToolbar');
-    if (toolbar) toolbar.style.display = '';
     syncWidgetAnchors(state);
     const anchors = collectPanelAnchors(state);
     _widgetGridTeardown = mountWidgetGrid(mount, state, anchors);
@@ -7695,17 +7749,8 @@ async function initWidgetGrid(){
     renderAllTodoWidgets();
     initLocalWidgetRuntimes(state);
     initGeminiWidgetRuntimes(state);
+    _bindWidgetLongPressOnce();
 
-    const editBtn = document.getElementById('widgetEditBtn');
-    if (editBtn && !editBtn.dataset.bound) {
-      editBtn.dataset.bound = '1';
-      editBtn.addEventListener('click', () => { void toggleWidgetEdit(); });
-    }
-    const addBtn = document.getElementById('widgetAddBtn');
-    if (addBtn && !addBtn.dataset.bound) {
-      addBtn.dataset.bound = '1';
-      addBtn.addEventListener('click', () => openWidgetTypePicker());
-    }
     const typePicker = document.getElementById('widgetTypePicker');
     if (typePicker && !typePicker.dataset.bound) {
       typePicker.dataset.bound = '1';
@@ -7744,9 +7789,8 @@ async function initWidgetGrid(){
     void syncAllCalendarWidgets();
     void syncAllDriveWidgets();
   } catch (e) {
-    console.warn('[WidgetGrid] init failed, falling back to legacy layout:', e);
-    dashboard.classList.remove('widget-grid-active');
-    root.style.display = 'none';
+    console.warn('[WidgetGrid] init failed:', e);
+    showToast('❌ 위젯 그리드를 불러오지 못했습니다');
     _widgetGridState = null;
     _hideWidgetEditUi();
   }
@@ -7763,10 +7807,7 @@ if (typeof window !== 'undefined') {
 /* ── 대시보드 초기화 ── */
 function initDashboard(){
   startClock();
-  buildCalendar();
-  buildCatPanels();
   setupTauriFileDrop().catch(e => console.warn('[TauriFileDrop]', e));
-  renderTodoList();       // 투두 리스트 초기화
   checkGoogleAuth();      // 인증 상태 확인 → 자동 동기화 + Drive 이미지
   startAlarmWatcher();    // 알림 워처 시작
   _bindBackupUiOnce();
@@ -7775,17 +7816,8 @@ function initDashboard(){
 
 /* applySettings 이후 Drive 이미지 재로드 (폴더 ID가 바뀔 수 있으므로) */
 function reloadDriveImages(){
-  if (isContentSyncPaused()) return;
-  if (isWidgetGridEnabled() && _widgetGridState) {
-    void syncAllDriveWidgets();
-    return;
-  }
-  const wId = document.getElementById('spWeeklyId')?.value?.trim()
-           || localStorage.getItem('driveWeeklyId') || '';
-  const mId = document.getElementById('spMemoId')?.value?.trim()
-           || localStorage.getItem('driveMemoId')   || '';
-  if(wId) loadDriveImages('weekly', wId);
-  if(mId) loadDriveImages('memo',   mId);
+  if (isContentSyncPaused() || !_widgetGridState) return;
+  void syncAllDriveWidgets();
 }
 
 /* ── Google 인증 상태 확인 + 자동 동기화 ── */
@@ -7822,8 +7854,10 @@ async function initGoogleTasksSync(){
 }
 
 function _showTasksSyncBtn(){
-  const btn = document.getElementById('todoSyncBtn');
-  if(btn){ btn.style.display = ''; btn.title = 'Google Tasks 동기화'; }
+  document.querySelectorAll('.todo-sync-btn').forEach((btn) => {
+    btn.style.display = '';
+    btn.title = 'Google Tasks 동기화';
+  });
 }
 
 async function syncGoogleTasks(silent){
@@ -7847,78 +7881,74 @@ async function syncGoogleTasks(silent){
     }
   }
   _gtasksSyncing = true;
-  const btn = document.getElementById('todoSyncBtn');
-  if(btn) btn.classList.add('syncing');
+  const syncBtns = document.querySelectorAll('.todo-sync-btn');
+  syncBtns.forEach((b) => b.classList.add('syncing'));
 
-  const result = await tasksListTasks(_gtasksListId);
-  if(result?.error){
-    _gtasksSyncing = false;
-    if(btn) btn.classList.remove('syncing');
-    if(result.error === 'tasks_auth_required'){
-      if(!silent) showToast('⚠️ Google Tasks 권한이 없어요. Google을 재연결해 주세요.');
-    } else if(!silent){
-      showToast('❌ 동기화 실패: ' + result.error);
+  const todoWidgets = (_widgetGridState?.widgets || []).filter((w) => w.type === 'todo');
+  const listIds = new Set(todoWidgets.map((w) => w.source?.tasksListId || _gtasksListId).filter(Boolean));
+  if (!listIds.size) listIds.add(_gtasksListId);
+
+  const tasksByList = new Map();
+  for (const listId of listIds) {
+    const result = await tasksListTasks(listId);
+    if (result?.error) {
+      _gtasksSyncing = false;
+      syncBtns.forEach((b) => b.classList.remove('syncing'));
+      if (result.error === 'tasks_auth_required') {
+        if (!silent) showToast('⚠️ Google Tasks 권한이 없어요. Google을 재연결해 주세요.');
+      } else if (!silent) {
+        showToast('❌ 동기화 실패: ' + result.error);
+      }
+      return;
     }
-    return;
+    tasksByList.set(listId, (result.items || []).filter((t) => t.title && !t.deleted && !t.hidden));
   }
 
-  const googleTasks = (result.items || []).filter(t => t.title && !t.deleted && !t.hidden);
-  const gtMap = {};
-  googleTasks.forEach(t => { gtMap[t.id] = t; });
-
-  // 1) 기존 연동 항목 업데이트 (Google → 로컬)
-  const toRemove = new Set();
-  todoItems.forEach(item => {
-    if(!item.taskId) return;
-    const gt = gtMap[item.taskId];
-    if(gt){
-      item.text = gt.title || item.text;
-      item.done = gt.status === 'completed';
-      delete gtMap[item.taskId]; // 처리됨
-    } else {
-      toRemove.add(item.id); // Google에서 삭제됨
-    }
-  });
-  todoItems = todoItems.filter(t => !toRemove.has(t.id));
-
-  // 2) Google에만 있는 새 항목 추가 (로컬 → 추가)
-  Object.values(gtMap).forEach(gt => {
-    todoItems.push({
-      id:         'gt_' + gt.id,
-      text:       gt.title,
-      done:       gt.status === 'completed',
-      alarmDT:    '',
-      taskId:     gt.id,
-      taskListId: _gtasksListId,
+  for (const w of todoWidgets) {
+    const listId = w.source?.tasksListId || _gtasksListId;
+    const googleTasks = tasksByList.get(listId) || [];
+    const gtMap = {};
+    googleTasks.forEach((t) => { gtMap[t.id] = t; });
+    if (!Array.isArray(w.items)) w.items = [];
+    const toRemove = new Set();
+    w.items.forEach((item) => {
+      if (!item.taskId) return;
+      const gt = gtMap[item.taskId];
+      if (gt) {
+        item.text = gt.title || item.text;
+        item.done = gt.status === 'completed';
+        delete gtMap[item.taskId];
+      } else {
+        toRemove.add(item.id);
+      }
     });
-  });
+    w.items = w.items.filter((t) => !toRemove.has(t.id));
+    Object.values(gtMap).forEach((gt) => {
+      w.items.push({
+        id: 'gt_' + gt.id,
+        text: gt.title,
+        done: gt.status === 'completed',
+        alarmDT: '',
+        taskId: gt.id,
+        taskListId: listId,
+      });
+    });
+  }
 
   localStorage.setItem('gtasksLastSync', Date.now().toString());
-  saveState();
-  renderTodoList();
-  if(!silent) showToast('✅ Google Tasks 동기화 완료');
+  if (_widgetGridState) {
+    await saveState(_widgetGridState);
+    renderAllTodoWidgets();
+  }
+  if (!silent) showToast('✅ Google Tasks 동기화 완료');
   _gtasksSyncing = false;
-  if(btn) btn.classList.remove('syncing');
+  syncBtns.forEach((b) => b.classList.remove('syncing'));
 }
 
 async function syncCalendarSilent(){
   if (isContentSyncPaused()) return;
   if (!await isAuthenticated()) return;
-  if (isWidgetGridEnabled() && _widgetGridState) {
-    await syncAllCalendarWidgets();
-    return;
-  }
-  const now = new Date();
-  const cy = (typeof CY !== 'undefined' && CY) ? CY : now.getFullYear();
-  const cm = (typeof CM !== 'undefined' && CM) ? CM : now.getMonth() + 1;
-  const from = new Date(cy, cm - 1, 1).toISOString();
-  const to   = new Date(cy, cm + 2, 0, 23, 59, 59).toISOString();
-  const result = await fetchCalendarEventsCached(resolvePrimaryCalendarId(), from, to);
-  if (!result.error) {
-    gcalEvents = buildEventMap(result.events || []);
-    syncGcalToWindow();
-    renderCal();
-  }
+  await syncAllCalendarWidgets();
 }
 
 function updateGoogleChip(authenticated){
@@ -8004,13 +8034,15 @@ function calMove(d){
   if(CM<0){CM=11;CY--;}
   if(CM>11){CM=0;CY++;}
   renderCal();
-  if (!isWidgetGridEnabled()) syncCalendarSilent();
 }
 function calReset(){ const n=new Date(); CY=n.getFullYear(); CM=n.getMonth(); CS=n.getDate(); renderCal(); }
 
 function renderCal(){
-  document.getElementById('calTitle2').textContent=`${CY}년 ${CM+1}월`;
-  const grid=document.getElementById('calDates'); grid.innerHTML='';
+  const titleEl = document.getElementById('calTitle2');
+  const grid = document.getElementById('calDates');
+  if (!titleEl || !grid) return;
+  titleEl.textContent=`${CY}년 ${CM+1}월`;
+  grid.innerHTML='';
   const today=new Date();
   const first=new Date(CY,CM,1).getDay();
   const dim  =new Date(CY,CM+1,0).getDate();
@@ -8174,7 +8206,7 @@ async function addPathsToCat(paths, cat) {
   }
   if (added > 0) {
     buildCatPanels();
-    saveState();
+    saveLegacyAppData();
     showToast(`✅ ${added}개 항목 추가됨`);
   }
   return added;
@@ -8287,7 +8319,7 @@ function buildCatPanels(){
       name.contentEditable='true'; name.focus();
       const s=window.getSelection(),r=document.createRange(); r.selectNodeContents(name); s.removeAllRanges(); s.addRange(r);
     });
-    name.addEventListener('blur',()=>{ name.contentEditable='false'; cat.name=name.textContent.trim()||cat.name; saveState(); });
+    name.addEventListener('blur',()=>{ name.contentEditable='false'; cat.name=name.textContent.trim()||cat.name; saveLegacyAppData(); });
     name.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();name.blur();} });
     const sub=document.createElement('div'); sub.className='cp-sub'; sub.textContent=cat.sub;
     meta.appendChild(name); meta.appendChild(sub);
@@ -8364,7 +8396,7 @@ function buildCatPanels(){
             cat.items.push(_dragSrc.item);
           }
           _dragSrc = null;
-          saveState();
+          saveLegacyAppData();
           buildCatPanels();
         }
       }
@@ -8382,7 +8414,7 @@ function buildCatPanels(){
         const srcIdx = _dragSrc.cat.items.indexOf(_dragSrc.item);
         if (srcIdx >= 0) { _dragSrc.cat.items.splice(srcIdx,1); cat.items.push(_dragSrc.item); }
         _dragSrc = null;
-        saveState();
+        saveLegacyAppData();
         buildCatPanels();
       }
     });
@@ -8440,7 +8472,7 @@ function buildCatPanels(){
       let lbl = titleInp.value.trim();
       if(!lbl){ try { lbl = new URL(url).hostname.replace(/^www\./,''); } catch{ lbl = url; } }
       cat.items.push({ ic:'🔗', lbl, tag:'URL', path: url });
-      saveState();
+      saveLegacyAppData();
       buildCatPanels();
       showToast('✅ 링크 추가됨');
     }
@@ -8477,7 +8509,7 @@ function buildCatPanels(){
     // note sync helper — tagList DOM → cat.note
     function syncNote() {
       cat.note = Array.from(tagList.querySelectorAll('.tag-txt')).map(e => e.textContent).join('\n');
-      saveState();
+      saveLegacyAppData();
     }
 
     // 초기 메모를 태그로 표시
@@ -8513,7 +8545,7 @@ function buildCatPanels(){
       cat.note = (cat.note?.trim() ? cat.note + '\n' : '') + txt;
       input.value = '';
       input.focus();
-      saveState();
+      saveLegacyAppData();
       showToast('✅ 메모 추가됨');
     }
 
@@ -8538,7 +8570,7 @@ function buildCatPanels(){
     }
     zone.appendChild(panel);
   });
-  saveState();
+  saveLegacyAppData();
   initPanelDragSort();
 }
 
@@ -9292,7 +9324,7 @@ function confirmIconPicker() {
   closeIconPicker();
   if (!_icpSelected || !_ctxItem) return;
   _ctxItem.ic = _icpSelected;
-  saveState();
+  saveLegacyAppData();
   buildCatPanels();
   showToast('🎨 아이콘이 변경됐어요');
 }
@@ -9597,7 +9629,7 @@ function confirmRename() {
   if (!val || !_ctxItem) return;
   const old = _ctxItem.lbl;
   _ctxItem.lbl = val;
-  saveState();
+  saveLegacyAppData();
   buildCatPanels();
   showToast(`✏️ "${old}" → "${val}"`);
 }
@@ -9852,13 +9884,13 @@ document.addEventListener('click', e => {
 /* ════════════════════════════════════════
    앱 데이터 저장 / 복원
 ════════════════════════════════════════ */
-function saveState(){
+function saveLegacyAppData(){
   try {
     localStorage.setItem('appCats',  JSON.stringify(CATS));
     localStorage.setItem('appTodos', JSON.stringify(todoItems));
     localStorage.setItem('appScale', String(userScale));
     localStorage.setItem('calAlarms', JSON.stringify(calAlarms));
-  } catch(e) { console.warn('saveState error:', e); }
+  } catch(e) { console.warn('saveLegacyAppData error:', e); }
 }
 
 /* 앱 시작 시 저장된 데이터 복원 (모든 함수 정의 후 호출) */
@@ -10232,8 +10264,7 @@ async function doGoogleDisconnect(){
   // Tasks 상태 초기화
   _gtasksListId = null;
   localStorage.removeItem('gtasksListId');
-  const syncBtn = document.getElementById('todoSyncBtn');
-  if(syncBtn) syncBtn.style.display = 'none';
+  document.querySelectorAll('.todo-sync-btn').forEach((btn) => { btn.style.display = 'none'; });
   showToast('🔌 Google 연결이 해제됐어요');
 }
 
@@ -10257,7 +10288,7 @@ function renderTodoList(){
     empty.className = 'todo-empty';
     empty.textContent = '할 일을 추가해 보세요 ✨';
     list.appendChild(empty);
-    saveState();
+    saveLegacyAppData();
     return;
   }
   todoItems.forEach(item => {
@@ -10299,7 +10330,7 @@ function renderTodoList(){
     el.appendChild(del);
     list.appendChild(el);
   });
-  saveState();
+  saveLegacyAppData();
 }
 
 async function addTodoItem(){
@@ -10395,7 +10426,7 @@ function checkAlarms(){
       todoDirty = true;
     }
   });
-  if (todoDirty) { saveState(); renderTodoList(); }
+  if (todoDirty) { saveLegacyAppData(); renderTodoList(); }
 
   let calDirty = false;
   Object.entries(calAlarms).forEach(([evId, al]) => {
@@ -10502,7 +10533,7 @@ function saveAlarmMiniPopup(){
   const item = todoItems.find(t => t.id === id);
   if(!item) return;
   item.alarmDT = dt;
-  saveState();
+  saveLegacyAppData();
   renderTodoList();
   closeAlarmMiniPopup();
   const d = new Date(dt);
@@ -10512,7 +10543,7 @@ function saveAlarmMiniPopup(){
 function clearAlarmMiniPopup(){
   const id = _alarmMiniTarget;
   const item = todoItems.find(t => t.id === id);
-  if(item){ item.alarmDT = ''; saveState(); renderTodoList(); }
+  if(item){ item.alarmDT = ''; saveLegacyAppData(); renderTodoList(); }
   closeAlarmMiniPopup();
   showToast('🔕 알림이 해제됐어요');
 }
@@ -10623,7 +10654,6 @@ async function checkSetupAuthStatus(){
       const el = document.getElementById(id);
       if (el) el.classList.remove('evd-open');
     });
-    // display 방식 오버레이
     // display / class 방식 오버레이
     ['cevCtxOverlay', 'cevCtxMenu'].forEach(id => {
       const el = document.getElementById(id);
@@ -10631,11 +10661,17 @@ async function checkSetupAuthStatus(){
     });
     document.getElementById('drvCtxOverlay')?.classList.remove('drv-open');
     document.getElementById('drvCtxMenu')?.classList.remove('drv-open');
-    ['drvMovePanel', 'renameOverlay', 'renamePopup', 'icpOverlay',
-     'alarmMiniOverlay', 'updateOverlay'].forEach(id => {
+    document.getElementById('icpOverlay')?.classList.remove('icp-open');
+    ['drvMovePanel', 'renameOverlay', 'renamePopup', 'icpPopup',
+     'alarmMiniOverlay'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
+    const uo = document.getElementById('updateOverlay');
+    if (uo) { uo.classList.remove('uo-show'); uo.style.display = ''; }
+    document.getElementById('updateBanner')?.classList.remove('ub-show');
+    document.getElementById('widgetTypePicker')?.classList.remove('open');
+    document.getElementById('widgetSourceDialog')?.classList.remove('open');
     // class 방식 팝업
     const cep = document.getElementById('catEditPopup');
     if (cep) cep.classList.remove('cep-open');
@@ -10684,7 +10720,7 @@ Object.assign(window, {
   doGoogleConnect, doGoogleDisconnect,
   doSetupGoogleConnect, doCheckForUpdates, checkForUpdates, installUpdate,
   // ── 설정 초기화 / 앱 ──
-  resetAllData, reopenSetup, quitApp,
+  resetAllData, quitApp,
   // ── 이름 변경 ──
   confirmRename, closeRenamePopup,
   // ── Setup 스텝 ──
@@ -10698,17 +10734,30 @@ Object.assign(window, {
   onUbBtnClick,
 });
 
+window.__dashReady = true;
+document.documentElement.classList.replace('dash-booting', 'dash-ready');
+_bindSetupUiOnce();
+
 /* 앱 시작 시 setupDone 이면 대시보드 — 반드시 Object.assign 이후 */
-(function checkSetupDone(){
-  if(localStorage.getItem('setupDone') === '1'){
-    document.getElementById('setupOverlay').classList.add('hidden');
-    document.getElementById('dashboard').classList.add('show');
-    applyScale(userScale);
-    if(document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', initDashboard, { once: true });
-    } else {
-      initDashboard();
-    }
+(async function checkSetupDone(){
+  let done = localStorage.getItem('setupDone') === '1';
+  if (!done) {
+    try {
+      const st = await loadState();
+      if (st?.settings?.setupDone) {
+        localStorage.setItem('setupDone', '1');
+        done = true;
+      }
+    } catch (_) {}
+  }
+  if (!done) return;
+  document.getElementById('setupOverlay').classList.add('hidden');
+  document.getElementById('dashboard').classList.add('show');
+  applyScale(userScale);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboard, { once: true });
+  } else {
+    initDashboard();
   }
 })();
 </script>

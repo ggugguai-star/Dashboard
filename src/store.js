@@ -14,7 +14,7 @@
  *   weeklyPlanTitle  → drive 위젯 title
  */
 
-import { compactVertical, GRID_COLS } from './layout-engine.js';
+import { compactVertical, GRID_COLS, collides, packLayoutFirstFit } from './layout-engine.js';
 
 export const SCHEMA_VERSION = 3;
 export const STATE_FILE = 'dashboard-state.json';
@@ -201,22 +201,17 @@ export function autoPackWidgets(widgets) {
     return String(a.id).localeCompare(String(b.id));
   });
 
-  let y = 0;
-  const layout = sorted.map((w) => {
-    const item = {
-      i: w.id,
-      x: 0,
-      y,
-      w: w.w,
-      h: w.h,
-      minW: w.minW,
-      minH: w.minH,
-    };
-    y += w.h;
-    return item;
-  });
+  const layout = sorted.map((w) => ({
+    i: w.id,
+    x: w.x ?? 0,
+    y: w.y ?? 0,
+    w: w.w,
+    h: w.h,
+    minW: w.minW,
+    minH: w.minH,
+  }));
 
-  const packed = compactVertical(layout);
+  const packed = compactVertical(packLayoutFirstFit(layout));
   return sorted.map((w) => {
     const p = packed.find((el) => el.i === w.id);
     return { ...w, x: p.x, y: p.y };
@@ -360,11 +355,79 @@ function collectLocalStorageSnapshot() {
   return snap;
 }
 
+/** Tauri WebView — bare npm import 불가(frontendDist=src만 배포). invoke 브리지 사용 */
 async function getFsApi() {
-  const { mkdir, readTextFile, writeTextFile, rename, exists, copyFile, remove } =
-    await import('@tauri-apps/plugin-fs');
-  const { BaseDirectory } = await import('@tauri-apps/plugin-fs');
-  return { mkdir, readTextFile, writeTextFile, rename, exists, copyFile, remove, BaseDirectory };
+  const tauri = typeof window !== 'undefined' ? window.__TAURI__ : null;
+  const invoke = tauri?.core?.invoke;
+  if (typeof invoke !== 'function') {
+    throw new Error('Tauri FS unavailable');
+  }
+
+  const BaseDirectory = { AppData: 4 };
+
+  const readTextFile = async (path, options) => {
+    const arr = await invoke('plugin:fs|read_text_file', { path, options });
+    const bytes = arr instanceof ArrayBuffer ? new Uint8Array(arr) : Uint8Array.from(arr);
+    return new TextDecoder(options?.encoding ?? 'utf-8').decode(bytes);
+  };
+
+  const writeTextFile = async (path, data, options) => {
+    const body = new TextEncoder().encode(data);
+    await invoke('plugin:fs|write_text_file', body, {
+      headers: {
+        path: encodeURIComponent(path),
+        options: JSON.stringify(options ?? {}),
+      },
+    });
+  };
+
+  return {
+    BaseDirectory,
+    mkdir: (path, options) => invoke('plugin:fs|mkdir', { path, options }),
+    readTextFile,
+    writeTextFile,
+    rename: (oldPath, newPath, options) => invoke('plugin:fs|rename', { oldPath, newPath, options }),
+    exists: (path, options) => invoke('plugin:fs|exists', { path, options }),
+    copyFile: (fromPath, toPath, options) => invoke('plugin:fs|copy_file', { fromPath, toPath, options }),
+    remove: (path, options) => invoke('plugin:fs|remove', { path, options }),
+  };
+}
+
+function layoutHasOverlap(widgets) {
+  const layout = stateWidgetsToLayout(widgets);
+  for (let i = 0; i < layout.length; i++) {
+    for (let j = i + 1; j < layout.length; j++) {
+      if (collides(layout[i], layout[j])) return true;
+    }
+  }
+  return false;
+}
+
+/** 예전 자동배치(전부 x=0 세로 스택) 여부 */
+function isLegacySingleColumnLayout(widgets) {
+  if (!Array.isArray(widgets) || widgets.length < 2) return false;
+  return widgets.every((w) => (w.x ?? 0) === 0);
+}
+
+/** 12열 그리드 기준 좌표 보정 + 겹침/미배치 시 자동 배치 */
+export function normalizeWidgetLayout(state, { force = false } = {}) {
+  const next = cloneState(state ?? createEmptyState());
+  next.grid = { cols: GRID_COLS };
+  const widgets = (next.widgets || []).map((w) => enrichWidget(w));
+  const needsPack = force
+    || widgets.some((w) => w.x == null || w.y == null)
+    || layoutHasOverlap(widgets)
+    || isLegacySingleColumnLayout(widgets);
+  next.widgets = needsPack ? autoPackWidgets(widgets) : widgets;
+  return next;
+}
+
+function ensureWidgetStateSeeded(state) {
+  let next = state ?? createEmptyState();
+  if (!Array.isArray(next.widgets) || next.widgets.length === 0) {
+    next = seedDefaultWidgets(next);
+  }
+  return normalizeWidgetLayout(next);
 }
 
 async function ensureAppDataDir(fs) {
@@ -420,19 +483,29 @@ async function writeStateAtomic(fs, state) {
 
 /** Tauri AppData에서 상태 로드. 없으면 localStorage 마이그레이션 시도. */
 export async function loadState() {
-  const fs = await getFsApi();
-  await ensureAppDataDir(fs);
+  try {
+    const fs = await getFsApi();
+    await ensureAppDataDir(fs);
 
-  const raw = await fs.readTextFile(STATE_FILE, {
-    baseDir: fs.BaseDirectory.AppData,
-  }).catch(() => null);
+    const raw = await fs.readTextFile(STATE_FILE, {
+      baseDir: fs.BaseDirectory.AppData,
+    }).catch(() => null);
 
-  if (raw) {
-    const parsed = parseStateJson(raw);
-    if (parsed) return applyMigrationIdempotent(parsed);
+    if (raw) {
+      const parsed = parseStateJson(raw);
+      if (parsed) {
+        return ensureWidgetStateSeeded(applyMigrationIdempotent(parsed));
+      }
+    }
+
+    return ensureWidgetStateSeeded(await migrateFromLocalStorage());
+  } catch (err) {
+    console.warn('[store] loadState FS failed, using localStorage fallback:', err);
+    const snap = collectLocalStorageSnapshot();
+    return ensureWidgetStateSeeded(
+      buildStateFromLocalStorage(snap, { migratedAt: new Date().toISOString() }),
+    );
   }
-
-  return migrateFromLocalStorage();
 }
 
 /** 디바운스·원자적 쓰기·롤링 백업 */

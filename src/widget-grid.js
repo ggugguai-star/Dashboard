@@ -8,13 +8,14 @@ import {
   pixelToCell,
 } from './layout-engine.js';
 
-/** 기본 OFF — localStorage USE_WIDGET_GRID=1 이면 ON */
-export const USE_WIDGET_GRID_DEFAULT = false;
+/** 단계 15: 그리드가 유일 레이아웃 */
+export const USE_WIDGET_GRID_DEFAULT = true;
 
 export const DEFAULT_GAP = 8;
 
 let _contentSyncPaused = false;
 let _editMode = false;
+let _focusWidgetId = null;
 let _mounted = null;
 let _editTeardown = null;
 let _dragSession = null;
@@ -44,16 +45,16 @@ export function isEditMode() {
   return _editMode;
 }
 
+export function getEditFocusWidgetId() {
+  return _focusWidgetId;
+}
+
 export function isLayoutDirty() {
   return _layoutDirty;
 }
 
 export function isWidgetGridEnabled() {
-  if (typeof localStorage !== 'undefined') {
-    const v = localStorage.getItem('USE_WIDGET_GRID');
-    if (v === '1' || v === 'true') return true;
-  }
-  return USE_WIDGET_GRID_DEFAULT;
+  return true;
 }
 
 export function widgetsToLayout(widgets) {
@@ -143,7 +144,6 @@ function observeShellResize(shell) {
 
 /** @param {HTMLElement} rootEl */
 export function attachWidgetObservers(rootEl) {
-  if (!isWidgetGridEnabled()) return;
   detachWidgetObservers();
 
   const canvas = getCanvas(rootEl);
@@ -298,8 +298,9 @@ function updateAllShellGeometry(container, state, metrics, options = {}) {
   applyWidgetsGeometry(canvas, widgets, metrics, options);
 }
 
-function ensureDragHandles(canvas) {
+function ensureDragHandles(canvas, focusWidgetId = null) {
   canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    if (focusWidgetId && shell.dataset.widgetId !== focusWidgetId) return;
     if (!shell.querySelector(':scope > .widget-drag-handle')) {
       const handle = document.createElement('div');
       handle.className = 'widget-drag-handle';
@@ -314,8 +315,9 @@ function removeDragHandles(canvas) {
   canvas.querySelectorAll('.widget-drag-handle').forEach((h) => h.remove());
 }
 
-function ensureResizeHandles(canvas) {
+function ensureResizeHandles(canvas, focusWidgetId = null) {
   canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    if (focusWidgetId && shell.dataset.widgetId !== focusWidgetId) return;
     if (!shell.querySelector(':scope > .widget-resize-handle')) {
       const handle = document.createElement('div');
       handle.className = 'widget-resize-handle';
@@ -708,6 +710,9 @@ export function renderGrid(container, state, options = {}) {
   }
 
   canvas.style.height = `${computeGridHeight(widgets, cellSize, gap)}px`;
+  if (_editMode) {
+    canvas.style.setProperty('--edit-grid-step', `${cellSize + gap}px`);
+  }
 
   const typeIndex = {
     calendar: 0, drive: 0, todo: 0, category: 0,
@@ -737,14 +742,16 @@ export function renderGrid(container, state, options = {}) {
   }
 
   if (_editMode) {
-    ensureDragHandles(canvas);
-    ensureResizeHandles(canvas);
+    ensureDragHandles(canvas, _focusWidgetId);
+    ensureResizeHandles(canvas, _focusWidgetId);
   }
 
   return metrics;
 }
 
 function ensureEditActionButtons(canvas, options = {}) {
+  const focusWidgetId = options.focusWidgetId ?? null;
+  if (focusWidgetId) return;
   canvas.querySelectorAll('.widget-cell').forEach((shell) => {
     if (shell.querySelector(':scope > .widget-edit-actions')) return;
     const bar = document.createElement('div');
@@ -909,9 +916,10 @@ export function enterEditMode(rootEl, state, options = {}) {
   if (!canvas) return state;
 
   _editMode = true;
+  _focusWidgetId = options.focusWidgetId ?? null;
   setContentSyncPaused(true);
-  ensureDragHandles(canvas);
-  ensureResizeHandles(canvas);
+  ensureDragHandles(canvas, _focusWidgetId);
+  ensureResizeHandles(canvas, _focusWidgetId);
   ensureEditActionButtons(canvas, options);
 
   const dashboard = typeof document !== 'undefined'
@@ -983,6 +991,7 @@ export function exitEditMode(rootEl, state) {
   }
 
   _editMode = false;
+  _focusWidgetId = null;
   setContentSyncPaused(false);
 
   const dashboard = typeof document !== 'undefined'

@@ -11,6 +11,7 @@ import {
   moveElement,
   resizeElement,
   compactVertical,
+  packLayoutFirstFit,
   resolveCollisionsCascade,
   pixelToCell,
   clampToBounds,
@@ -164,6 +165,28 @@ describe('resizeElement', () => {
     const result = resizeElement(layout, layout[0], 4, 3);
     const b = result.find((el) => el.i === 'b');
     assert.equal(b.y, 3);
+  });
+});
+
+describe('packLayoutFirstFit', () => {
+  it('packs default four widgets across 12 columns (not single column)', () => {
+    const layout = [
+      item('cal-1', 0, 0, 4, 4),
+      item('wk-1', 0, 4, 3, 3),
+      item('memo-1', 0, 8, 3, 4),
+      item('cat-1', 0, 12, 2, 3),
+    ];
+    const packed = packLayoutFirstFit(layout);
+    assert.equal(packed.length, 4);
+    const xs = packed.map((p) => p.x);
+    assert.ok(xs.some((x) => x > 0), 'at least one widget uses horizontal space');
+    for (let i = 0; i < packed.length; i++) {
+      for (let j = i + 1; j < packed.length; j++) {
+        assert.equal(collides(packed[i], packed[j]), false);
+      }
+    }
+    const maxBottom = Math.max(...packed.map((p) => p.y + p.h));
+    assert.ok(maxBottom <= 6, `packed height ${maxBottom} should fit one screen row-group`);
   });
 });
 

@@ -93,6 +93,53 @@ export function compactVertical(layout) {
   });
 }
 
+/**
+ * 12열 그리드에 위젯을 가로·세로로 빈 칸에 배치 (first-fit, 큰 것 우선).
+ * 세로 한 줄 스택 대신 한 화면에 최대한 모이도록 배치한다.
+ */
+export function packLayoutFirstFit(layout, cols = GRID_COLS) {
+  if (!layout.length) return [];
+  const order = layout.map((el) => el.i);
+  const sorted = [...layout].sort((a, b) => {
+    const areaA = (a.w ?? 1) * (a.h ?? 1);
+    const areaB = (b.w ?? 1) * (b.h ?? 1);
+    if (areaB !== areaA) return areaB - areaA;
+    return String(a.i).localeCompare(String(b.i));
+  });
+
+  const placed = [];
+  const maxScanY = 96;
+
+  for (const item of sorted) {
+    const w = Math.min(item.w ?? 1, cols);
+    const h = item.h ?? 1;
+    let spot = null;
+
+    outer:
+    for (let y = 0; y < maxScanY; y++) {
+      for (let x = 0; x <= cols - w; x++) {
+        const probe = { ...item, x, y, w, h };
+        if (!placed.some((p) => collides(probe, p))) {
+          spot = { x, y };
+          break outer;
+        }
+      }
+    }
+
+    if (!spot) {
+      const fallbackY = placed.reduce((m, p) => Math.max(m, (p.y ?? 0) + (p.h ?? 1)), 0);
+      spot = { x: 0, y: fallbackY };
+    }
+
+    placed.push({ ...item, x: spot.x, y: spot.y, w, h });
+  }
+
+  return order.map((id) => {
+    const found = placed.find((el) => el.i === id);
+    return found ? { ...found } : null;
+  }).filter(Boolean);
+}
+
 export function moveElement(layout, item, x, y) {
   const base = cloneLayout(layout);
   const idx = base.findIndex((el) => el.i === item.i);
