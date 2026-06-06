@@ -52,6 +52,10 @@ export function resolveCollisionsCascade(layout, moved) {
       const other = { ...result[i] };
       if (other.y === anchor.y) {
         other.x = anchor.x + anchor.w;
+        if (other.x + other.w > GRID_COLS) {
+          other.x = 0;
+          other.y = anchor.y + anchor.h;
+        }
       } else {
         other.y = anchor.y + anchor.h;
       }
@@ -60,7 +64,42 @@ export function resolveCollisionsCascade(layout, moved) {
     }
   }
 
-  return result;
+  return sanitizeLayout(result);
+}
+
+/** 그리드 밖(x+w>cols)으로 밀린 위젯을 다음 행으로 재배치 */
+export function sanitizeLayout(layout, cols = GRID_COLS) {
+  if (!layout.length) return [];
+  const result = cloneLayout(layout);
+  const maxScanY = 96;
+
+  for (let i = 0; i < result.length; i++) {
+    const item = result[i];
+    if (item.x >= 0 && item.x + item.w <= cols) continue;
+
+    const others = result.filter((_, j) => j !== i);
+    let spot = null;
+    outer:
+    for (let y = 0; y < maxScanY; y++) {
+      for (let x = 0; x <= cols - (item.w ?? 1); x++) {
+        const probe = { ...item, x, y };
+        if (!others.some((p) => collides(probe, p))) {
+          spot = { x, y };
+          break outer;
+        }
+      }
+    }
+    if (!spot) {
+      const fallbackY = others.reduce(
+        (m, p) => Math.max(m, (p.y ?? 0) + (p.h ?? 1)),
+        0,
+      );
+      spot = { x: 0, y: fallbackY };
+    }
+    result[i] = clampToBounds({ ...item, ...spot }, cols);
+  }
+
+  return result.map((el) => clampToBounds(el, cols));
 }
 
 /**
@@ -91,6 +130,46 @@ export function compactVertical(layout) {
     const found = sorted.find((el) => el.i === id);
     return { ...found };
   });
+}
+
+/**
+ * 같은 행에서 왼쪽 빈 칸으로 당김 (y 우선·x 오름차순).
+ */
+export function compactHorizontal(layout, cols = GRID_COLS) {
+  if (layout.length === 0) return [];
+
+  const items = cloneLayout(layout);
+  const order = items.map((el) => el.i);
+  const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+
+  for (const item of sorted) {
+    const maxX = cols - (item.w ?? 1);
+    for (let x = 0; x <= Math.min(item.x, maxX); x++) {
+      const probe = clampToBounds({ ...item, x }, cols);
+      const blocked = sorted.some(
+        (other) => other.i !== item.i && collides(probe, other),
+      );
+      if (!blocked) {
+        item.x = probe.x;
+        item.y = probe.y;
+        break;
+      }
+    }
+  }
+
+  return order.map((id) => {
+    const found = sorted.find((el) => el.i === id);
+    return { ...found };
+  });
+}
+
+/** 가로·세로 빈 공간 제거 — 리사이즈/드래그 후 자동 정렬용 */
+export function compactLayout(layout, cols = GRID_COLS) {
+  let result = sanitizeLayout(cloneLayout(layout), cols);
+  result = compactHorizontal(result, cols);
+  result = compactVertical(result);
+  result = compactHorizontal(result, cols);
+  return sanitizeLayout(result, cols);
 }
 
 /**

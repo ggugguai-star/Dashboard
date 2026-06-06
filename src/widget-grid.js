@@ -3,6 +3,7 @@
  */
 import {
   GRID_COLS,
+  compactLayout,
   moveElement,
   resizeElement,
   pixelToCell,
@@ -171,6 +172,10 @@ export function attachWidgetObservers(rootEl) {
             w,
             h,
           );
+          if (target.dataset.widgetType === 'calendar'
+            && typeof globalThis.__dashboardRerenderCalendar === 'function') {
+            globalThis.__dashboardRerenderCalendar(target.dataset.widgetId);
+          }
         }));
       }
     });
@@ -223,6 +228,30 @@ function applyShellGeometry(shell, widget, cellSize, gap) {
   shell.style.height = `${ph}px`;
 }
 
+function applyShellGeometryWithOffset(shell, widget, cellSize, gap, offsetX, offsetY) {
+  const x = widget.x ?? 0;
+  const y = widget.y ?? 0;
+  const w = widget.w ?? 2;
+  const h = widget.h ?? 2;
+  const px = x * (cellSize + gap) + offsetX;
+  const py = y * (cellSize + gap) + offsetY;
+  const pw = w * cellSize + (w - 1) * gap;
+  const ph = h * cellSize + (h - 1) * gap;
+  shell.style.transform = `translate(${px}px, ${py}px)`;
+  shell.style.width = `${pw}px`;
+  shell.style.height = `${ph}px`;
+}
+
+function applyShellPixelSize(shell, widget, cellSize, gap, pw, ph) {
+  const x = widget.x ?? 0;
+  const y = widget.y ?? 0;
+  const px = x * (cellSize + gap);
+  const py = y * (cellSize + gap);
+  shell.style.transform = `translate(${px}px, ${py}px)`;
+  shell.style.width = `${pw}px`;
+  shell.style.height = `${ph}px`;
+}
+
 function countCategoryWidgets(widgets) {
   return widgets.filter((w) => w.type === 'category').length;
 }
@@ -230,6 +259,7 @@ function countCategoryWidgets(widgets) {
 function resolveAnchorNode(widget, anchors, typeIndex, categoryCount) {
   const type = widget.type;
   if (type === 'calendar' || type === 'drive' || type === 'todo'
+    || type === 'gsheets' || type === 'gslides' || type === 'gdocs'
     || LOCAL_WIDGET_TYPES.includes(type)) {
     const list = anchors[type] || [];
     const node = list[typeIndex[type] ?? 0];
@@ -332,7 +362,7 @@ function removeResizeHandles(canvas) {
   canvas.querySelectorAll('.widget-resize-handle').forEach((h) => h.remove());
 }
 
-function getOrCreateGhost(canvas) {
+function getOrCreateResizeGhost(canvas) {
   let ghost = canvas.querySelector(':scope > .widget-resize-ghost');
   if (!ghost) {
     ghost = document.createElement('div');
@@ -349,15 +379,49 @@ function hideResizeGhost(canvas) {
 }
 
 function showResizeGhost(canvas, widget, metrics) {
-  const ghost = getOrCreateGhost(canvas);
+  const ghost = getOrCreateResizeGhost(canvas);
   applyShellGeometry(ghost, widget, metrics.cellSize, metrics.gap);
   ghost.style.display = 'block';
+}
+
+function getOrCreateDragGhost(canvas) {
+  let ghost = canvas.querySelector(':scope > .widget-drag-ghost');
+  if (!ghost) {
+    ghost = document.createElement('div');
+    ghost.className = 'widget-drag-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    canvas.appendChild(ghost);
+  }
+  return ghost;
+}
+
+function hideDragGhost(canvas) {
+  const ghost = canvas?.querySelector(':scope > .widget-drag-ghost');
+  if (ghost) ghost.style.display = 'none';
+}
+
+function showDragGhost(canvas, widget, metrics) {
+  const ghost = getOrCreateDragGhost(canvas);
+  applyShellGeometry(ghost, widget, metrics.cellSize, metrics.gap);
+  ghost.style.display = 'block';
+}
+
+function scheduleSettledGeometry(container, state, metrics) {
+  const apply = () => updateAllShellGeometry(container, state, metrics);
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(apply);
+    });
+  } else {
+    apply();
+  }
 }
 
 function clearDragVisuals(canvas) {
   canvas?.querySelectorAll('.widget-cell.is-dragging').forEach((shell) => {
     shell.classList.remove('is-dragging');
   });
+  hideDragGhost(canvas);
 }
 
 function clearResizeVisuals(canvas) {
@@ -381,12 +445,14 @@ function commitDrag(state, container, session) {
   const item = layout.find((el) => el.i === widgetId);
   if (!item) return state;
 
-  const nextLayout = moveElement(layout, item, cell.x, cell.y);
+  const nextLayout = compactLayout(moveElement(layout, item, cell.x, cell.y));
   const nextWidgets = applyLayoutToWidgets(state.widgets, nextLayout);
   state.widgets = nextWidgets;
   _layoutDirty = true;
 
-  updateAllShellGeometry(container, state, metrics);
+  const canvas = getCanvas(container);
+  hideDragGhost(canvas);
+  scheduleSettledGeometry(container, state, metrics);
   if (_mounted) _mounted.state = state;
   return state;
 }
@@ -405,12 +471,27 @@ function previewDrag(state, container, session) {
   const item = layout.find((el) => el.i === widgetId);
   if (!item) return;
 
-  const previewLayout = moveElement(layout, item, cell.x, cell.y);
+  const previewLayout = compactLayout(moveElement(layout, item, cell.x, cell.y));
   const previewWidgets = applyLayoutToWidgets(state.widgets, previewLayout);
 
   const canvas = getCanvas(container);
   if (!canvas) return;
-  applyWidgetsGeometry(canvas, previewWidgets, metrics);
+
+  const previewById = new Map(previewWidgets.map((w) => [w.id, w]));
+  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    const id = shell.dataset.widgetId;
+    const previewW = previewById.get(id);
+    if (!previewW) return;
+    if (id === widgetId) {
+      applyShellGeometryWithOffset(shell, widget, metrics.cellSize, metrics.gap, deltaX, deltaY);
+    } else {
+      applyShellGeometry(shell, previewW, metrics.cellSize, metrics.gap);
+    }
+  });
+  canvas.style.height = `${computeGridHeight(previewWidgets, metrics.cellSize, metrics.gap)}px`;
+
+  const target = previewWidgets.find((w) => w.id === widgetId);
+  if (target) showDragGhost(canvas, target, metrics);
 }
 
 function computeResizeCells(widget, deltaX, deltaY, metrics) {
@@ -438,14 +519,14 @@ function commitResize(state, container, session) {
   const item = layout.find((el) => el.i === widgetId);
   if (!item) return state;
 
-  const nextLayout = resizeElement(layout, item, newW, newH);
+  const nextLayout = compactLayout(resizeElement(layout, item, newW, newH));
   const nextWidgets = applyLayoutToWidgets(state.widgets, nextLayout);
   state.widgets = nextWidgets;
   _layoutDirty = true;
 
   const canvas = getCanvas(container);
-  if (canvas) hideResizeGhost(canvas);
-  updateAllShellGeometry(container, state, metrics);
+  hideResizeGhost(canvas);
+  scheduleSettledGeometry(container, state, metrics);
   if (_mounted) _mounted.state = state;
   return state;
 }
@@ -460,12 +541,33 @@ function previewResize(state, container, session) {
   const item = layout.find((el) => el.i === widgetId);
   if (!item) return;
 
-  const previewLayout = resizeElement(layout, item, newW, newH);
+  const previewLayout = compactLayout(resizeElement(layout, item, newW, newH));
   const previewWidgets = applyLayoutToWidgets(state.widgets, previewLayout);
 
   const canvas = getCanvas(container);
   if (!canvas) return;
-  applyWidgetsGeometry(canvas, previewWidgets, metrics);
+
+  const { pw: startPw, ph: startPh } = cellsToPixelSize(
+    widget.w ?? 2,
+    widget.h ?? 2,
+    metrics.cellSize,
+    metrics.gap,
+  );
+  const smoothPw = Math.max(metrics.cellSize, startPw + deltaX);
+  const smoothPh = Math.max(metrics.cellSize, startPh + deltaY);
+
+  const previewById = new Map(previewWidgets.map((w) => [w.id, w]));
+  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    const id = shell.dataset.widgetId;
+    const previewW = previewById.get(id);
+    if (!previewW) return;
+    if (id === widgetId) {
+      applyShellPixelSize(shell, widget, metrics.cellSize, metrics.gap, smoothPw, smoothPh);
+    } else {
+      applyShellGeometry(shell, previewW, metrics.cellSize, metrics.gap);
+    }
+  });
+  canvas.style.height = `${computeGridHeight(previewWidgets, metrics.cellSize, metrics.gap)}px`;
 
   const resized = previewWidgets.find((w) => w.id === widgetId);
   if (resized) showResizeGhost(canvas, resized, metrics);
@@ -549,6 +651,7 @@ function attachDragHandlers(container, state) {
     cancelAnimationFrame(session.raf);
     session.shell.classList.remove('is-dragging');
     setCanvasInteracting(canvas, false);
+    hideDragGhost(canvas);
     updateAllShellGeometry(container, state, session.metrics, { suppressTransition: true });
   };
 
@@ -715,7 +818,7 @@ export function renderGrid(container, state, options = {}) {
   }
 
   const typeIndex = {
-    calendar: 0, drive: 0, todo: 0, category: 0,
+    calendar: 0, drive: 0, todo: 0, gsheets: 0, gslides: 0, gdocs: 0, category: 0,
     clock: 0, sticky: 0, pomodoro: 0, dday: 0, weather: 0, gemini: 0,
   };
   const categoryCount = countCategoryWidgets(widgets);
@@ -790,6 +893,7 @@ export function collectPanelAnchors(state = null) {
   if (typeof document === 'undefined') {
     return {
       calendar: [], drive: [], todo: [],
+      gsheets: [], gslides: [], gdocs: [],
       clock: [], sticky: [], pomodoro: [], dday: [], weather: [], gemini: [],
       catZone: null, categoryPanels: [],
     };
@@ -799,6 +903,9 @@ export function collectPanelAnchors(state = null) {
     const calendar = [];
     const drive = [];
     const todo = [];
+    const gsheets = [];
+    const gslides = [];
+    const gdocs = [];
     const clock = [];
     const sticky = [];
     const pomodoro = [];
@@ -811,6 +918,9 @@ export function collectPanelAnchors(state = null) {
       if (w.type === 'calendar') calendar.push(node);
       else if (w.type === 'drive') drive.push(node);
       else if (w.type === 'todo') todo.push(node);
+      else if (w.type === 'gsheets') gsheets.push(node);
+      else if (w.type === 'gslides') gslides.push(node);
+      else if (w.type === 'gdocs') gdocs.push(node);
       else if (w.type === 'clock') clock.push(node);
       else if (w.type === 'sticky') sticky.push(node);
       else if (w.type === 'pomodoro') pomodoro.push(node);
@@ -821,7 +931,8 @@ export function collectPanelAnchors(state = null) {
     const catZone = document.getElementById('catZone');
     const categoryPanels = catZone ? [...catZone.querySelectorAll(':scope > .cat-panel')] : [];
     return {
-      calendar, drive, todo, clock, sticky, pomodoro, dday, weather, gemini, catZone, categoryPanels,
+      calendar, drive, todo, gsheets, gslides, gdocs,
+      clock, sticky, pomodoro, dday, weather, gemini, catZone, categoryPanels,
     };
   }
   const sideL = document.querySelector('.side-l');
@@ -865,8 +976,8 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
       if (!_mounted) return;
-      renderGrid(rootEl, state, {
-        anchors: resolvedAnchors,
+      renderGrid(rootEl, _mounted.state, {
+        anchors: _mounted.anchors ?? resolvedAnchors,
         layoutOnly: true,
       });
     });
@@ -903,6 +1014,20 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
 export function remountWidgetGrid(rootEl, state, anchors = null, prevTeardown = null) {
   if (typeof prevTeardown === 'function') prevTeardown();
   return mountWidgetGrid(rootEl, state, anchors);
+}
+
+/** 위젯 삭제 등 경량 DOM 갱신 — 셸 제거 후 레이아웃만 재계산 */
+export function pruneWidgetCell(rootEl, state, widgetId, anchors = null) {
+  const canvas = getCanvas(rootEl);
+  if (!canvas) return state;
+  canvas.querySelector(`.widget-cell[data-widget-id="${widgetId}"]`)?.remove();
+  const resolvedAnchors = anchors ?? collectPanelAnchors(state);
+  renderGrid(rootEl, state, { anchors: resolvedAnchors, layoutOnly: true });
+  if (_mounted) {
+    _mounted.state = state;
+    _mounted.anchors = resolvedAnchors;
+  }
+  return state;
 }
 
 /**

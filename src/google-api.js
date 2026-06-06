@@ -6,8 +6,8 @@
  * ── 모듈 구성 ──────────────────────────────────────────────────────────
  *  [Auth]    getAuthUrl · exchangeCodeForTokens · getValidAccessToken
  *  [Cal]     getCalendarList · getCalendarEvents · createCalendarEvent · updateCalendarEvent · deleteCalendarEvent
- *  [Drive]   listDriveFolder · listDriveImages · getDriveImageData
- *            driveTrashFile · driveMoveFile · driveDownloadFile
+ *  [Drive]   listDriveFolder · listDriveImages · listDriveFilesByMime · getDriveImageData
+ *            driveTrashFile · driveMoveFile · driveDownloadFile · driveDownloadFolder
  *  [Tasks]   getTaskLists · tasksGetDefaultList · tasksListTasks · tasksCreateTask
  *            tasksPatchTask · tasksDeleteTask
  *
@@ -359,6 +359,28 @@ export async function listDriveImages(folderId) {
 }
 
 /**
+ * Drive에서 mimeType 으로 Google Workspace 파일 목록을 조회한다.
+ *
+ * @param {string} mimeType — e.g. application/vnd.google-apps.spreadsheet
+ * @param {{ pageSize?: number }} [options]
+ * @returns {Promise<{files:object[]}|{error:string}>}
+ */
+export async function listDriveFilesByMime(mimeType, options = {}) {
+  const pageSize = options.pageSize ?? 30;
+  const params = new URLSearchParams({
+    q:       `mimeType='${mimeType}' and trashed=false`,
+    fields:  'files(id,name,mimeType,webViewLink,modifiedTime)',
+    orderBy: 'modifiedTime desc',
+    pageSize: String(pageSize),
+  });
+  const json = await _apiFetch(
+    `https://www.googleapis.com/drive/v3/files?${params}`
+  );
+  if (json.error) return json;
+  return { files: json.files ?? [] };
+}
+
+/**
  * Drive 파일을 Base64 로 가져온다 (이미지 미리보기용).
  * 큰 파일(>5MB) 은 브라우저 메모리 이슈가 있을 수 있다.
  *
@@ -500,6 +522,101 @@ export async function driveDownloadFile(fileId, fileName, mimeType, destPath) {
   } catch (err) {
     return { error: err.message };
   }
+}
+
+const _FOLDER_MIME = 'application/vnd.google-apps.folder';
+
+function _joinPath(dir, name) {
+  const sep = String(dir).includes('\\') ? '\\' : '/';
+  return String(dir).replace(/[/\\]+$/, '') + sep + name;
+}
+
+async function _ensureLocalDir(path) {
+  try {
+    await window.__TAURI__.core.invoke('plugin:fs|mkdir', {
+      path,
+      options: { recursive: true },
+    });
+  } catch {
+    /* 이미 존재할 수 있음 */
+  }
+}
+
+/** 폴더 내 전체 파일 목록 (페이지네이션) */
+async function _listAllDriveFolderFiles(folderId) {
+  const all = [];
+  let pageToken = '';
+  const parentId = folderId || 'root';
+  do {
+    const params = new URLSearchParams({
+      q: `'${parentId}' in parents and trashed=false`,
+      fields: 'nextPageToken,files(id,name,mimeType,webViewLink,size,parents)',
+      orderBy: 'folder,name',
+      pageSize: '200',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
+    const json = await _apiFetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+    if (json.error) return json;
+    all.push(...(json.files ?? []));
+    pageToken = json.nextPageToken || '';
+  } while (pageToken);
+  return { files: all };
+}
+
+async function _downloadDriveFolderRecursive(folderId, folderName, destParentPath, stats) {
+  const localPath = _joinPath(destParentPath, folderName);
+  await _ensureLocalDir(localPath);
+
+  const listing = await _listAllDriveFolderFiles(folderId);
+  if (listing.error) {
+    stats.errors.push(`${folderName}: ${listing.error}`);
+    return;
+  }
+
+  for (const f of listing.files) {
+    if (f.mimeType === _FOLDER_MIME) {
+      await _downloadDriveFolderRecursive(f.id, f.name, localPath, stats);
+      continue;
+    }
+    const isGoogleApp = f.mimeType?.startsWith('application/vnd.google-apps');
+    const exportInfo = isGoogleApp ? _EXPORT_MAP[f.mimeType] : null;
+    if (isGoogleApp && !exportInfo) {
+      stats.skipped.push(f.name);
+      continue;
+    }
+    const result = await driveDownloadFile(f.id, f.name, f.mimeType, localPath);
+    if (result.error) stats.errors.push(`${f.name}: ${result.error}`);
+    else stats.downloaded += 1;
+  }
+}
+
+/**
+ * Drive 폴더를 로컬 경로에 재귀 다운로드한다.
+ * (Google은 폴더 zip API가 없어 하위 항목을 순회한다)
+ *
+ * @param {string} folderId
+ * @param {string} folderName
+ * @param {string} destPath — 로컬 부모 폴더 경로
+ */
+export async function driveDownloadFolder(folderId, folderName, destPath) {
+  const token = await getValidAccessToken();
+  if (!token) return { error: 'not_authenticated' };
+
+  const stats = { downloaded: 0, skipped: [], errors: [] };
+  await _downloadDriveFolderRecursive(folderId, folderName, destPath, stats);
+
+  const savedPath = _joinPath(destPath, folderName);
+  if (stats.downloaded === 0 && stats.errors.length) {
+    return { error: stats.errors[0] };
+  }
+  return {
+    success: true,
+    savedPath,
+    folderName,
+    downloaded: stats.downloaded,
+    skipped: stats.skipped.length,
+    errors: stats.errors,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════

@@ -11,6 +11,8 @@ import {
   moveElement,
   resizeElement,
   compactVertical,
+  compactHorizontal,
+  compactLayout,
   packLayoutFirstFit,
   resolveCollisionsCascade,
   pixelToCell,
@@ -166,6 +168,17 @@ describe('resizeElement', () => {
     const b = result.find((el) => el.i === 'b');
     assert.equal(b.y, 3);
   });
+
+  it('wraps pushed widget to next row when horizontal overflow', () => {
+    const layout = [item('a', 0, 0, 6, 2), item('b', 6, 0, 3, 2)];
+    const result = resizeElement(layout, layout[0], 10, 2);
+    const a = result.find((el) => el.i === 'a');
+    const b = result.find((el) => el.i === 'b');
+    assert.equal(a.w, 10);
+    assert.equal(b.x, 0);
+    assert.ok(b.y >= 2);
+    assert.ok(b.x + b.w <= 12);
+  });
 });
 
 describe('packLayoutFirstFit', () => {
@@ -187,6 +200,47 @@ describe('packLayoutFirstFit', () => {
     }
     const maxBottom = Math.max(...packed.map((p) => p.y + p.h));
     assert.ok(maxBottom <= 6, `packed height ${maxBottom} should fit one screen row-group`);
+  });
+});
+
+describe('compactHorizontal', () => {
+  it('slides widgets left into horizontal gap after shrink', () => {
+    const layout = [
+      item('a', 0, 0, 2, 2),
+      item('b', 4, 0, 3, 2),
+      item('c', 8, 0, 3, 2),
+    ];
+    const result = compactHorizontal(layout);
+    assert.equal(result.find((el) => el.i === 'b').x, 2);
+    assert.equal(result.find((el) => el.i === 'c').x, 5);
+  });
+
+  it('does not overlap when compacting', () => {
+    const layout = [item('a', 0, 0, 4, 2), item('b', 5, 0, 4, 2)];
+    const result = compactHorizontal(layout);
+    for (let i = 0; i < result.length; i++) {
+      for (let j = i + 1; j < result.length; j++) {
+        assert.equal(collides(result[i], result[j]), false);
+      }
+    }
+  });
+});
+
+describe('compactLayout', () => {
+  it('reflows after resize shrink leaves top-row gap', () => {
+    const layout = [
+      item('a', 0, 0, 4, 2),
+      item('b', 4, 0, 4, 2),
+      item('c', 8, 0, 4, 2),
+      item('d', 0, 2, 4, 3),
+    ];
+    const shrunk = resizeElement(layout, layout[0], 2, 2);
+    const result = compactLayout(shrunk);
+    assert.equal(result.find((el) => el.i === 'a').w, 2);
+    assert.equal(result.find((el) => el.i === 'b').x, 2);
+    assert.equal(result.find((el) => el.i === 'c').x, 6);
+    const d = result.find((el) => el.i === 'd');
+    assert.ok(d.y <= 2, `d should move up, got y=${d.y}`);
   });
 });
 

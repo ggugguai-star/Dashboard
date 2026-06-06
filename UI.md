@@ -159,10 +159,13 @@ body {
 ```
 
 ## 5. 컴포넌트 패턴
-- **카드/패널**: `.glass` + `padding: var(--space-5)`. 떠 있는 느낌은 `--shadow-md`~`lg`.
-- **버튼(프라이머리)**: 솔리드 `--primary`, 텍스트 `--text-on-primary`, `border-radius: var(--radius-pill)`,
-  hover 시 살짝 떠오르기(`translateY(-1px)` + `--shadow-md`), press 시 `--primary-press`.
-- **버튼(글래스)**: `.glass` + `--radius-pill`, 텍스트 `--text-strong`. 보조 액션용.
+> 마우스/포인터로 누르거나 올리는 모든 컨트롤(버튼·카드·칩·아이콘 등)에는 §6.1 `.tactile`을 함께 붙여
+> "통통거리는" 촉감을 준다. 호버 떠오름이 필요하면 `.tactile.lift`.
+
+- **카드/패널**: `.glass` + `padding: var(--space-5)`. 떠 있는 느낌은 `--shadow-md`~`lg`. 클릭 가능하면 `.tactile.lift`.
+- **버튼(프라이머리)**: 솔리드 `--primary`, 텍스트 `--text-on-primary`, `border-radius: var(--radius-pill)`, `.tactile` 부착.
+  hover 시 살짝 떠오르기(`.lift` 또는 `translateY(-1px)` + `--shadow-md`), press 시 `--primary-press`로 색 전환 + 스쿼시.
+- **버튼(글래스)**: `.glass` + `--radius-pill`, 텍스트 `--text-strong`, `.tactile`. 보조 액션용.
 - **상단/하단 내비게이션(탭바)**: `.glass`를 화면 가장자리에 띄우고(`position: sticky/fixed`),
   반경 크게, 약간의 여백을 둬 "떠 있는 바" 느낌. iOS 탭바처럼.
 - **입력 필드**: `--bg-elevated` 살짝 불투명 + 1px 보더(`--glass-stroke-bottom`), focus 시 `--primary` 링.
@@ -173,13 +176,53 @@ body {
 ```css
 :root {
   --ease-soft:   cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* 살짝 통통 튀는 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* 1회성 오버슈트(등장/모달용) */
   --dur-fast: 160ms; --dur: 240ms; --dur-slow: 380ms;
+
+  /* 촉각 스프링(Tactile) — iOS/iPadOS식 "통통거림".
+     감쇠 조화진동을 linear()로 인코딩 → 다중 바운스가 GPU 합성으로 재생됨.
+     물리값: stiffness 520, damping 20, mass 1 (overshoot ~22%, settle ~525ms). */
+  --ease-tactile: linear(
+    0, 0.218 6.5%, 0.842 18.5%, 1.077, 1.163 28.5%, 1.148, 1.066 41%,
+    0.996 49%, 0.973, 0.983 65%, 1.002, 1.006, 1
+  );
+  --dur-tactile:  525ms;   /* 스프링은 settle time에 종속 — 임의로 줄이지 말 것 */
+  --press-scale:  0.96;    /* 눌림 깊이(작을수록 깊게) */
+  --hover-lift:   2px;     /* 호버 시 떠오르는 높이 */
 }
 ```
 - 인터랙션은 `--dur` / `--ease-soft` 기본. 등장/모달은 `--ease-spring`로 생기 부여.
+- **마우스/포인터 촉감은 `.tactile`(아래) 사용** — press 스쿼시 후 `--ease-tactile`로 튕기며 복귀, hover 시 떠오름.
 - 페이지 로드 시 staggered 등장(`animation-delay`)으로 한 번의 인상적인 순간을 만든다(과한 마이크로 인터랙션 남발 금지).
 - hover/press에 미세한 깊이 변화(그림자·translateY)로 "유리가 반응하는" 느낌.
+
+### 6.1 `.tactile` 유틸리티 (마우스 촉감의 표준 구현)
+`transform(scale)`을 주 피드백 채널로 쓴다(색 아님). 누를 땐 빠르게 스쿼시하고,
+떼는 순간 스프링 이징이 1.0을 넘겨 살짝 튄 뒤 가라앉는다. 어떤 요소(버튼·카드·칩·아이콘)에도 붙일 수 있다.
+
+```css
+.tactile {
+  transition: transform var(--dur-tactile) var(--ease-tactile),
+              box-shadow var(--dur) var(--ease-soft);
+  will-change: transform;
+  touch-action: manipulation;   /* 모바일 더블탭 지연 제거 */
+}
+/* 누름: 빠르게 눌렸다가, 떼면 위 스프링 이징으로 튕기며 복귀 */
+.tactile:active { transform: scale(var(--press-scale)); transition-duration: 90ms; }
+
+/* 호버 떠오름: 터치 기기에서 hover가 눌린 채 끼지 않도록 pointer:fine 전용 */
+@media (hover: hover) and (pointer: fine) {
+  .tactile.lift:hover {
+    transform: translateY(calc(-1 * var(--hover-lift))) scale(1.01);
+    box-shadow: var(--shadow-lg);
+  }
+}
+```
+- **드래그(관성·러버밴딩)** 는 CSS로 한계가 있어 JS 스프링을 쓴다. 동일 물리값(stiffness 520 / damping 20 / mass 1)을
+  `pointermove`로 따라오게 하고 `pointerup` 시 같은 스프링으로 원위치(또는 스냅) 복귀시킨다. Motion One의 `spring`이나
+  동등한 RAF 적분으로 구현. (튜닝·코드 추출은 `playground.html` 참고.)
+- 스프링은 지속시간이 물리에 종속된다. 더 통통하게(감쇠↓) 만들면 settle이 길어지니, **자주 누르는 컨트롤은 짧게(스내피)**,
+  카드 등장·모달엔 길고 탄력 있게 배분한다.
 
 ## 7. 접근성 (필수)
 ```css
@@ -201,7 +244,10 @@ body {
 ## 8. Do / Don't
 - ✅ 따뜻한 오프화이트 + 멀티톤 파스텔 메시, 떠 있는 유리 패널, 큰 라운드, 부드러운 그림자.
 - ✅ Pretendard(본문) + Bricolage Grotesque(디스플레이) 조합 유지.
+- ✅ 클릭/호버되는 컨트롤엔 `.tactile`로 스프링 촉감 부여(색이 아닌 `scale`로 반응). 호버는 `pointer:fine` 전용.
 - ❌ 다크모드/`prefers-color-scheme: dark` 스타일 추가.
+- ❌ `--ease-tactile`의 settle보다 짧게 `--dur-tactile`을 강제로 줄여 바운스를 끊기.
+- ❌ 터치 기기에서 hover 효과가 눌린 채 끼게 두기(반드시 `@media (hover:hover) and (pointer:fine)`).
 - ❌ 순수 흰 배경 위 진한 그림자, 날카로운 직각, 형광/원색 대량 사용.
 - ❌ Inter/Roboto/Arial 등 제너릭 폰트, "보라 그라데이션 on 화이트" 클리셰.
 - ❌ 가독성을 해치는 과한 투명도(텍스트가 배경에 묻히는 것).

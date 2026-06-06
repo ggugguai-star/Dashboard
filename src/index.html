@@ -4,39 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>업무 대시보드 — 데모</title>
+<link rel="stylesheet" href="./fonts/fonts.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@import url('./fonts/fonts.css');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root {
-  /* 파스텔 팔레트 */
-  --lavender: #c4b5fd;
-  --sky:      #93c5fd;
-  --mint:     #6ee7b7;
-  --peach:    #fdba74;
-  --rose:     #fda4af;
-  --lemon:    #fde68a;
-  --lilac:    #e9d5ff;
-
-  --glass-bg:     rgba(255,255,255,0.52);
-  --glass-bg2:    rgba(255,255,255,0.36);
-  --glass-border: rgba(255,255,255,0.78);
-  --glass-border2:rgba(255,255,255,0.48);
-
-  --text1: #1e1b4b;
-  --text2: #4c4f6b;
-  --text3: #8b8fae;
-  --text4: #b8bbcf;
-
-  --shadow-soft: 0 8px 32px rgba(120,100,200,0.10), 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-card: 0 12px 40px rgba(120,100,200,0.13), 0 3px 10px rgba(0,0,0,0.05);
-
-  /* UI.md §1 — 그리드·핸들 별칭 */
+  /* UI.md §1 — 컬러 토큰 */
+  --bg-base:        #F6F5FB;
   --bg-elevated:    #FFFFFF;
+  --pastel-lavender:#E9E3FF;
+  --pastel-mint:    #D9F5E6;
+  --pastel-peach:   #FFE7DC;
+  --pastel-sky:     #DCEEFF;
+  --pastel-blush:   #FFE1EC;
+  --pastel-butter:  #FFF3D6;
   --primary:        #6E5BF2;
   --primary-press:  #5A48D6;
   --primary-soft:   #ECE8FF;
+  --accent-coral:   #FF8A6B;
+  --text-strong:    #1B1A2E;
+  --text:           #3A3850;
+  --text-muted:     #6B6980;
+  --text-on-primary:#FFFFFF;
   --glass-fill:     rgba(255, 255, 255, 0.55);
   --glass-fill-strong: rgba(255, 255, 255, 0.72);
   --glass-stroke:   rgba(255, 255, 255, 0.65);
@@ -44,38 +38,180 @@
   --glass-highlight:rgba(255, 255, 255, 0.85);
   --glass-blur:     20px;
   --glass-saturate: 180%;
-  --text-muted:     #6B6980;
-  --radius-sm:      12px;
-  --radius-md:      18px;
+  --shadow-sm:  0 2px 8px rgba(40, 35, 90, 0.06);
+  --shadow-md:  0 8px 28px rgba(40, 35, 90, 0.10);
+  --shadow-lg:  0 20px 56px rgba(40, 35, 90, 0.14);
+  --success: #34C77B;
+  --warning: #F7B955;
+  --danger:  #F26D6D;
+  --info:    #5AA9F2;
 
-  /* UI.md §6 — Liquid motion */
-  --ease-liquid: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* UI.md §2 — 타이포 */
+  --font-display: "Bricolage Grotesque", "Pretendard Variable", Pretendard, sans-serif;
+  --font-sans:    "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  --text-xs:  0.75rem;
+  --text-sm:  0.875rem;
+  --text-md:  1rem;
+  --text-lg:  1.25rem;
+  --text-xl:  1.563rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+  --leading-tight: 1.2;
+  --leading-normal: 1.55;
+  --tracking-tight: -0.02em;
+
+  /* UI.md §3 — 형태 */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+
+  /* UI.md §6 — 모션 */
   --ease-soft:   cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --dur-fast:    160ms;
-  --dur-liquid:  350ms;
-  --glass-blur-ui: 20px;
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 380ms;
+  --ease-tactile: linear(
+    0, 0.218 6.5%, 0.842 18.5%, 1.077, 1.163 28.5%, 1.148, 1.066 41%,
+    0.996 49%, 0.973, 0.983 65%, 1.002, 1.006, 1
+  );
+  --dur-tactile:  525ms;
+  --press-scale:  0.96;
+  --hover-lift:   2px;
+
+  /* 레거시 별칭 (기존 스타일 호환) */
+  --ease-liquid: var(--ease-spring);
+  --dur-liquid: var(--dur-slow);
+  --lavender: #c4b5fd;
+  --sky:      #93c5fd;
+  --mint:     #6ee7b7;
+  --peach:    #fdba74;
+  --rose:     #fda4af;
+  --lemon:    #fde68a;
+  --lilac:    #e9d5ff;
+  --glass-bg:     var(--glass-fill);
+  --glass-bg2:    var(--glass-fill);
+  --glass-border: var(--glass-stroke);
+  --glass-border2:var(--glass-stroke-bottom);
+  --text1: var(--text-strong);
+  --text2: var(--text);
+  --text3: var(--text-muted);
+  --text4: #b8bbcf;
+  --shadow-soft: var(--shadow-md);
+  --shadow-card: var(--shadow-lg);
+  --glass-blur-ui: var(--glass-blur);
 }
 
 html { font-size: 16px; }
 body {
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
-  background: #e8ecff;
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  color: var(--text);
+  background: var(--bg-base);
   min-height: 100vh;
   overflow-x: hidden;
-  color: var(--text1);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, .display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-strong);
+  line-height: var(--leading-tight);
 }
 
-/* ── 배경 그라디언트 (항상 표시) ── */
+/* UI.md §4 — Liquid Glass 재질 */
+.glass {
+  position: relative;
+  background: linear-gradient(135deg, var(--glass-fill-strong), var(--glass-fill));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-stroke);
+  border-bottom-color: var(--glass-stroke-bottom);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
+  overflow: hidden;
+}
+.glass::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 42%);
+  pointer-events: none;
+}
+
+/* UI.md §6.1 — tactile 촉감 */
+.tactile {
+  transition: transform var(--dur-tactile) var(--ease-tactile),
+              box-shadow var(--dur) var(--ease-soft);
+  will-change: transform;
+  touch-action: manipulation;
+}
+.tactile:active {
+  transform: scale(var(--press-scale));
+  transition-duration: 90ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tactile.lift:hover {
+    transform: translateY(calc(-1 * var(--hover-lift))) scale(1.01);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* UI.md §5 — 표준 인터랙티브 요소 tactile 적용 */
+.nb, .tb-btn, .btn-next, .btn-back, .widget-type-opt, .widget-edit-btn,
+.widget-action-btn, .widget-backup-btn, .todo-add-btn, .todo-bell, .todo-del,
+.link-add-btn, .note-add-btn, .cp-icon, .cp-gear, .ch-gear, .ctx-i,
+.sf-minus, .sf-plus, .sf-settings-btn, .sp-widget-act, .gem-send-btn,
+.gem-attach-btn, .gem-new-chat, .res-card, .cnum, .scale-preset,
+.widget-type-opt, .item, .ch-icon-drive, .ch-icon-wp, .ch-icon-gcal, .ch-icon-gtask,
+.ch-icon-gsheets, .ch-icon-gslides, .ch-icon-gdocs {
+  transition: transform var(--dur-tactile) var(--ease-tactile),
+              box-shadow var(--dur) var(--ease-soft),
+              background var(--dur) var(--ease-soft),
+              color var(--dur-fast) var(--ease-soft);
+  will-change: transform;
+  touch-action: manipulation;
+}
+.nb:active, .tb-btn:active, .btn-next:active, .btn-back:active,
+.widget-type-opt:active, .widget-edit-btn:active, .widget-action-btn:active,
+.todo-add-btn:active, .todo-bell:active, .link-add-btn:active, .note-add-btn:active,
+.cp-icon:active, .cp-gear:active, .ch-gear:active, .ctx-i:active,
+.sf-minus:active, .sf-plus:active, .gem-send-btn:active, .gem-attach-btn:active,
+.res-card:active, .cnum:active, .scale-preset:active, .item:active {
+  transform: scale(var(--press-scale));
+  transition-duration: 90ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .nb:hover, .tb-btn:hover, .widget-type-opt:hover, .todo-add-btn:hover,
+  .link-add-btn:hover, .note-add-btn:hover, .cp-icon:hover, .item:hover,
+  .res-card:hover, .cnum:hover, .scale-preset:hover {
+    transform: translateY(calc(-1 * var(--hover-lift)));
+    box-shadow: var(--shadow-md);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── 배경 그라디언트 (UI.md §4 메시) ── */
 .bg-wrap {
   position: fixed; inset: 0; z-index: 0;
   background:
-    radial-gradient(ellipse 55% 45% at 8%  5%,  rgba(196,181,253,0.50) 0%, transparent 70%),
-    radial-gradient(ellipse 45% 40% at 93% 8%,  rgba(147,197,253,0.42) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 55% at 5%  92%, rgba(253,186,116,0.32) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 95% 92%, rgba(110,231,183,0.32) 0%, transparent 65%),
-    radial-gradient(ellipse 35% 35% at 50% 50%, rgba(253,164,175,0.18) 0%, transparent 65%),
-    #eef2ff;
+    radial-gradient(40rem 40rem at 12% 8%,  var(--pastel-lavender), transparent 60%),
+    radial-gradient(36rem 36rem at 88% 12%, var(--pastel-sky),      transparent 60%),
+    radial-gradient(34rem 34rem at 78% 88%, var(--pastel-peach),    transparent 60%),
+    radial-gradient(30rem 30rem at 18% 92%, var(--pastel-mint),     transparent 60%),
+    var(--bg-base);
+  background-attachment: fixed;
   pointer-events: none;
 }
 /* 미세 노이즈 텍스처 */
@@ -145,7 +281,7 @@ body {
   box-shadow: 0 20px 60px rgba(120,100,220,0.14), 0 4px 16px rgba(0,0,0,0.06),
               inset 0 1px 0 rgba(255,255,255,0.9);
   overflow: visible;  /* hidden 제거 — 내부 스크롤 아닌 카드 전체가 늘어남 */
-  animation: floatIn .5s cubic-bezier(0.34,1.4,0.64,1) both;
+  animation: floatIn var(--dur-slow) var(--ease-spring) both;
   /* 하단 여백 */
   margin-bottom: 0;
 }
@@ -176,7 +312,7 @@ body {
 }
 
 .s-emoji { font-size: clamp(32px, 5vh, 48px); display: block; margin-bottom: clamp(8px, 1.5vh, 16px); }
-.s-title { font-size: clamp(22px, 3.5vh, 30px); font-weight: 700; color: var(--text1); letter-spacing: -0.02em; margin-bottom: 6px; }
+.s-title { font-family: var(--font-display); font-size: clamp(22px, 3.5vh, 30px); font-weight: 700; color: var(--text1); letter-spacing: var(--tracking-tight); margin-bottom: 6px; }
 .s-sub   { font-size: clamp(13px, 1.8vh, 15px); color: var(--text2); line-height: 1.65; margin-bottom: clamp(18px, 3vh, 30px); }
 
 .s-label {
@@ -218,7 +354,7 @@ body {
   width: 36px; height: 36px; border-radius: 10px; background: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  color: #4285f4; font-family: 'DM Sans',sans-serif;
+  color: #4285f4; font-family: var(--font-sans);
 }
 .gcard-title { font-size: 16px; font-weight: 600; color: var(--text1); }
 .gcard-sub   { font-size: 12px; color: var(--text3); margin-top: 2px; }
@@ -231,7 +367,7 @@ body {
   width: 100%; background: rgba(255,255,255,0.65);
   border: 1.5px solid var(--glass-border); border-radius: 14px;
   padding: 14px 18px; font-size: 14px; color: var(--text1); outline: none;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; margin-bottom: 12px;
+  font-family: var(--font-sans); margin-bottom: 12px;
   transition: border-color .2s, box-shadow .2s;
 }
 .s-input:focus { border-color: rgba(196,181,253,0.9); box-shadow: 0 0 0 3px rgba(196,181,253,0.2); }
@@ -254,7 +390,7 @@ body {
   background: linear-gradient(135deg, rgba(139,92,246,0.82), rgba(99,102,241,0.80));
   border: 1px solid rgba(139,92,246,0.35); color: white;
   font-size: clamp(14px, 1.8vh, 16px); font-weight: 500; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   box-shadow: 0 6px 20px rgba(139,92,246,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
   transition: all .2s; letter-spacing: 0.01em;
 }
@@ -413,7 +549,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   box-shadow: 0 1px 0 rgba(255,255,255,0.85), 0 3px 16px rgba(120,100,200,0.07);
 }
 .tb-left { display: flex; align-items: center; gap: 14px; }
-.tb-logo { font-size: 17px; font-weight: 700; color: var(--text1); letter-spacing: -0.02em; }
+.tb-logo { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text1); letter-spacing: var(--tracking-tight); }
 .tb-date { font-size: 17px; color: var(--text2); }
 
 /* 드래그 가능 영역 힌트 — 헤더 호버 시 미세 커서 변화 */
@@ -452,6 +588,14 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .tb-btn-gear:hover svg { transform: rotate(60deg); }
 
+/* 바탕화면 보기 버튼 */
+.tb-btn-desktop svg { width: 16px; height: 16px; }
+.tb-btn-desktop:hover {
+  background: rgba(196,181,253,0.35) !important;
+  color: #6d28d9 !important;
+  border-color: rgba(196,181,253,0.55) !important;
+}
+
 /* 종료 버튼 */
 .tb-btn-quit svg { width: 14px; height: 14px; }
 .tb-btn-quit:hover { background: rgba(253,164,175,0.35) !important; color: #be123c !important; border-color: rgba(253,164,175,0.5) !important; }
@@ -467,7 +611,7 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .tb-btn-scale {
   width: auto !important; padding: 0 11px !important;
   font-size: 12px !important; font-weight: 600;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   color: #7c3aed !important;
   background: rgba(196,181,253,0.2) !important;
   border-color: rgba(196,181,253,0.4) !important;
@@ -623,28 +767,50 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border: 1px solid rgba(196,181,253,0.35);
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(80,50,180,0.18);
-  padding: 18px 20px;
-  min-width: 280px;
-  max-width: 92vw;
+  padding: 20px 22px;
+  min-width: 520px;
+  max-width: min(640px, 94vw);
 }
 .widget-type-panel h3, .widget-source-panel h3 {
-  margin: 0 0 12px;
-  font-size: 15px;
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--text1);
 }
 .widget-type-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 }
 .widget-type-opt {
-  padding: 12px 10px;
-  border-radius: 12px;
+  padding: 12px 4px 10px;
+  border-radius: 14px;
   border: 1px solid var(--glass-border);
   background: var(--glass-fill-strong);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 82px;
+}
+.widget-type-opt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  font-size: 38px;
+  min-height: 40px;
+  min-width: 40px;
+}
+.widget-type-opt-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: -0.01em;
 }
 .widget-type-opt:hover { background: var(--primary-soft); border-color: rgba(110,91,242,0.35); }
 .widget-source-field { margin-bottom: 12px; }
@@ -668,7 +834,10 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   justify-content: flex-end;
   margin-top: 14px;
 }
-#widgetAnchorPool, #widgetAnchorTemplates, #catZone { display: none !important; }
+#widgetAnchorPool, #widgetAnchorTemplates { display: none !important; }
+#catZone { display: none !important; }
+.widget-cell > #catZone,
+.widget-cell > .cat-zone { display: grid !important; }
 .widget-grid-mount {
   flex: 1;
   min-height: 0;
@@ -682,7 +851,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   position: relative;
   width: 100%;
   border-radius: var(--radius-md);
-  transition: background var(--dur-liquid) var(--ease-soft);
+  transition: background var(--dur-liquid) var(--ease-soft),
+              height var(--dur-liquid) var(--ease-liquid);
 }
 #dashboard.widget-grid-editing .widget-grid-canvas {
   background:
@@ -702,8 +872,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-stroke);
   border-bottom-color: var(--glass-stroke-bottom);
-  border-radius: 22px;
-  box-shadow: var(--shadow-soft), inset 0 1px 0 var(--glass-highlight);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
   overflow: hidden;
   box-sizing: border-box;
   display: flex;
@@ -716,7 +886,6 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .widget-cell.is-dragging,
 .widget-cell.is-resizing,
-.widget-grid-canvas.is-interacting .widget-cell,
 .widget-grid-canvas.no-reflow-transition .widget-cell {
   transition: none !important;
 }
@@ -760,7 +929,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border-color: rgba(110,91,242,0.35);
 }
 .widget-resize-grip { pointer-events: none; font-weight: 700; }
-.widget-resize-ghost {
+.widget-resize-ghost,
+.widget-drag-ghost {
   display: none;
   position: absolute;
   top: 0;
@@ -771,6 +941,16 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   background: rgba(110,91,242,0.08);
   box-sizing: border-box;
   z-index: 15;
+  transition:
+    transform var(--dur-liquid) var(--ease-liquid),
+    width var(--dur-liquid) var(--ease-liquid),
+    height var(--dur-liquid) var(--ease-liquid);
+}
+.widget-drag-ghost {
+  border-style: solid;
+  border-color: rgba(110,91,242,0.45);
+  background: rgba(110,91,242,0.12);
+  z-index: 14;
 }
 .widget-drag-handle {
   display: none;
@@ -801,12 +981,44 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .widget-cell > .gc {
   flex: 1;
-  height: auto;
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   border-radius: inherit;
   animation: none;
+}
+.widget-cell[data-widget-type="calendar"] .cal-grid-wrap { flex-shrink: 0; }
+.widget-cell[data-widget-type="calendar"] .cal-events-box {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.widget-cell[data-widget-type="calendar"] .ch {
+  padding: 10px 12px 8px;
+  gap: 6px;
+}
+.widget-cell[data-widget-type="calendar"] .ch-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-cell[data-widget-type="calendar"] .ch-nav {
+  margin-left: auto;
+  flex-shrink: 0;
+  gap: 3px;
+}
+.widget-cell[data-widget-type="calendar"] .ch-gear { opacity: 1; }
+.widget-cell[data-widget-tier="compact"][data-widget-type="calendar"] .ch-nav .nb {
+  font-size: 11px;
+  padding: 3px 6px;
+}
+.widget-cell[data-widget-tier="compact"][data-widget-type="calendar"] .ch-nav .cal-add-nb {
+  font-size: 13px;
+  padding: 2px 7px;
+  min-width: 24px;
 }
 .widget-cell > .gc:hover { transform: none; }
 .widget-cell > .cat-zone {
@@ -954,6 +1166,14 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .gem-bubble.model { align-self: flex-start; background: rgba(255,255,255,0.06); color: var(--text1); }
 .gem-bubble.system { align-self: center; background: rgba(255,193,7,0.12); color: var(--text2); font-size: 11px; }
 .gem-stream { padding: 0 10px 4px; font-size: 12px; color: var(--text2); min-height: 0; }
+.gem-bubble.gem-streaming { position: relative; }
+.gem-bubble.gem-streaming .gem-cursor {
+  display: inline-block;
+  margin-left: 1px;
+  color: #7c3aed;
+  animation: gemCursorBlink 1.06s step-end infinite;
+}
+@keyframes gemCursorBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 .gem-attach-preview {
   padding: 0 10px; font-size: 11px; color: var(--text3); display: flex; flex-wrap: wrap; gap: 4px;
 }
@@ -1006,26 +1226,29 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   scrollbar-color: rgba(196,181,253,0.4) transparent;
 }
 
-/* ── 글래스 카드 ── */
+/* ── 글래스 카드 (위젯·패널) ── */
 .gc {
-  background: rgba(255,255,255,0.68);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1px solid var(--glass-border);
-  border-radius: 22px;
-  box-shadow: var(--shadow-soft);
+  background: linear-gradient(135deg, var(--glass-fill-strong), var(--glass-fill));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-stroke);
+  border-bottom-color: var(--glass-stroke-bottom);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
   overflow: hidden; flex-shrink: 0;
   position: relative;
-  transition: box-shadow .2s, transform .2s;
-  animation: cardIn .5s cubic-bezier(0.34,1.2,0.64,1) both;
+  transition: transform var(--dur-tactile) var(--ease-tactile),
+              box-shadow var(--dur) var(--ease-soft);
+  animation: cardIn var(--dur-slow) var(--ease-spring) both;
+  touch-action: manipulation;
 }
 .gc:nth-child(1){animation-delay:.05s}
 .gc:nth-child(2){animation-delay:.12s}
 .gc:nth-child(3){animation-delay:.19s}
 .gc:nth-child(4){animation-delay:.26s}
 @keyframes cardIn {
-  from{opacity:0;transform:translateY(16px)}
-  to{opacity:1;transform:translateY(0)}
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 /* 글래스 내부 하이라이트 */
 .gc::before {
@@ -1034,7 +1257,12 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border-radius: inherit; pointer-events:none; z-index:0;
 }
 .gc > * { position: relative; z-index: 1; }
-.gc:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) {
+  .gc:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(calc(-1 * var(--hover-lift))) scale(1.005);
+  }
+}
 
 .ch {
   display: flex; align-items: center; gap: 9px;
@@ -1043,7 +1271,38 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .ch-icon { font-size: 16px; flex-shrink: 0; }
 .ch-title { font-size: 13px; font-weight: 600; color: var(--text1); flex: 1; }
-.ch-nav { display: flex; gap: 5px; margin-left: auto; }
+.ch-gear {
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.7);
+  color: var(--text4);
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity .12s;
+}
+.ch:hover .ch-gear { opacity: 1; }
+.ch-nav { display: flex; gap: 5px; margin-left: auto; align-items: center; }
+.ch-nav .cal-add-nb {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 8px;
+  min-width: 28px;
+  color: #7c3aed;
+  background: rgba(196,181,253,0.22);
+  border-color: rgba(196,181,253,0.5);
+}
+.ch-nav .cal-add-nb:hover {
+  background: rgba(196,181,253,0.38);
+  color: #6d28d9;
+}
 .nb {
   background: rgba(255,255,255,0.65); border: 1px solid var(--glass-border2);
   border-radius: 9px; padding: 4px 10px;
@@ -1056,15 +1315,27 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 
 /* 달력 */
 .cal-grid-wrap { padding: 10px 12px 6px; }
-.cal-dow-row { display: grid; grid-template-columns: repeat(7,1fr); text-align:center; margin-bottom: 4px; }
-.cdow { font-size: 11px; color: var(--text4); padding: 2px 0; }
+.cal-dow-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  text-align: center;
+  margin-bottom: 4px;
+}
+.cdow { font-size: 11px; color: var(--text4); padding: 2px 0; min-width: 0; }
 .cdow:first-child{color:#fca5a5} .cdow:last-child{color:#93c5fd}
 
-.cal-dates { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; text-align: center; }
+.cal-dates {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  text-align: center;
+}
 .cday {
   font-size: 13px; color: var(--text2); padding: 6px 2px; border-radius: 9px;
   cursor: pointer; position: relative; transition: background .1s;
   font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
 }
 .cday:hover { background: rgba(255,255,255,0.75); }
 .cday.other { color: rgba(180,185,210,0.5); }
@@ -1079,7 +1350,96 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   width:4px; height:4px; border-radius:50%;
   background: linear-gradient(135deg, #f9a8d4, #c4b5fd);
 }
+.cday.has-inline-ev {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 54px;
+  padding: 3px 2px 2px;
+  text-align: left;
+  vertical-align: top;
+}
+.cday.has-inline-ev.ev::after { display: none; }
+.cday-num {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+  align-self: flex-end;
+  padding: 0 2px 2px;
+  flex-shrink: 0;
+}
+.cday-evs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+.cday-ev-chip {
+  font-size: 9px;
+  line-height: 1.25;
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.12);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.cday-ev-chip.allday { font-weight: 600; }
+.cday-ev-more {
+  font-size: 9px;
+  color: var(--text4);
+  padding: 0 2px;
+  line-height: 1.2;
+}
+.widget-cell[data-widget-tier="spacious"] .cday.has-inline-ev { min-height: 72px; }
+.widget-cell[data-widget-tier="spacious"] .cday-ev-chip { font-size: 10px; padding: 2px 4px; }
+.widget-cell[data-widget-tier="spacious"] .cday-num { font-size: 12px; }
 .cday.sun{color:#fca5a5} .cday.sat{color:#93c5fd}
+
+.wsf-cal-hint {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--text4);
+  line-height: 1.45;
+}
+.wsf-cal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.wsf-cal-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  font-size: 12.5px;
+  color: var(--text2);
+  cursor: pointer;
+  user-select: none;
+}
+.wsf-cal-check:hover { background: rgba(255,255,255,0.88); }
+.wsf-cal-check input { flex-shrink: 0; accent-color: #7c3aed; }
+.wsf-cal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+.wsf-cal-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .cal-events-box { padding: 6px 12px 10px; display: flex; flex-direction: column; gap: 4px; }
 .cev {
@@ -1091,13 +1451,15 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .cev:hover{background:rgba(255,255,255,0.8)}
 .cev-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .cev-time{font-size:11px;color:var(--text4);white-space:nowrap}
-/* ── Drive 폴더 아이콘 ── */
-.ch-icon-drive {
+/* ── Drive / Weekly Plan 헤더 아이콘 ── */
+.ch-icon-drive, .ch-icon-wp {
   cursor: pointer;
   transition: transform .15s, filter .15s;
 }
 .ch-icon-drive:hover { transform: scale(1.22); filter: drop-shadow(0 0 4px rgba(26,115,232,0.45)); }
 .ch-icon-drive:active { transform: scale(0.92); }
+.ch-icon-wp:hover { transform: scale(1.22); filter: drop-shadow(0 0 4px rgba(110,91,242,0.45)); }
+.ch-icon-wp:active { transform: scale(0.92); }
 
 /* ── 편집 가능한 패널 제목 ── */
 .ch-title-editable {
@@ -1128,6 +1490,30 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .cal-add-btn:hover { background: rgba(196,181,253,0.3); }
 
+/* Weekly Plan — Drive 폴더 사진 뷰어 빈 상태 */
+.wp-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  filter: drop-shadow(0 4px 14px rgba(110, 91, 242, 0.2));
+}
+.wp-empty-icon svg { display: block; }
+.wp-empty-msg {
+  font-size: 13px;
+  color: var(--text3);
+  text-align: center;
+  line-height: 1.65;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.wp-empty-sub {
+  font-size: 11px;
+  color: var(--text4);
+  line-height: 1.5;
+}
 /* Weekly Plan / Memo 이미지 */
 .img-view {
   padding: 10px 12px 6px;
@@ -1264,6 +1650,42 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .todo-item:hover .todo-del { opacity: 1; }
 .todo-del:hover { background: rgba(248,113,113,0.15); color: #ef4444; }
 
+/* ══ Google Workspace 파일 목록 (Sheets / Slides / Docs) ══ */
+.gfile-list {
+  flex: 1; overflow-y: auto; padding: 6px 10px 8px;
+  display: flex; flex-direction: column; gap: 3px;
+  min-height: 0;
+}
+.gfile-list::-webkit-scrollbar { width: 3px; }
+.gfile-list::-webkit-scrollbar-thumb { background: rgba(196,181,253,0.35); border-radius:99px; }
+.gfile-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: 10px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.75);
+  font-size: 12px; color: var(--text1);
+  cursor: grab; transition: background .12s;
+  touch-action: none;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.gfile-item:hover { background: rgba(255,255,255,0.82); }
+.gfile-name {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  line-height: 1.4;
+}
+.gfile-empty, .gfile-unauth {
+  font-size: 12px; color: var(--text4); text-align: center;
+  padding: 20px 8px; font-style: italic;
+  font-family: 'Noto Sans KR', sans-serif; line-height: 1.6;
+}
+.ch-icon-gsheets, .ch-icon-gslides, .ch-icon-gdocs {
+  cursor: pointer; transition: transform .15s, filter .15s;
+}
+.ch-icon-gsheets:hover { transform: scale(1.18); filter: drop-shadow(0 0 4px rgba(52,168,83,0.5)); }
+.ch-icon-gslides:hover { transform: scale(1.18); filter: drop-shadow(0 0 4px rgba(251,188,4,0.55)); }
+.ch-icon-gdocs:hover { transform: scale(1.18); filter: drop-shadow(0 0 4px rgba(66,133,244,0.5)); }
+.ch-icon-gsheets:active, .ch-icon-gslides:active, .ch-icon-gdocs:active { transform: scale(0.92); }
+
 /* Google Tasks 배지 */
 .gtask-badge {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1287,6 +1709,8 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 /* ✅ 아이콘 클릭 스타일 */
 .ch-icon-gtask { cursor: pointer; transition: transform .15s, filter .15s; display: inline-block; }
 .ch-icon-gtask:hover { transform: scale(1.18); filter: brightness(1.1); }
+.ch-icon-gemini { cursor: default; transition: transform .15s, filter .15s; }
+.ch-icon-gemini:hover { transform: scale(1.12); filter: drop-shadow(0 0 4px rgba(142,85,234,0.45)); }
 
 /* 입력 행 */
 .todo-input-row {
@@ -1323,16 +1747,19 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 
 /* ── 카테고리 패널 ── */
 .cat-panel {
-  background: var(--glass-bg2);
-  backdrop-filter: blur(var(--glass-blur-ui)) saturate(1.5);
-  -webkit-backdrop-filter: blur(var(--glass-blur-ui)) saturate(1.5);
-  border: 1px solid var(--glass-border2);
-  border-radius: 22px; display: flex; flex-direction: column;
+  background: linear-gradient(135deg, var(--glass-fill-strong), var(--glass-fill));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-stroke);
+  border-bottom-color: var(--glass-stroke-bottom);
+  border-radius: var(--radius-lg);
+  display: flex; flex-direction: column;
   position: relative; overflow: hidden;
-  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,0.25);
-  transition: box-shadow var(--dur-liquid) var(--ease-liquid),
-              transform var(--dur-liquid) var(--ease-liquid);
-  animation: panelIn .55s var(--ease-liquid) both;
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
+  transition: transform var(--dur-tactile) var(--ease-tactile),
+              box-shadow var(--dur) var(--ease-soft);
+  animation: panelIn var(--dur-slow) var(--ease-spring) both;
+  touch-action: manipulation;
 }
 .cat-panel:nth-child(1){animation-delay:.08s}
 .cat-panel:nth-child(2){animation-delay:.15s}
@@ -1354,13 +1781,16 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 /* 드래그 핸들 바 (카테고리 상단 컬러 바) */
 .cp-drag-bar {
   position: absolute; top: 0; left: 0; right: 0; height: 6px;
+  min-height: 6px;
+  flex-shrink: 0;
   background: var(--pc, #c4b5fd);
   box-shadow: 0 0 14px var(--pc, #c4b5fd);
   border-radius: 20px 20px 0 0;
   cursor: grab; z-index: 3;
   transition: height 0.18s ease, opacity 0.18s ease;
+  pointer-events: auto;
 }
-.cp-drag-bar:hover  { height: 11px; }
+.cp-drag-bar:hover  { height: 11px; min-height: 11px; }
 .cp-drag-bar:active { cursor: grabbing; }
 /* 드래그 중 원본 패널 페이드 */
 .cat-panel.panel-drag-src { opacity: 0.35; transition: opacity 0.15s; }
@@ -1379,8 +1809,20 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   transform: scale(1.04); opacity: 0.93;
   transition: none !important;
 }
-.cat-panel>*{position:relative;z-index:1;}
-.cat-panel:hover{box-shadow:var(--shadow-card);transform:translateY(-2px) scale(1.012)}
+.cat-panel > :not(.cp-drag-bar) { position: relative; z-index: 1; }
+.widget-cell > .cat-panel > .cp-drag-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-panel:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(calc(-1 * var(--hover-lift))) scale(1.01);
+  }
+}
 .cat-panel { will-change: transform, box-shadow; }
 
 .cp-head {
@@ -1446,7 +1888,11 @@ body.item-reorder-active .item{cursor:grabbing !important}
 .item.drag-above{border-top:2px solid #7c3aed !important;border-radius:0 0 11px 11px}
 .item.drag-below{border-bottom:2px solid #7c3aed !important;border-radius:11px 11px 0 0}
 .cp-body.body-drop-over{background:rgba(196,181,253,0.10);outline:1.5px dashed rgba(124,58,237,0.35);outline-offset:-4px;border-radius:10px}
-.item-ico{font-size:14px;flex-shrink:0}
+.item-ico{
+  font-size:14px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;line-height:0;min-width:20px;
+}
+.item-ico svg{display:block}
 .item-lbl{flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .item-tag{font-size:11px;padding:2px 7px;border-radius:999px;flex-shrink:0;font-weight:500}
 
@@ -1458,11 +1904,48 @@ body.item-reorder-active .item{cursor:grabbing !important}
   text-align:center;font-size:11px;color:var(--text4);flex-shrink:0;
 }
 .cp-drop-btns{display:flex;flex-direction:column;gap:0;padding:5px 9px 9px;}
+.cp-add-toggle-btn {
+  width: 100%; box-sizing: border-box;
+  padding: 7px 10px; border-radius: 9px;
+  border: 1px solid rgba(196,181,253,0.38);
+  background: rgba(255,255,255,0.52);
+  font-size: 11.5px; font-weight: 600; color: var(--text2);
+  cursor: pointer; text-align: center;
+  font-family: var(--font-sans);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.cp-add-toggle-btn:hover,
+.cp-add-toggle-btn.is-open {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(139,92,246,0.35);
+  color: var(--text1);
+}
+.cp-add-menu {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 0 0 4px;
+  animation: fadeIn .15s ease;
+}
+.cp-add-menu.is-hidden { display: none; }
+.cp-add-opt {
+  width: 100%; box-sizing: border-box;
+  padding: 7px 10px; border-radius: 9px;
+  border: 1px solid rgba(196,181,253,0.32);
+  background: rgba(255,255,255,0.62);
+  font-size: 11.5px; font-weight: 500; color: var(--text2);
+  cursor: pointer; text-align: left;
+  font-family: var(--font-sans);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.cp-add-opt:hover {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(139,92,246,0.35);
+  color: var(--text1);
+}
 .cp-dbtn{
   flex:1;padding:6px 0;border-radius:9px;
   background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.7);
   font-size:11px;color:var(--text2);cursor:pointer;transition:all .12s;
-  font-family:'DM Sans','Noto Sans KR',sans-serif;
+  font-family:var(--font-sans);
 }
 .cp-dbtn:hover{background:rgba(255,255,255,0.9);color:var(--text1)}
 
@@ -1474,7 +1957,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: rgba(255,255,255,0.52);
   font-size: 11.5px; font-weight: 500; color: var(--text2);
   cursor: pointer; text-align: center;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   transition: background .15s, border-color .15s, color .15s;
 }
 .link-toggle-btn:hover {
@@ -1494,7 +1977,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: rgba(255,255,255,0.72);
   border: 1.5px solid rgba(230,225,255,0.85); border-radius: 9px;
   padding: 6px 10px; font-size: 11.5px; color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   outline: none; transition: border-color .15s;
 }
 .link-url-input:focus { border-color: rgba(139,92,246,0.45); }
@@ -1768,64 +2251,64 @@ body.item-reorder-active .item{cursor:grabbing !important}
   transition: background .15s; flex-shrink: 0;
 }
 
-/* ── 업데이트 설치 오버레이 ── */
+/* ── 업데이트 설치 오버레이 (앱 화면 블러 + 진행률) ── */
 .update-overlay {
   position: fixed; inset: 0; z-index: 99999;
-  background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 50%, #fff7ed 100%);
   display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none;
   transition: opacity 0.35s ease;
 }
 .update-overlay.uo-show { opacity: 1; pointer-events: all; }
-.uo-card {
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(16px);
-  border: 1px solid #f1f5f9;
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(80,50,180,0.15), 0 4px 16px rgba(0,0,0,0.06);
-  padding: 44px 56px;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
-  min-width: 300px;
-}
-.uo-spinner-wrap {
-  position: relative; width: 76px; height: 76px; margin-bottom: 6px;
-}
-.uo-spinner {
-  width: 76px; height: 76px; border-radius: 50%;
-  border: 3px solid #ddd6fe;
-  border-top-color: #7c3aed;
-  animation: spin 0.9s linear infinite;
-}
-.uo-app-badge {
+.uo-backdrop {
   position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 30px;
+  backdrop-filter: blur(14px) saturate(1.35);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  background: rgba(246, 245, 251, 0.52);
+}
+.uo-card {
+  position: relative; z-index: 1;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.92);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(80,50,180,0.14), 0 4px 16px rgba(0,0,0,0.05);
+  padding: 36px 44px 32px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  min-width: 320px; max-width: min(400px, calc(100vw - 48px));
+}
+.uo-emoji {
+  font-size: 34px; line-height: 1; margin-bottom: 2px;
+  filter: drop-shadow(0 2px 8px rgba(110,91,242,0.2));
 }
 .uo-title {
-  font-size: 17px; font-weight: 800; color: #1e293b; letter-spacing: -0.3px;
-  margin-top: 2px;
+  font-size: 16px; font-weight: 800; color: #1e293b; letter-spacing: -0.3px;
+  text-align: center; line-height: 1.45;
 }
 .uo-version-badge {
-  font-size: 11.5px; font-weight: 600; color: #7c3aed;
+  font-size: 11px; font-weight: 600; color: #7c3aed;
   background: rgba(139,92,246,0.09);
   border: 1px solid rgba(139,92,246,0.18);
-  padding: 3px 14px; border-radius: 20px;
+  padding: 3px 12px; border-radius: 20px;
+}
+.uo-progress-track {
+  width: 100%; height: 8px; border-radius: 999px;
+  background: rgba(196,181,253,0.28);
+  overflow: hidden; margin-top: 4px;
+}
+.uo-progress-fill {
+  height: 100%; width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+  transition: width 0.35s cubic-bezier(0.34,1.2,0.64,1);
+  box-shadow: 0 0 12px rgba(139,92,246,0.35);
+}
+.uo-percent {
+  font-size: 22px; font-weight: 800; color: #5b21b6;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.5px;
 }
 .uo-sub {
-  font-size: 12px; color: #64748b; text-align: center; line-height: 1.65;
-}
-.uo-dots {
-  display: flex; gap: 7px; margin-top: 6px;
-}
-.uo-dots span {
-  width: 7px; height: 7px; border-radius: 50%; background: #c4b5fd;
-  animation: uo-dot-pulse 1.5s ease-in-out infinite;
-}
-.uo-dots span:nth-child(2) { animation-delay: 0.22s; }
-.uo-dots span:nth-child(3) { animation-delay: 0.44s; }
-@keyframes uo-dot-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); background: #8b5cf6; }
+  font-size: 12px; color: #64748b; text-align: center; line-height: 1.6;
 }
 .ub-close:hover { background: rgba(255,255,255,0.3); }
 
@@ -1968,7 +2451,13 @@ body.item-reorder-active .item{cursor:grabbing !important}
   padding: 10px 12px; border-radius: 14px;
   background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.82);
 }
-.sp-widget-row-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.sp-widget-row-icon {
+  font-size: 18px; flex-shrink: 0; width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center; line-height: 0;
+}
+.sp-widget-row-icon svg, .ch-icon svg, .cp-icon svg, .widget-type-opt-icon svg { display: block; }
+.ch-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+.ch-icon svg { pointer-events: none; }
 .sp-widget-row-meta { flex: 1; min-width: 0; }
 .sp-widget-row-title { font-size: 13.5px; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sp-widget-row-type { font-size: 11px; color: var(--text3); margin-top: 2px; }
@@ -2032,7 +2521,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
 .cat-name-inp {
   flex: 1; background: transparent; border: none; outline: none;
   font-size: 13px; font-weight: 500; color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   border-bottom: 1px solid transparent; padding: 2px 3px;
   transition: border-color .14s;
 }
@@ -2077,7 +2566,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   width: 100%; background: rgba(255,255,255,0.68);
   border: 1.5px solid rgba(255,255,255,0.88); border-radius: 12px;
   padding: 10px 14px; font-size: 13px; color: var(--text1); outline: none;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   transition: border-color .18s, box-shadow .18s;
 }
 .sp-inp:focus {
@@ -2092,7 +2581,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: linear-gradient(135deg, rgba(139,92,246,0.82), rgba(99,102,241,0.8));
   border: 1px solid rgba(139,92,246,0.3); color: white;
   font-size: 13.5px; font-weight: 500; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   box-shadow: 0 4px 14px rgba(139,92,246,0.22);
   transition: all .18s;
 }
@@ -2108,7 +2597,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   padding: 9px 22px; border-radius: 11px;
   background: rgba(255,255,255,0.65); border: 1.5px solid rgba(255,255,255,0.85);
   font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; transition: all .14s;
+  font-family: var(--font-sans); transition: all .14s;
 }
 .sp-cancel-btn:hover { background: rgba(255,255,255,0.95); color: var(--text1); }
 .sp-apply-btn {
@@ -2116,7 +2605,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: linear-gradient(to right, #8b5cf6, #7c3aed);
   border: 1px solid rgba(139,92,246,0.32); color: white;
   font-size: 13px; font-weight: 500; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   box-shadow: 0 4px 14px rgba(139,92,246,0.22), inset 0 1px 0 rgba(255,255,255,0.18);
   transition: transform var(--dur-liquid) var(--ease-liquid),
               box-shadow var(--dur-liquid) var(--ease-liquid);
@@ -2175,7 +2664,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   padding: 6px 10px; border-radius: 9px; font-size: 11.5px;
   border: 1.5px solid rgba(230,225,255,0.85);
   background: rgba(255,255,255,0.72); color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; outline: none;
+  font-family: var(--font-sans); outline: none;
 }
 .cep-icon-search:focus, .icp-search:focus { border-color: rgba(139,92,246,0.45); }
 .icp-search { margin: 0 10px 4px; width: calc(100% - 20px); }
@@ -2207,7 +2696,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
 .cep-name-input {
   flex: 1; background: transparent; border: none; outline: none;
   font-size: 13px; font-weight: 600; color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* 색상 팔레트 행 */
@@ -2227,7 +2716,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   flex: 1; padding: 7px 4px; border-radius: 10px; font-size: 12px; font-weight: 500;
   background: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.85);
   color: var(--text2); cursor: pointer; text-align: center;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; transition: all .14s;
+  font-family: var(--font-sans); transition: all .14s;
 }
 .cep-type-btn:hover { background: rgba(255,255,255,0.9); }
 .cep-type-btn.cep-type-sel {
@@ -2242,7 +2731,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
 .cep-drive-root-input {
   background: rgba(255,255,255,0.7); border: 1.5px solid rgba(255,255,255,0.9);
   border-radius: 9px; padding: 6px 10px; font-size: 12px; color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; outline: none;
+  font-family: var(--font-sans); outline: none;
   transition: border-color .14s;
 }
 .cep-drive-root-input:focus { border-color: rgba(196,181,253,0.7); }
@@ -2285,6 +2774,9 @@ body.item-reorder-active .item{cursor:grabbing !important}
 }
 .db-list::-webkit-scrollbar { width: 3px; }
 .db-list::-webkit-scrollbar-thumb { background: rgba(196,181,253,0.3); border-radius: 2px; }
+.db-item, .gfile-item {
+  touch-action: none;
+}
 .db-item {
   display: flex; align-items: center; gap: 7px;
   padding: 5px 7px; border-radius: 8px; cursor: pointer;
@@ -2311,6 +2803,14 @@ body.item-reorder-active .item{cursor:grabbing !important}
   border: 1.5px dashed rgba(139,92,246,0.5) !important;
   border-radius: 8px;
 }
+.cp-drop.google-drop-over {
+  background: rgba(196,181,253,0.22) !important;
+  outline: 1.5px dashed rgba(124,58,237,0.45);
+  outline-offset: -2px;
+}
+body.google-file-drag-active { cursor: grabbing !important; }
+body.google-file-drag-active .db-item,
+body.google-file-drag-active .gfile-item { cursor: grabbing !important; }
 /* Drive 이동 다이얼로그 선택 행 */
 .drv-move-sel { background: rgba(139,92,246,0.14) !important; }
 .db-unauth {
@@ -2331,7 +2831,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   flex: 1; padding: 7px 0; border-radius: 9px;
   background: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.85);
   font-size: 12.5px; color: var(--text2); cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; transition: all .14s;
+  font-family: var(--font-sans); transition: all .14s;
 }
 .cep-cancel:hover { background: rgba(255,255,255,0.95); }
 .cep-save {
@@ -2339,7 +2839,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: linear-gradient(to right, #8b5cf6, #7c3aed);
   border: 1px solid rgba(139,92,246,0.3); color: white;
   font-size: 12.5px; font-weight: 500; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   box-shadow: 0 3px 10px rgba(139,92,246,0.22);
   transition: transform var(--dur-liquid) var(--ease-liquid),
               box-shadow var(--dur-liquid) var(--ease-liquid);
@@ -2399,7 +2899,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
 .evd-title-input {
   width: 100%; background: transparent; border: none; outline: none;
   font-size: 17px; font-weight: 700; color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   border-bottom: 2px solid rgba(196,181,253,0.4);
   padding: 2px 0 8px;
   transition: border-color .15s;
@@ -2421,7 +2921,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   flex: 1; background: rgba(255,255,255,0.72); border: 1.5px solid rgba(230,225,255,0.85);
   border-radius: 10px; padding: 7px 11px;
   font-size: 13px; font-weight: 500; color: var(--text1);
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   outline: none; transition: border-color .15s, background .15s;
 }
 .evd-inp:focus { border-color: rgba(139,92,246,0.45); background: rgba(255,255,255,0.9); }
@@ -2441,7 +2941,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   flex: 1; background: rgba(255,255,255,0.72); border: 1.5px solid rgba(230,225,255,0.85);
   border-radius: 10px; padding: 8px 11px;
   font-size: 13px; color: var(--text1); line-height: 1.5;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   outline: none; resize: none; height: 64px;
   transition: border-color .15s;
 }
@@ -2589,7 +3089,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   margin-top: 8px; padding: 6px 13px; border-radius: 9px;
   background: rgba(255,255,255,0.8); border: 1.5px solid rgba(196,181,253,0.4);
   font-size: 12px; font-weight: 500; color: #5b21b6; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   transition: all .15s;
 }
 .oauth-link-btn:hover { background: rgba(196,181,253,0.2); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(139,92,246,0.15); }
@@ -2606,7 +3106,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   margin-top: 8px; padding: 6px 13px; border-radius: 9px;
   background: rgba(255,255,255,0.8); border: 1.5px dashed rgba(196,181,253,0.5);
   font-size: 12px; font-weight: 500; color: #7c3aed; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif; transition: all .15s;
+  font-family: var(--font-sans); transition: all .15s;
 }
 .oauth-toggle-btn:hover { background: rgba(196,181,253,0.15); border-style: solid; }
 
@@ -2622,7 +3122,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
   background: linear-gradient(135deg, rgba(139,92,246,0.84), rgba(99,102,241,0.82));
   border: 1px solid rgba(139,92,246,0.32); color: white;
   font-size: 15px; font-weight: 500; cursor: pointer;
-  font-family: 'DM Sans','Noto Sans KR',sans-serif;
+  font-family: var(--font-sans);
   box-shadow: 0 5px 18px rgba(139,92,246,0.24), inset 0 1px 0 rgba(255,255,255,0.18);
   transition: all .2s;
 }
@@ -2864,18 +3364,11 @@ body.item-reorder-active .item{cursor:grabbing !important}
   flex: 1; min-width: 0; font-size: 12px;
 }
 
-/* UI.md §7 — 접근성 (개선-6) */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-  .widget-cell {
-    transition: none !important;
-  }
-}
+/* UI.md §7 — 접근성 */
 @media (prefers-reduced-transparency: reduce) {
-  .cat-panel, .topbar, .toast, .settings-panel, .ctx, .icp-popup, #renamePopup {
+  .glass, .gc, .cat-panel, .topbar, .toast, .settings-panel, .ctx, .icp-popup,
+  #renamePopup, .setup-card, .scale-floater {
+    background: var(--bg-elevated) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -2889,6 +3382,13 @@ body.item-reorder-active .item{cursor:grabbing !important}
     -webkit-backdrop-filter: none !important;
     background: var(--bg-elevated) !important;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .widget-cell { transition: none !important; }
 }
 </style>
 </head>
@@ -3092,6 +3592,15 @@ body.item-reorder-active .item{cursor:grabbing !important}
         <!-- 동기화 버튼 -->
         <div class="tb-btn tb-btn-sync" id="btnSync"
              onclick="doSync()" title="동기화 (Google Calendar · Drive)"><span class="sync-ico">↻</span></div>
+        <!-- 바탕화면 보기 (트레이로 숨김 → Win+D 대체) -->
+        <div class="tb-btn tb-btn-desktop" onclick="showDesktopPeek()" title="바탕화면 보기 (트레이로 숨김)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="13" rx="2"/>
+            <path d="M8 20h8"/>
+            <path d="M12 17v3"/>
+          </svg>
+        </div>
         <!-- 설정 버튼 (톱니바퀴) -->
         <div class="tb-btn tb-btn-gear" onclick="reopenSetup()" title="설정">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -3109,7 +3618,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
           </svg>
         </div>
         <!-- 트레이로 숨기기 (✕ 버튼 → 트레이로 이동, 완전 종료 아님) -->
-        <div class="tb-btn tb-btn-quit" onclick="hideToTray()" title="트레이로 숨기기">
+        <div class="tb-btn tb-btn-quit" onclick="showDesktopPeek()" title="바탕화면 보기 (트레이로 숨김)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -3135,12 +3644,13 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <div id="widgetAnchorTemplates" aria-hidden="true">
         <div class="gc" data-widget-template="calendar">
           <div class="ch">
-            <span class="ch-icon ch-icon-gcal" title="Google 캘린더 열기">📅</span>
+            <span class="ch-icon ch-icon-gcal" title="Google 캘린더 열기"></span>
             <span class="ch-title">내 캘린더</span>
             <div class="ch-nav">
-              <button type="button" class="nb">‹</button>
               <button type="button" class="nb today-nb">오늘</button>
+              <button type="button" class="nb">‹</button>
               <button type="button" class="nb">›</button>
+              <button type="button" class="nb cal-add-nb" title="일정 추가">+</button>
             </div>
           </div>
           <div class="cal-grid-wrap">
@@ -3152,18 +3662,18 @@ body.item-reorder-active .item{cursor:grabbing !important}
           </div>
           <div class="cal-events-box"></div>
         </div>
-        <div class="gc" data-widget-template="drive">
+        <div class="gc" data-widget-template="drive" style="display:flex;flex-direction:column;min-height:0">
           <div class="ch">
-            <span class="ch-icon ch-icon-drive" title="Google Drive 폴더 열기">🗓</span>
+            <span class="ch-icon ch-icon-wp" title="연결된 폴더 열기"></span>
             <span class="ch-title">Weekly Plan</span>
             <button type="button" class="nb nb-spin" title="새로고침"><span class="sync-ico">↻</span></button>
           </div>
-          <div class="img-view" style="position:relative;overflow:hidden">
+          <div class="img-view" style="position:relative;overflow:hidden;flex:0 0 42%;min-height:100px">
             <div class="img-mock" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%">
-              <div style="font-size:28px">📅</div>
-              <div style="font-size:13px;color:var(--text3);text-align:center;line-height:1.7">
-                Google Drive 폴더의<br>이미지가 여기에 표시돼요<br>
-                <span style="font-size:11px;color:var(--text4)">(손글씨 플래너 사진 등)</span>
+              <div class="wp-empty-icon" aria-hidden="true"></div>
+              <div class="wp-empty-msg">
+                연결한 폴더의 사진이 이곳에 표시돼요
+                <span class="wp-empty-sub">손글씨 플래너 · 메모 사진 등</span>
               </div>
             </div>
             <img src="" alt="" class="drive-zoomable"
@@ -3174,10 +3684,11 @@ body.item-reorder-active .item{cursor:grabbing !important}
             <span class="img-cnt">— / —</span>
             <button type="button" class="nb">›</button>
           </div>
+          <div class="db-list drive-widget-files" style="flex:1;min-height:0;overflow:auto;margin-top:4px"></div>
         </div>
         <div class="gc" data-widget-template="todo" style="display:flex;flex-direction:column">
           <div class="ch">
-            <span class="ch-icon ch-icon-gtask" title="Google Tasks 열기">✅</span>
+            <span class="ch-icon ch-icon-gtask" title="Google Tasks 열기"></span>
             <span class="ch-title">메모 · 할 일</span>
             <button type="button" class="nb" title="완료 항목 정리" style="font-size:11px;padding:3px 8px">정리</button>
             <button type="button" class="todo-sync-btn" title="Google Tasks 동기화" style="display:none"><span class="sync-ico">↻</span></button>
@@ -3187,6 +3698,30 @@ body.item-reorder-active .item{cursor:grabbing !important}
             <input class="todo-input" type="text" placeholder="할 일 입력 후 Enter ↵" maxlength="80">
             <button type="button" class="todo-add-btn" title="추가">+</button>
           </div>
+        </div>
+        <div class="gc" data-widget-template="gsheets" style="display:flex;flex-direction:column">
+          <div class="ch">
+            <span class="ch-icon ch-icon-gsheets" title="Google Sheets 열기"></span>
+            <span class="ch-title">Google Sheets</span>
+            <button type="button" class="nb nb-spin" title="새로고침"><span class="sync-ico">↻</span></button>
+          </div>
+          <div class="gfile-list"></div>
+        </div>
+        <div class="gc" data-widget-template="gslides" style="display:flex;flex-direction:column">
+          <div class="ch">
+            <span class="ch-icon ch-icon-gslides" title="Google Slides 열기"></span>
+            <span class="ch-title">Google Slides</span>
+            <button type="button" class="nb nb-spin" title="새로고침"><span class="sync-ico">↻</span></button>
+          </div>
+          <div class="gfile-list"></div>
+        </div>
+        <div class="gc" data-widget-template="gdocs" style="display:flex;flex-direction:column">
+          <div class="ch">
+            <span class="ch-icon ch-icon-gdocs" title="Google Docs 열기"></span>
+            <span class="ch-title">Google Docs</span>
+            <button type="button" class="nb nb-spin" title="새로고침"><span class="sync-ico">↻</span></button>
+          </div>
+          <div class="gfile-list"></div>
         </div>
       </div>
       <div id="widgetAnchorPool" aria-hidden="true"></div>
@@ -3415,6 +3950,12 @@ body.item-reorder-active .item{cursor:grabbing !important}
                 현재 버전: <span id="spAppVersion" style="font-weight:700;color:var(--text2)">—</span>
               </p>
               <p id="spUpdateStatus" style="font-size:11.5px;color:var(--text4);margin:2px 0 0;line-height:1.5"></p>
+              <p id="spUpdateManual" style="display:none;font-size:11.5px;margin:6px 0 0;line-height:1.5">
+                <a href="#" id="spUpdateManualLink" style="color:#7c3aed;font-weight:600;text-decoration:none"
+                  onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                  GitHub에서 최신 버전 수동 설치 →
+                </a>
+              </p>
             </div>
             <button id="spUpdateBtn" onclick="doCheckForUpdates()" style="
               flex-shrink:0;padding:8px 16px;border-radius:10px;
@@ -3487,16 +4028,19 @@ body.item-reorder-active .item{cursor:grabbing !important}
   <div class="widget-type-panel">
     <h3>위젯 추가</h3>
     <div class="widget-type-grid">
-      <button type="button" class="widget-type-opt" data-widget-type="calendar">📅 달력</button>
-      <button type="button" class="widget-type-opt" data-widget-type="drive">🗓 Drive</button>
-      <button type="button" class="widget-type-opt" data-widget-type="todo">✅ 할 일</button>
-      <button type="button" class="widget-type-opt" data-widget-type="category">📚 카테고리</button>
-      <button type="button" class="widget-type-opt" data-widget-type="clock">🕐 시계</button>
-      <button type="button" class="widget-type-opt" data-widget-type="sticky">📌 메모</button>
-      <button type="button" class="widget-type-opt" data-widget-type="pomodoro">⏱ 뽀모도로</button>
-      <button type="button" class="widget-type-opt" data-widget-type="dday">📆 D-Day</button>
-      <button type="button" class="widget-type-opt" data-widget-type="weather">☀️ 날씨</button>
-      <button type="button" class="widget-type-opt" data-widget-type="gemini">🤖 Gemini</button>
+      <button type="button" class="widget-type-opt" data-widget-type="calendar"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="drive"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="todo"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="gsheets"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="gslides"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="gdocs"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="category"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="clock"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="sticky"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="pomodoro"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="dday"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="weather"></button>
+      <button type="button" class="widget-type-opt" data-widget-type="gemini"></button>
     </div>
     <div class="widget-source-actions" style="margin-top:14px">
       <button type="button" class="widget-edit-btn" id="widgetTypeCancel">취소</button>
@@ -3513,8 +4057,9 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <input type="text" id="wsfTitle" maxlength="40">
     </div>
     <div class="widget-source-field" id="wsfCalendarWrap" style="display:none">
-      <label for="wsfCalendar">캘린더</label>
-      <select id="wsfCalendar"></select>
+      <label>표시할 캘린더</label>
+      <p class="wsf-cal-hint">Google 캘린더처럼 여러 개를 선택할 수 있어요. 위젯마다 다르게 설정 가능합니다.</p>
+      <div id="wsfCalendarList" class="wsf-cal-list"></div>
     </div>
     <div class="widget-source-field" id="wsfTaskListWrap" style="display:none">
       <label for="wsfTaskList">Tasks 목록</label>
@@ -3563,6 +4108,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
       <button type="button" class="widget-edit-btn" id="wsfGeminiKeyGuide" style="margin-top:8px;width:100%">무료 키 발급 방법</button>
       <label for="wsfGeminiModel" style="margin-top:8px">모델</label>
       <select id="wsfGeminiModel"></select>
+      <button type="button" class="widget-edit-btn" id="wsfGeminiKeyClear" style="margin-top:8px;width:100%">API 키 초기화</button>
     </div>
     <div class="widget-source-actions">
       <button type="button" class="widget-edit-btn" id="widgetSourceCancel">취소</button>
@@ -3805,16 +4351,17 @@ body.item-reorder-active .item{cursor:grabbing !important}
 <div class="toast" id="toast"></div>
 
 <!-- 업데이트 설치 오버레이 -->
-<div class="update-overlay" id="updateOverlay">
+<div class="update-overlay" id="updateOverlay" aria-live="polite" aria-busy="true">
+  <div class="uo-backdrop" aria-hidden="true"></div>
   <div class="uo-card">
-    <div class="uo-spinner-wrap">
-      <div class="uo-spinner"></div>
-      <div class="uo-app-badge">📋</div>
-    </div>
-    <div class="uo-title">업데이트 설치 중...</div>
+    <div class="uo-emoji" aria-hidden="true">✨</div>
+    <div class="uo-title">새로운 기능을 추가하는 중입니다.</div>
     <div class="uo-version-badge" id="uoVersionBadge"></div>
-    <div class="uo-sub">잠시 후 자동으로 재시작됩니다</div>
-    <div class="uo-dots"><span></span><span></span><span></span></div>
+    <div class="uo-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="uoProgressBar">
+      <div class="uo-progress-fill" id="uoProgressFill"></div>
+    </div>
+    <div class="uo-percent" id="uoPercent">0%</div>
+    <div class="uo-sub" id="uoSub">잠시만 기다려 주세요</div>
   </div>
 </div>
 
@@ -3841,8 +4388,8 @@ import {
 import {
   getAuthUrl, exchangeCodeForTokens, getValidAccessToken,
   getCalendarList, getCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
-  listDriveFolder, listDriveImages, getDriveImageData,
-  driveTrashFile, driveMoveFile, driveDownloadFile,
+  listDriveFolder, listDriveImages, listDriveFilesByMime, getDriveImageData,
+  driveTrashFile, driveMoveFile, driveDownloadFile, driveDownloadFolder,
   tasksGetDefaultList, getTaskLists, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
 } from './google-api.js';
 import {
@@ -3850,6 +4397,7 @@ import {
   fetchCached,
   buildCalendarEventsKey,
   buildCalendarListKey,
+  buildDriveMimeListKey,
   invalidateCache,
   DEFAULT_EVENTS_TTL_MS,
   DEFAULT_LIST_TTL_MS,
@@ -3863,6 +4411,7 @@ import {
 import {
   mountWidgetGrid,
   remountWidgetGrid,
+  pruneWidgetCell,
   isWidgetGridEnabled,
   collectPanelAnchors,
   enterEditMode,
@@ -3906,16 +4455,111 @@ const GCAL_EVENTS_TTL_MS = DEFAULT_EVENTS_TTL_MS;
 let _activeCalendarWidgetId = null;
 const _calWidgetState = new Map();
 
+function resolveWidgetCalendarIds(widget) {
+  if (!widget) return ['primary'];
+  const ids = widget.source?.calendarIds;
+  if (Array.isArray(ids) && ids.length) return [...ids];
+  if (widget.source?.calendarId) return [widget.source.calendarId];
+  return ['primary'];
+}
+
 function resolvePrimaryCalendarId() {
   const widgets = _widgetGridState?.widgets;
   if (!Array.isArray(widgets)) return 'primary';
   const wid = _activeCalendarWidgetId
     || widgets.find((w) => w.type === 'calendar')?.id;
   const w = widgets.find((x) => x.id === wid);
-  if (w?.source?.calendarId) return w.source.calendarId;
-  const first = widgets.find((x) => x.type === 'calendar');
-  if (first?.source?.calendarId) return first.source.calendarId;
-  return 'primary';
+  return resolveWidgetCalendarIds(w)[0] || 'primary';
+}
+
+function getSelectedWsfCalendarIds() {
+  const list = document.getElementById('wsfCalendarList');
+  if (!list) return ['primary'];
+  const ids = [...list.querySelectorAll('input[type="checkbox"]:checked')].map((el) => el.value);
+  return ids.length ? ids : ['primary'];
+}
+
+async function populateWsfCalendarList(widget) {
+  const listEl = document.getElementById('wsfCalendarList');
+  if (!listEl) return;
+  const selected = new Set(resolveWidgetCalendarIds(widget));
+  listEl.innerHTML = '<div class="wsf-cal-hint">불러오는 중...</div>';
+  const res = await fetchCalendarListCached();
+  listEl.innerHTML = '';
+  if (res.error) {
+    listEl.innerHTML = `<div class="wsf-cal-hint">오류: ${res.error}</div>`;
+    return;
+  }
+  const cals = res.calendars || [];
+  if (!cals.length) {
+    listEl.innerHTML = '<div class="wsf-cal-hint">캘린더가 없습니다</div>';
+    return;
+  }
+  for (const c of cals) {
+    const row = document.createElement('label');
+    row.className = 'wsf-cal-check';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = c.id;
+    cb.checked = selected.has(c.id);
+    const dot = document.createElement('span');
+    dot.className = 'wsf-cal-dot';
+    dot.style.background = c.backgroundColor || '#8b5cf6';
+    const name = document.createElement('span');
+    name.className = 'wsf-cal-name';
+    name.textContent = c.summary + (c.primary ? ' (기본)' : '');
+    row.appendChild(cb);
+    row.appendChild(dot);
+    row.appendChild(name);
+    listEl.appendChild(row);
+  }
+}
+
+function calTierInlineLimit(widgetId) {
+  const shell = document.querySelector(`.widget-cell[data-widget-id="${widgetId}"]`);
+  const tier = shell?.dataset?.widgetTier || 'normal';
+  const h = shell?.clientHeight || 0;
+  if (tier === 'compact' || h < 220) return 0;
+  if (tier === 'spacious' || h >= 360) return 4;
+  if (h >= 300) return 3;
+  return 2;
+}
+
+globalThis.__dashboardRerenderCalendar = (widgetId) => {
+  if (widgetId) renderCalForWidget(widgetId);
+};
+
+function sortDayEvents(evs) {
+  return [...evs].sort((a, b) => {
+    if (a.allDay && !b.allDay) return -1;
+    if (!a.allDay && b.allDay) return 1;
+    if (a.t === '종일' && b.t !== '종일') return -1;
+    if (a.t !== '종일' && b.t === '종일') return 1;
+    return String(a.t).localeCompare(String(b.t));
+  });
+}
+
+function buildCalendarColorMap(calendars) {
+  const map = {};
+  for (const c of calendars || []) {
+    if (c?.id && c.backgroundColor) map[c.id] = c.backgroundColor;
+  }
+  return map;
+}
+
+async function fetchWidgetCalendarEvents(widget, timeMin, timeMax) {
+  const ids = resolveWidgetCalendarIds(widget);
+  const listRes = await fetchCalendarListCached();
+  const colorMap = buildCalendarColorMap(listRes.calendars);
+  const merged = [];
+  for (const calId of ids) {
+    const result = await fetchCalendarEventsCached(calId, timeMin, timeMax);
+    if (result.error) continue;
+    for (const ev of result.events || []) {
+      merged.push({ ...ev, _calendarId: calId });
+    }
+  }
+  return { events: merged, colorMap };
 }
 
 function setActiveCalendarWidget(widgetId) {
@@ -3941,11 +4585,19 @@ async function fetchCalendarEventsCached(calendarId, timeMin, timeMax) {
 /* ── Tauri invoke / listen 단축 래퍼 ── */
 const tInvoke = (cmd, args, opts) => window.__TAURI__.core.invoke(cmd, args, opts);
 const tListen = (evt, cb)         => window.__TAURI__.event.listen(evt, cb);
+/** Tauri v2 dialog — options 를 { options } 로 감싸야 함 */
+const tDialogOpen = (options = {}) => tInvoke('plugin:dialog|open', { options });
+const tDialogSave = (options = {}) => tInvoke('plugin:dialog|save', { options });
 
 /* ── plugin-shell: URL / 파일 / 앱 열기 ── */
 async function openPath(url) {
   try   { return await tInvoke('plugin:shell|open', { path: url }); }
   catch (e) { console.error('[openPath]', e); return { error: e.message }; }
+}
+
+async function openExternalUrl(url) {
+  const r = await openPath(url);
+  if (r?.error) window.open(url, '_blank', 'noopener');
 }
 
 function isWebUrl(p) {
@@ -4006,12 +4658,78 @@ function clearItemReorderHighlights() {
 
 let _ptrItemReorder = null;
 
+function isHiddenCatLayoutNode(el) {
+  if (!el) return true;
+  const pool = document.getElementById('widgetAnchorPool');
+  const templates = document.getElementById('widgetAnchorTemplates');
+  if (pool?.contains(el) || templates?.contains(el)) return true;
+  const catZone = document.getElementById('catZone');
+  if (catZone?.contains(el) && !catZone.closest('.widget-cell')) return true;
+  return false;
+}
+
+function queryActiveCatItems() {
+  return [...document.querySelectorAll('.cat-panel .cp-body .item')]
+    .filter((it) => !isHiddenCatLayoutNode(it));
+}
+
+function queryActiveCatBodies() {
+  return [...document.querySelectorAll('.cat-panel .cp-body')]
+    .filter((body) => !isHiddenCatLayoutNode(body.closest('.cat-panel')));
+}
+
+function catFromPanelElement(panel) {
+  if (!panel) return null;
+  const idx = parseInt(panel.dataset.catIdx, 10);
+  if (Number.isNaN(idx) || idx < 0 || idx >= CATS.length) return null;
+  return CATS[idx];
+}
+
+function isLocalFolderItem(item) {
+  if (!item?.path) return false;
+  if (item.tag === '폴더' || item.ic === '📁') return true;
+  const p = String(item.path);
+  return p.endsWith('/') || p.endsWith('\\') || !String(p.split(/[\\/]/).pop() || '').includes('.');
+}
+
+/** Google 파일 드래그 드롭 대상 (WebView2: rect 히트) */
+function findGoogleFileDropTarget(clientX, clientY) {
+  for (const row of queryActiveCatItems()) {
+    const r = row.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      const item = row.__itemRef;
+      const cat = row.__catRef;
+      if (item && cat && isLocalFolderItem(item)) {
+        return { kind: 'folder', row, cat, item };
+      }
+      const body = row.closest('.cp-body');
+      if (body && cat) return { kind: 'body', bodyEl: body, cat };
+    }
+  }
+
+  for (const dz of document.querySelectorAll('.cat-panel .cp-drop')) {
+    const panel = dz.closest('.cat-panel');
+    if (!panel || isHiddenCatLayoutNode(panel)) continue;
+    const r = dz.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      const cat = catFromPanelElement(panel);
+      if (cat) return { kind: 'dropzone', dz, cat };
+    }
+  }
+
+  for (const body of queryActiveCatBodies()) {
+    const r = body.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      const cat = catFromBodyElement(body);
+      if (cat) return { kind: 'body', bodyEl: body, cat };
+    }
+  }
+  return null;
+}
+
 /** WebView2: elementFromPoint 대신 좌표·getBoundingClientRect 히트 (설정 패널 DnD와 동일) */
 function findItemDropTarget(clientX, clientY, srcRow) {
-  const zone = document.getElementById('catZone');
-  if (!zone) return null;
-
-  for (const it of zone.querySelectorAll('.item')) {
+  for (const it of queryActiveCatItems()) {
     if (it === srcRow || !it.__catRef || !it.__itemRef) continue;
     const r = it.getBoundingClientRect();
     if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
@@ -4020,7 +4738,7 @@ function findItemDropTarget(clientX, clientY, srcRow) {
     }
   }
 
-  for (const body of zone.querySelectorAll('.cp-body')) {
+  for (const body of queryActiveCatBodies()) {
     const r = body.getBoundingClientRect();
     if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
       const dstCat = catFromBodyElement(body);
@@ -4068,10 +4786,7 @@ function commitItemPointerReorder() {
   } else if (pr.dropCat) {
     ok = moveItemToCatEnd(pr.srcCat, pr.srcItem, pr.dropCat);
   }
-  if (ok) {
-    saveLegacyAppData();
-    buildCatPanels();
-  }
+  if (ok) void refreshCategoryUi();
   return ok;
 }
 
@@ -4079,7 +4794,7 @@ let _itemReorderDidMove = false;
 
 /** Tauri WebView2: pointer capture + rect 히트로 순서·카테고리 이동 (행 전체 또는 ⋮⋮) */
 function beginItemReorder(row, cat, item, startEvent) {
-  if (_ptrItemReorder) return;
+  if (_ptrItemReorder || _ptrGoogleFileDrag) return;
   const pid = startEvent.pointerId ?? 1;
   const sx = startEvent.clientX;
   const sy = startEvent.clientY;
@@ -4172,8 +4887,9 @@ function installItemRowInteractions(row, cat, item) {
   }
 
   row.addEventListener('pointerdown', e => {
-    if (e.button !== 0 || _driveDragFile) return;
+    if (e.button !== 0 || _ptrGoogleFileDrag) return;
     if (e.target.closest('.item-lbl') && e.detail > 1) return;
+    e.stopPropagation();
     beginItemReorder(row, cat, item, e);
   });
 }
@@ -4181,16 +4897,28 @@ function installItemRowInteractions(row, cat, item) {
 /* ── plugin-process: 앱 완전 종료 (트레이 메뉴 "종료"에서 호출) ── */
 function quitApp() { tInvoke('plugin:process|exit', { code: 0 }).catch(() => {}); }
 
-/* ── 창 트레이로 숨기기 (topbar ✕ 버튼 → 트레이 잔류) ── */
+/* ── 창 트레이로 숨기기 (바탕화면 보기) ── */
 async function hideToTray() {
   try { await window.__TAURI__.window.getCurrentWindow().hide(); }
   catch (e) { console.error('[hideToTray]', e); }
 }
 
+async function showDesktopPeek() {
+  const first = !localStorage.getItem('desktopPeekHintSeen');
+  await hideToTray();
+  showToast(
+    first
+      ? '바탕화면이 보여요. 파일을 옮긴 뒤 작업 표시줄 트레이의 대시보드 아이콘을 누르면 다시 열려요.'
+      : '트레이 아이콘을 누르면 대시보드가 다시 열려요.',
+    first ? 6500 : 3200,
+  );
+  if (first) localStorage.setItem('desktopPeekHintSeen', '1');
+}
+
 /* ── plugin-dialog: 폴더 선택 다이얼로그 ── */
 async function selectDownloadFolder() {
   try {
-    const picked = await tInvoke('plugin:dialog|open', { multiple: false, directory: true, title: '다운로드 폴더 선택' });
+    const picked = await tDialogOpen({ multiple: false, directory: true, title: '다운로드 폴더 선택' });
     if (!picked) return null;
     return Array.isArray(picked) ? picked[0] : picked;
   } catch { return null; }
@@ -4236,6 +4964,27 @@ async function setLoginItem(enabled) {
 /* ── plugin-app: 앱 버전 ── */
 async function getAppVersion() {
   try { return await tInvoke('plugin:app|version'); } catch { return ''; }
+}
+
+const UPDATE_ATTEMPT_KEY = 'dashboardLastUpdateAttempt';
+
+function parseVersionParts(v) {
+  return String(v || '0').replace(/^v/i, '').split('.').map((n) => parseInt(n, 10) || 0);
+}
+
+function compareVersions(a, b) {
+  const pa = parseVersionParts(a);
+  const pb = parseVersionParts(b);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function normalizeVersionLabel(v) {
+  return String(v || '').replace(/^v/i, '').trim();
 }
 
 /* ── 인증 상태 확인 (keyring + access_token 유효성) ── */
@@ -4316,6 +5065,57 @@ async function googleAuthStart() {
 let _updateStatusCallback = null;
 let _pendingUpdateRid     = null;   // plugin:updater|check 에서 받은 update RID
 let _downloadedBytesRid   = null;   // plugin:updater|download 에서 받은 bytes RID
+let _pendingUpdateVersion = '';
+let _updateInstallTimer   = null;
+let _updateInstallStarted = false;
+
+function mapDownloadOverlayPercent(raw) {
+  return Math.max(4, Math.min(82, Math.round(raw * 0.82)));
+}
+
+function setUpdateOverlayProgress(percent, sub) {
+  const overlay = document.getElementById('updateOverlay');
+  const fill = document.getElementById('uoProgressFill');
+  const pctEl = document.getElementById('uoPercent');
+  const subEl = document.getElementById('uoSub');
+  const bar = document.getElementById('uoProgressBar');
+  const pct = Math.max(0, Math.min(100, Math.round(percent)));
+  if (overlay) overlay.classList.add('uo-show');
+  if (fill) fill.style.width = `${pct}%`;
+  if (pctEl) pctEl.textContent = `${pct}%`;
+  if (subEl && sub) subEl.textContent = sub;
+  if (bar) {
+    bar.setAttribute('aria-valuenow', String(pct));
+    bar.setAttribute('aria-valuetext', `${pct}%`);
+  }
+  document.getElementById('updateBanner')?.classList.remove('ub-show');
+}
+
+function hideUpdateOverlay() {
+  if (_updateInstallTimer) {
+    clearInterval(_updateInstallTimer);
+    _updateInstallTimer = null;
+  }
+  document.getElementById('updateOverlay')?.classList.remove('uo-show');
+}
+
+function beginInstallUpdate() {
+  if (_updateInstallStarted || _pendingUpdateRid === null) return;
+  _updateInstallStarted = true;
+  _ubState = 'installing';
+  setUpdateOverlayProgress(84, '새 버전을 적용하고 있어요');
+  let p = 84;
+  _updateInstallTimer = setInterval(() => {
+    p = Math.min(98, p + 2);
+    setUpdateOverlayProgress(p, '새 버전을 적용하고 있어요');
+    if (p >= 98) {
+      clearInterval(_updateInstallTimer);
+      _updateInstallTimer = null;
+      setUpdateOverlayProgress(100, '곧 다시 시작돼요');
+      setTimeout(() => { void installUpdate(); }, 280);
+    }
+  }, 110);
+}
 
 function onUpdateStatus(cb)      { _updateStatusCallback = cb; }
 function _emitUpdateStatus(info) { if (_updateStatusCallback) _updateStatusCallback(info); }
@@ -4327,17 +5127,41 @@ function _emitUpdateStatus(info) { if (_updateStatusCallback) _updateStatusCallb
  */
 async function checkForUpdates() {
   try {
+    const currentVersion = normalizeVersionLabel(await getAppVersion());
     const metadata = await tInvoke('plugin:updater|check', {});
 
     if (!metadata) {
+      if (currentVersion) localStorage.removeItem(UPDATE_ATTEMPT_KEY);
       _emitUpdateStatus({ type: 'not-available' });
       return;
     }
 
-    _pendingUpdateRid   = metadata.rid   ?? null;
-    _downloadedBytesRid = null;
+    const targetVersion = normalizeVersionLabel(metadata.version);
+    if (currentVersion && targetVersion && compareVersions(currentVersion, targetVersion) >= 0) {
+      localStorage.removeItem(UPDATE_ATTEMPT_KEY);
+      _emitUpdateStatus({ type: 'not-available' });
+      return;
+    }
 
-    _emitUpdateStatus({ type: 'available', version: metadata.version || '?' });
+    const lastAttempt = localStorage.getItem(UPDATE_ATTEMPT_KEY);
+    if (
+      currentVersion && targetVersion && lastAttempt === targetVersion
+      && compareVersions(currentVersion, targetVersion) < 0
+    ) {
+      _emitUpdateStatus({
+        type: 'error',
+        code: 'update-loop',
+        message: `v${targetVersion} 설치를 시도했지만 앱 버전이 v${currentVersion}으로 남아 있어요. 자동 업데이트를 중단했습니다. GitHub 릴리즈에서 설치 파일을 직접 받아 설치해 주세요.`,
+      });
+      return;
+    }
+
+    _pendingUpdateRid     = metadata.rid   ?? null;
+    _downloadedBytesRid   = null;
+    _pendingUpdateVersion = metadata.version || '';
+    _updateInstallStarted = false;
+
+    _emitUpdateStatus({ type: 'available', version: _pendingUpdateVersion || '?' });
 
     // 발견 즉시 백그라운드 다운로드 시작
     _startDownloadProgress(metadata).catch(e => {
@@ -4351,6 +5175,12 @@ async function checkForUpdates() {
       _emitUpdateStatus({
         type: 'error',
         message: '업데이트 정보(latest.json)를 받지 못했어요. GitHub 릴리즈에 latest.json·서명(.sig)이 있는지 확인해 주세요.',
+      });
+    } else if (/different key|created with a different key/i.test(msg)) {
+      _emitUpdateStatus({
+        type: 'error',
+        code: 'key-rotation',
+        message: 'v2.1.0 이하 버전은 서명 키가 바뀌어 앱 내 자동 업데이트를 사용할 수 없어요. GitHub에서 v2.1.2 이상을 한 번 직접 설치하면 이후부터는 자동 업데이트가 됩니다.',
       });
     } else if (/pubkey|signature|CERTIFICATE|verify/i.test(msg)) {
       _emitUpdateStatus({
@@ -4382,20 +5212,30 @@ async function _startDownloadProgress(metadata) {
       case 'Started':
         totalBytes  = msg.data?.contentLength || 0;
         loadedBytes = 0;
-        _emitUpdateStatus({ type: 'progress', percent: 0, version: metadata.version });
+        _emitUpdateStatus({ type: 'progress', percent: 0, version: metadata.version, phase: 'download' });
         break;
 
       case 'Progress':
         loadedBytes += msg.data?.chunkLength || 0;
-        const pct    = totalBytes > 0
+        const rawPct = totalBytes > 0
           ? Math.round(Math.min((loadedBytes / totalBytes) * 100, 99))
           : 0;
-        _emitUpdateStatus({ type: 'progress', percent: pct, version: metadata.version });
+        _emitUpdateStatus({
+          type: 'progress',
+          percent: rawPct,
+          overlayPercent: mapDownloadOverlayPercent(rawPct),
+          version: metadata.version,
+          phase: 'download',
+        });
         break;
 
       case 'Finished':
-        // 다운로드 완료 — install() 대기 상태
-        _emitUpdateStatus({ type: 'downloaded', version: metadata.version });
+        _emitUpdateStatus({
+          type: 'downloaded',
+          version: metadata.version,
+          overlayPercent: 82,
+          phase: 'install',
+        });
         break;
     }
   };
@@ -4415,30 +5255,33 @@ async function _startDownloadProgress(metadata) {
 async function installUpdate() {
   if (_pendingUpdateRid === null) {
     console.warn('[Updater] 설치할 업데이트 없음');
+    hideUpdateOverlay();
     return;
   }
   try {
+    const targetVersion = normalizeVersionLabel(_pendingUpdateVersion);
+    if (targetVersion) localStorage.setItem(UPDATE_ATTEMPT_KEY, targetVersion);
+    setUpdateOverlayProgress(100, '업데이트를 마무리하고 있어요');
     if (_downloadedBytesRid !== null) {
-      // 두 단계 방식: 다운로드 완료 후 별도 설치
       await tInvoke('plugin:updater|install', {
         updateRid: _pendingUpdateRid,
         bytesRid:  _downloadedBytesRid,
       });
     } else {
-      // 폴백: 단일 download_and_install (bytesRid 없을 때)
       const Channel = window.__TAURI__.core.Channel;
-      const ch      = new Channel();
+      const ch = new Channel();
       await tInvoke('plugin:updater|download_and_install', {
         onEvent: ch,
         rid:     _pendingUpdateRid,
       });
     }
-    // install 후 앱이 자동 재시작되지 않으면 강제 재시작
-    await tInvoke('plugin:process|restart');
+    // quiet + /R 모드: NSIS가 앱을 재시작함. 미재시작 시에만 폴백.
+    await tInvoke('plugin:process|restart').catch(() => {});
   } catch (e) {
     console.error('[installUpdate]', e);
-    // 재시작 실패 시 종료 후 사용자가 수동 재시작
-    await tInvoke('plugin:process|exit', { code: 0 }).catch(() => {});
+    hideUpdateOverlay();
+    _updateInstallStarted = false;
+    _emitUpdateStatus({ type: 'error', message: e.message || String(e) });
   }
 }
 
@@ -4447,6 +5290,12 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     checkForUpdates().catch(e => console.warn('[Updater/startup]', e));
   }, 3000);
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'h' || e.key === 'H')) {
+      e.preventDefault();
+      void showDesktopPeek();
+    }
+  });
 }, { once: true });
 
 /* ════════════════════════════════════════════════════════════════
@@ -4713,14 +5562,370 @@ let spScale = 100;
 let activePaletteCatIdx = -1;
 
 const SP_WIDGET_TYPE_LABELS = {
-  calendar: '캘린더', drive: 'Weekly Plan', todo: '메모 · 할 일', category: '카테고리',
+  calendar: '캘린더', drive: 'Weekly Plan', todo: '메모 · 할 일',
+  gsheets: 'Google Sheets', gslides: 'Google Slides', gdocs: 'Google Docs',
+  category: '카테고리',
   clock: '시계', sticky: '스티키 메모', pomodoro: '뽀모도로', dday: 'D-Day',
   weather: '날씨', gemini: 'Gemini',
 };
 const SP_WIDGET_TYPE_ICONS = {
-  calendar: '📅', drive: '📁', todo: '✅', category: '📚', clock: '🕐', sticky: '📝',
+  calendar: '📅', drive: '📁', todo: '✅',
+  gsheets: '📊', gslides: '📽', gdocs: '📄',
+  category: '📚', clock: '🕐', sticky: '📝',
   pomodoro: '🍅', dday: '📆', weather: '🌤', gemini: '🤖',
 };
+
+/* Google Workspace 브랜드 아이콘 (2024~2025 앱 런처 기준) */
+const GDRIVE_ICON_MARKER = '__gdrive__';
+const GCAL_ICON_MARKER = '__gcal__';
+const GTASK_ICON_MARKER = '__gtask__';
+const GEMINI_ICON_MARKER = '__gemini__';
+const GSHEETS_ICON_MARKER = '__gsheets__';
+const GSLIDES_ICON_MARKER = '__gslides__';
+const GDOCS_ICON_MARKER = '__gdocs__';
+const WEEKLY_PLAN_ICON_MARKER = '__weekly_plan__';
+
+const WIDGET_UI_SVGS = {
+  [WEEKLY_PLAN_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <defs>
+    <linearGradient id="wpHdrGrad" x1="5" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ECE8FF"/>
+      <stop offset="1" stop-color="#DCEEFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="3.5" y="3" width="17" height="18" rx="4.2" fill="url(#wpHdrGrad)" stroke="rgba(110,91,242,0.28)" stroke-width="1.1"/>
+  <rect x="5.5" y="5" width="13" height="2.2" rx="1.1" fill="#6E5BF2" fill-opacity="0.22"/>
+  <circle cx="7.2" cy="9.2" r="0.9" fill="#7c3aed"/><circle cx="9.8" cy="9.2" r="0.9" fill="#7c3aed"/>
+  <circle cx="12.4" cy="9.2" r="0.9" fill="#7c3aed"/><circle cx="15" cy="9.2" r="0.9" fill="#7c3aed"/>
+  <circle cx="17.6" cy="9.2" r="0.9" fill="#7c3aed"/>
+  <rect x="6" y="11.5" width="12" height="7.5" rx="2" fill="#BFDBFE" fill-opacity="0.55"/>
+  <circle cx="8.8" cy="14.2" r="1.5" fill="#F7B955"/>
+  <path d="M6 18.2 L10 15.2 L13.5 17 L18 13.8 L18 18.2 Z" fill="#34C77B" fill-opacity="0.75"/>
+</svg>`,
+};
+
+const GOOGLE_BRAND_SVGS = {
+  /* Google Drive — 공식 6색 제품 로고 */
+  [GDRIVE_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 87.3 78" width="20" height="18" aria-hidden="true">
+  <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066DA"/>
+  <path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00AC47"/>
+  <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.85-1.45 1.25-3.1 1.25-4.75H60l5.55 10.55z" fill="#EA4335"/>
+  <path d="M43.65 25l13.75-25c-1.35-.8-2.9-1.2-4.5-1.2H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832D"/>
+  <path d="M60 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.5c1.6 0 3.15-.45 4.5-1.2z" fill="#2684FC"/>
+  <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 60 53h27.4c0-1.55-.4-3.1-1.2-4.5z" fill="#FFBA00"/>
+</svg>`,
+  /* Google Calendar — 2024 앱 런처 (파란 사각 + 상단 밴드 + 31) */
+  [GCAL_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <rect x="3" y="3" width="18" height="18" rx="3.8" fill="#1A73E8"/>
+  <path fill="#4285F4" d="M3 7.4C3 5.52 4.52 4 6.4 4h11.2C19.48 4 21 5.52 21 7.4V9H3V7.4z"/>
+  <text x="12" y="17.2" text-anchor="middle" fill="#FFFFFF" font-size="9.5" font-weight="500" font-family="Google Sans,Roboto,Arial,sans-serif">31</text>
+</svg>`,
+  /* Google Tasks — 2024~2025 앱 런처 (파란 그라데이션 스쿼클 + 3D 립 + 체크) */
+  [GTASK_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <defs>
+    <linearGradient id="gtaskBrandGrad" x1="12" y1="2.8" x2="12" y2="18.5" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1A73E8"/>
+      <stop offset="0.42" stop-color="#4285F4"/>
+      <stop offset="1" stop-color="#AECBFA"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="5.4" width="16" height="15.6" rx="5.2" fill="#1967D2"/>
+  <rect x="3" y="3.2" width="18" height="16.2" rx="5.6" fill="url(#gtaskBrandGrad)"/>
+  <path fill="#1967D2" fill-opacity="0.22" d="M3 14.8h18v4.6c0 .9-4.03 1.7-9 1.7S3 20.3 3 19.4V14.8z"/>
+  <path fill="#FFFFFF" d="M10.15 15.75 7.35 13l1.4-1.4 1.4 1.4 4.35-4.35 1.4 1.4z"/>
+</svg>`,
+  /* Google Gemini — 2024 스파클 (4각 별 + 멀티컬러 그라데이션) */
+  [GEMINI_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <defs>
+    <linearGradient id="geminiBrandGrad" x1="4" y1="1.5" x2="20" y2="22.5" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EA4335"/>
+      <stop offset="0.22" stop-color="#FBBC04"/>
+      <stop offset="0.48" stop-color="#34A853"/>
+      <stop offset="0.72" stop-color="#4285F4"/>
+      <stop offset="1" stop-color="#8E55EA"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#geminiBrandGrad)" d="M12 2.2c.92 4.08 4 7.16 8.08 8-.08 4.08-3.16 7.16-8.08 8-.92-4.08-4-7.16-8.08-8 4.08-.84 7.16-3.92 8.08-8z"/>
+</svg>`,
+  /* Google Sheets — 세로 라운드 + 녹색 그라데이션 + 흰 격자 */
+  [GSHEETS_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <defs>
+    <linearGradient id="gsheetsBrandGrad" x1="12" y1="3" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#34A853"/>
+      <stop offset="1" stop-color="#0D652D"/>
+    </linearGradient>
+  </defs>
+  <rect x="5" y="3" width="14" height="18" rx="3.2" fill="url(#gsheetsBrandGrad)"/>
+  <line x1="8" y1="8.5" x2="16" y2="8.5" stroke="#FFFFFF" stroke-width="1.25" stroke-linecap="round"/>
+  <line x1="8" y1="12.5" x2="16" y2="12.5" stroke="#FFFFFF" stroke-width="1.25" stroke-linecap="round"/>
+  <line x1="11" y1="8.5" x2="11" y2="16.5" stroke="#FFFFFF" stroke-width="1.25" stroke-linecap="round"/>
+</svg>`,
+  /* Google Slides — 가로 라운드 + 노란/골드 그라데이션 + 흰 슬라이드 윤곽 */
+  [GSLIDES_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <defs>
+    <linearGradient id="gslidesBrandGrad" x1="3" y1="12" x2="21" y2="12" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FBBC04"/>
+      <stop offset="1" stop-color="#F29900"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="7" width="18" height="10" rx="2.8" fill="url(#gslidesBrandGrad)"/>
+  <rect x="6" y="9.5" width="12" height="6.5" rx="1" fill="none" stroke="#FFFFFF" stroke-width="1.3"/>
+</svg>`,
+  /* Google Docs — 세로 라운드 + 파란 그라데이션 + 흰 가로줄 3개 */
+  [GDOCS_ICON_MARKER]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+  <defs>
+    <linearGradient id="gdocsBrandGrad" x1="12" y1="3" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4285F4"/>
+      <stop offset="1" stop-color="#1967D2"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="3" width="12" height="18" rx="2.8" fill="url(#gdocsBrandGrad)"/>
+  <line x1="9" y1="8" x2="15" y2="8" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="9" y1="12" x2="14" y2="12" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="9" y1="16" x2="12.5" y2="16" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round"/>
+</svg>`,
+};
+
+const GOOGLE_BRAND_TITLES = {
+  [GDRIVE_ICON_MARKER]: 'Google Drive',
+  [GCAL_ICON_MARKER]: 'Google Calendar',
+  [GTASK_ICON_MARKER]: 'Google Tasks',
+  [GEMINI_ICON_MARKER]: 'Google Gemini',
+  [GSHEETS_ICON_MARKER]: 'Google Sheets',
+  [GSLIDES_ICON_MARKER]: 'Google Slides',
+  [GDOCS_ICON_MARKER]: 'Google Docs',
+};
+
+const WIDGET_BRAND_ICON = {
+  calendar: GCAL_ICON_MARKER,
+  drive: WEEKLY_PLAN_ICON_MARKER,
+  todo: GTASK_ICON_MARKER,
+  gemini: GEMINI_ICON_MARKER,
+  gsheets: GSHEETS_ICON_MARKER,
+  gslides: GSLIDES_ICON_MARKER,
+  gdocs: GDOCS_ICON_MARKER,
+};
+
+const GWORKSPACE_WIDGET_TYPES = ['gsheets', 'gslides', 'gdocs'];
+
+const GWORKSPACE_WIDGET_CONFIG = {
+  gsheets: {
+    mime: 'application/vnd.google-apps.spreadsheet',
+    homeUrl: 'https://sheets.google.com',
+    brand: 'sheets',
+    iconClass: 'ch-icon-gsheets',
+    fileUrl(id) { return `https://docs.google.com/spreadsheets/d/${id}/edit`; },
+  },
+  gslides: {
+    mime: 'application/vnd.google-apps.presentation',
+    homeUrl: 'https://slides.google.com',
+    brand: 'slides',
+    iconClass: 'ch-icon-gslides',
+    fileUrl(id) { return `https://docs.google.com/presentation/d/${id}/edit`; },
+  },
+  gdocs: {
+    mime: 'application/vnd.google-apps.document',
+    homeUrl: 'https://docs.google.com',
+    brand: 'docs',
+    iconClass: 'ch-icon-gdocs',
+    fileUrl(id) { return `https://docs.google.com/document/d/${id}/edit`; },
+  },
+};
+
+function normalizeIconMarker(value) {
+  if (!value || typeof value !== 'string') return value || '';
+  const raw = value.trim();
+  const v = raw.toLowerCase();
+  if (v === GDRIVE_ICON_MARKER || v === '_gdrive' || v === 'gdrive' || v.includes('gdrive')) return GDRIVE_ICON_MARKER;
+  if (v === GCAL_ICON_MARKER || v === '_gcal' || v === 'gcal' || v.includes('gcal')) return GCAL_ICON_MARKER;
+  if (v === GTASK_ICON_MARKER || v === '_gtask' || v === 'gtask' || v.includes('gtask')) return GTASK_ICON_MARKER;
+  if (v === GEMINI_ICON_MARKER || v === '_gemini' || v === 'gemini' || v.includes('gemini')) return GEMINI_ICON_MARKER;
+  if (v === GSHEETS_ICON_MARKER || v === '_gsheets' || v === 'gsheets' || v.includes('gsheets')) return GSHEETS_ICON_MARKER;
+  if (v === GSLIDES_ICON_MARKER || v === '_gslides' || v === 'gslides' || v.includes('gslides')) return GSLIDES_ICON_MARKER;
+  if (v === GDOCS_ICON_MARKER || v === '_gdocs' || v === 'gdocs' || v.includes('gdocs')) return GDOCS_ICON_MARKER;
+  if (v === WEEKLY_PLAN_ICON_MARKER || v === '_weekly_plan' || v === 'weekly_plan' || v.includes('weekly_plan')) {
+    return WEEKLY_PLAN_ICON_MARKER;
+  }
+  return raw;
+}
+
+function isGoogleBrandMarker(value) {
+  const m = normalizeIconMarker(value);
+  return m === GDRIVE_ICON_MARKER || m === GCAL_ICON_MARKER || m === GTASK_ICON_MARKER
+    || m === GEMINI_ICON_MARKER || m === GSHEETS_ICON_MARKER || m === GSLIDES_ICON_MARKER
+    || m === GDOCS_ICON_MARKER;
+}
+
+function scaledWidgetSvg(marker, size) {
+  const raw = WIDGET_UI_SVGS[marker];
+  if (!raw) return '';
+  const s = size || 20;
+  return raw.replace(/width="\d+"/, `width="${s}"`).replace(/height="\d+"/, `height="${s}"`);
+}
+
+function scaledBrandSvg(marker, size) {
+  const svg = GOOGLE_BRAND_SVGS[marker];
+  if (!svg) return '';
+  const h = Math.round(size * (marker === GDRIVE_ICON_MARKER ? 0.9 : 1));
+  let out = svg
+    .replace(/width="\d+"/, `width="${size}"`)
+    .replace(/height="\d+"/, `height="${h}"`);
+  const gradMarkers = {
+    [GEMINI_ICON_MARKER]: 'geminiBrandGrad',
+    [GTASK_ICON_MARKER]: 'gtaskBrandGrad',
+    [GSHEETS_ICON_MARKER]: 'gsheetsBrandGrad',
+    [GSLIDES_ICON_MARKER]: 'gslidesBrandGrad',
+    [GDOCS_ICON_MARKER]: 'gdocsBrandGrad',
+  };
+  const gradBase = gradMarkers[marker];
+  if (gradBase) {
+    const gradId = `${gradBase}_${size}_${Math.random().toString(36).slice(2, 8)}`;
+    const re = new RegExp(`id="${gradBase}"`, 'g');
+    out = out.replace(re, `id="${gradId}"`)
+      .replace(new RegExp(`url\\(#${gradBase}\\)`, 'g'), `url(#${gradId})`);
+  }
+  return out;
+}
+
+function renderIcon(container, iconValue, svgSize) {
+  if (!container) return;
+  const marker = normalizeIconMarker(iconValue);
+  if (GOOGLE_BRAND_SVGS[marker]) {
+    container.innerHTML = scaledBrandSvg(marker, svgSize || 20);
+    container.classList.add('has-brand-icon');
+    return;
+  }
+  if (WIDGET_UI_SVGS[marker]) {
+    container.innerHTML = scaledWidgetSvg(marker, svgSize || 20);
+    container.classList.add('has-brand-icon');
+    return;
+  }
+  container.classList.remove('has-brand-icon');
+  container.textContent = iconValue || '';
+}
+
+function renderBrandIcon(container, brand, svgSize) {
+  const map = {
+    drive: WEEKLY_PLAN_ICON_MARKER,
+    calendar: GCAL_ICON_MARKER,
+    tasks: GTASK_ICON_MARKER,
+    gemini: GEMINI_ICON_MARKER,
+    sheets: GSHEETS_ICON_MARKER,
+    slides: GSLIDES_ICON_MARKER,
+    docs: GDOCS_ICON_MARKER,
+  };
+  renderIcon(container, map[brand], svgSize);
+}
+
+function wpEmptyIconSvg(size = 52, uid = `wp${Math.random().toString(36).slice(2, 9)}`) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="${size}" height="${size}" aria-hidden="true">
+  <defs>
+    <linearGradient id="${uid}F" x1="8" y1="8" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ECE8FF"/>
+      <stop offset="1" stop-color="#DCEEFF"/>
+    </linearGradient>
+    <linearGradient id="${uid}S" x1="14" y1="14" x2="14" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#BFDBFE" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#C4B5FD" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="${uid}H" x1="14" y1="28" x2="42" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6EE7B7"/>
+      <stop offset="1" stop-color="#34C77B"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="9" width="42" height="38" rx="10" fill="url(#${uid}F)" stroke="rgba(255,255,255,0.88)" stroke-width="1.6"/>
+  <rect x="11" y="13" width="34" height="26" rx="6" fill="url(#${uid}S)"/>
+  <circle cx="19" cy="21" r="4.2" fill="#F7B955"/>
+  <circle cx="19" cy="21" r="2.4" fill="#FFF3D6" fill-opacity="0.65"/>
+  <path d="M11 37 L20.5 27.5 L28 32.5 L35.5 25 L45 37 Z" fill="url(#${uid}H)" fill-opacity="0.82"/>
+  <path d="M11 37 H45" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="11" y="39" width="34" height="5" rx="2.5" fill="rgba(255,255,255,0.72)"/>
+  <circle cx="42" cy="16" r="2.2" fill="#6E5BF2" fill-opacity="0.45"/>
+  <path d="M40.5 14.5 L43.5 14.5 M42 13 L42 16" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round"/>
+</svg>`;
+}
+
+function renderWpEmptyIcon(container, size = 52) {
+  if (!container) return;
+  container.className = 'wp-empty-icon';
+  container.setAttribute('aria-hidden', 'true');
+  container.innerHTML = wpEmptyIconSvg(size);
+}
+
+const WP_EMPTY_MAIN = '연결한 폴더의 사진이 이곳에 표시돼요';
+const WP_EMPTY_SUB = '손글씨 플래너 · 메모 사진 등';
+
+function wpEmptyStateMarkup(main, iconSize = 48, sub = '') {
+  const uid = `wp${Math.random().toString(36).slice(2, 9)}`;
+  const subHtml = sub ? `<span class="wp-empty-sub">${sub}</span>` : '';
+  return `<div class="wp-empty-icon" aria-hidden="true">${wpEmptyIconSvg(iconSize, uid)}</div>`
+    + `<div class="wp-empty-msg">${main}${subHtml}</div>`;
+}
+
+function _bindServiceIconClick(el, handler) {
+  if (!el || typeof handler !== 'function') return;
+  el.style.cursor = 'pointer';
+  el.onclick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    handler();
+  };
+}
+
+const WIDGET_TYPE_PICKER_LABELS = {
+  calendar: '달력', drive: 'Drive', todo: '할 일',
+  gsheets: 'Sheets', gslides: 'Slides', gdocs: 'Docs',
+  category: '카테고리', clock: '시계', sticky: '메모',
+  pomodoro: '뽀모도로', dday: 'D-Day', weather: '날씨', gemini: 'Gemini',
+};
+
+function initWidgetTypePickerIcons() {
+  document.querySelectorAll('#widgetTypePicker .widget-type-opt').forEach((btn) => {
+    const type = btn.dataset.widgetType;
+    if (!type) return;
+    btn.innerHTML = '';
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'widget-type-opt-icon';
+    const label = document.createElement('span');
+    label.className = 'widget-type-opt-label';
+    label.textContent = WIDGET_TYPE_PICKER_LABELS[type] || type;
+    const brandMarker = WIDGET_BRAND_ICON[type];
+    if (brandMarker) {
+      renderIcon(iconWrap, brandMarker, 40);
+    } else {
+      iconWrap.textContent = SP_WIDGET_TYPE_ICONS[type] || '🧩';
+    }
+    btn.appendChild(iconWrap);
+    btn.appendChild(label);
+  });
+}
+
+function _appendChGear(chEl, widgetId) {
+  if (!chEl || !widgetId) return;
+  chEl.querySelector('.ch-gear')?.remove();
+  const gear = document.createElement('div');
+  gear.className = 'ch-gear';
+  gear.textContent = '⚙';
+  gear.title = '위젯 설정';
+  gear.addEventListener('click', (e) => {
+    e.stopPropagation();
+    void openWidgetSourceDialog(widgetId);
+  });
+  chEl.appendChild(gear);
+}
+
+function openGoogleTasks() {
+  void openExternalUrl('https://tasks.google.com');
+}
+
+function openDriveWidgetFolder(widgetId) {
+  const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
+  const folderId = w?.source?.folderId?.trim();
+  const url = folderId
+    ? `https://drive.google.com/drive/folders/${folderId}`
+    : 'https://drive.google.com';
+  void openExternalUrl(url);
+}
 
 function openSettings(){
   spScale = userScale;
@@ -4822,13 +6027,19 @@ function renderSpWidgetList() {
 
     const icon = document.createElement('div');
     icon.className = 'sp-widget-row-icon';
-    icon.textContent = w.type === 'category' ? (w.icon || SP_WIDGET_TYPE_ICONS.category) : (SP_WIDGET_TYPE_ICONS[w.type] || '🧩');
+    if (w.type === 'category') {
+      renderIcon(icon, w.icon || SP_WIDGET_TYPE_ICONS.category, 20);
+    } else if (WIDGET_BRAND_ICON[w.type]) {
+      renderIcon(icon, WIDGET_BRAND_ICON[w.type], 20);
+    } else {
+      icon.textContent = SP_WIDGET_TYPE_ICONS[w.type] || '🧩';
+    }
 
     const meta = document.createElement('div');
     meta.className = 'sp-widget-row-meta';
     const title = document.createElement('div');
     title.className = 'sp-widget-row-title';
-    title.textContent = w.title || w.id;
+    title.textContent = w.title || SP_WIDGET_TYPE_LABELS[w.type] || w.id;
     const type = document.createElement('div');
     type.className = 'sp-widget-row-type';
     type.textContent = `${SP_WIDGET_TYPE_LABELS[w.type] || w.type} · ${w.id}`;
@@ -4900,12 +6111,12 @@ function renderSpCatList(){
 
     // 아이콘 입력 (Drive 아이콘은 SVG 프리뷰, 일반 아이콘은 텍스트 입력)
     let iconInp;
-    if (cat.icon === GDRIVE_ICON_MARKER) {
+    if (isGoogleBrandMarker(cat.icon)) {
       iconInp = document.createElement('div');
       iconInp.className = 'cat-icon-inp';
       iconInp.style.cssText = 'display:flex;align-items:center;justify-content:center;cursor:default';
-      iconInp.title = 'Google Drive 아이콘';
-      renderIcon(iconInp, GDRIVE_ICON_MARKER, 18);
+      iconInp.title = GOOGLE_BRAND_TITLES[normalizeIconMarker(cat.icon)] || 'Google 아이콘';
+      renderIcon(iconInp, cat.icon, 18);
     } else {
       iconInp = document.createElement('input');
       iconInp.className = 'cat-icon-inp';
@@ -5193,6 +6404,7 @@ function evdBuildColors(){
 /* year/month(0-indexed)/day : 새 일정 추가
    existingEv : 수정 시 기존 이벤트 객체 전달 */
 var evdEditingId = null;
+var _evdCalendarId = null;
 
 function colorIdToHex(id){
   const found = EVD_COLORS.find(c => c.id === String(id));
@@ -5371,12 +6583,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
       const curEnd = document.getElementById('evdEndTime').value;
       const toM = s=>{ if(!s) return 0; const [a,b]=s.split(':').map(Number); return a*60+b; };
       if(!curEnd || toM(autoEnd) > toM(curEnd)) setEvTime('evdEndTime', autoEnd);
-    });
+    }, { minuteStep: 1 });
   };
   document.getElementById('evdEndChip').onclick = function(){
     openChipTimePicker(this, document.getElementById('evdEndTime').value||'10:00', hhmm=>{
       setEvTime('evdEndTime', hhmm);
-    });
+    }, { minuteStep: 1 });
   };
   document.getElementById('evdAlarmDateChip').onclick = function(){
     const cur = splitDtStr(document.getElementById('evdAlarmDT').value);
@@ -5535,6 +6747,7 @@ function closeChipTimePicker(){
 
 function openEvDialog(year, month, day, existingEv){
   evdEditingId = existingEv?.id || null;
+  _evdCalendarId = existingEv?.calendarId || resolvePrimaryCalendarId();
   const isEdit = !!existingEv;
   document.querySelector('.evd-header-title').textContent = isEdit ? '✏️ 일정 수정' : '📅 일정 추가';
   document.getElementById('evdSaveTxt').textContent = isEdit ? '💾 수정 저장' : '💾 저장';
@@ -5591,6 +6804,7 @@ function closeEvDialog(){
   closeChipDatePicker(false);
   closeChipTimePicker();
   evdEditingId = null;
+  _evdCalendarId = null;
 }
 
 function evdToggleAllDay(){
@@ -5634,7 +6848,7 @@ async function saveEvDialog(){
   btn.disabled = true; txt.textContent = '저장 중...';
 
   try {
-    const calId = resolvePrimaryCalendarId();
+    const calId = _evdCalendarId || resolvePrimaryCalendarId();
     const result = evdEditingId
       ? await updateCalendarEvent(evdEditingId, event, { calendarId: calId })
       : await createCalendarEvent(event, { calendarId: calId });
@@ -5702,7 +6916,7 @@ async function cevCtxDelete(){
   const ev = _cevCtxEvent; closeCevCtx(); if(!ev?.id) return;
   showToast('🗑 삭제 중...');
   try {
-    const calId = resolvePrimaryCalendarId();
+    const calId = ev.calendarId || resolvePrimaryCalendarId();
     const result = await deleteCalendarEvent(ev.id, { calendarId: calId });
     if(result.error) showToast('❌ ' + result.error);
     else {
@@ -5894,9 +7108,10 @@ function _bindWidgetLongPressOnce() {
   mount.addEventListener('pointerdown', (e) => {
     if (isEditMode() || e.button !== 0) return;
     if (e.target.closest(
-      'button, input, textarea, a, select, .item, .nb, .ch-nav, .cp-gear, .cp-icon, '
-      + '.todo-chk, .todo-add-row, .gem-input-row, .gem-sidebar, .widget-drag-handle, '
-      + '.widget-resize-handle, .widget-done-btn',
+      'button, input, textarea, a, select, .item, .nb, .cal-add-nb, .ch-nav, .cp-gear, .ch-gear, .cp-icon, .ch-icon, '
+      + '.todo-chk, .todo-add-row, .todo-bell, .gem-input-row, .gem-sidebar, .gem-attach-btn, '
+      + '.db-item, .gfile-item, .drive-widget-files, '
+      + '.widget-drag-handle, .widget-resize-handle, .widget-done-btn',
     )) return;
     const shell = e.target.closest('.widget-cell');
     if (!shell?.dataset?.widgetId) return;
@@ -5987,9 +7202,20 @@ function _cloneCalendarAnchor(widget){
   const evBox = node.querySelector('.cal-events-box');
   if (evBox) evBox.id = `calEvBox_${sid}`;
   const navBtns = node.querySelectorAll('.ch-nav .nb');
-  if (navBtns[0]) navBtns[0].onclick = () => calMoveForWidget(sid, -1);
-  if (navBtns[1]) navBtns[1].onclick = () => calResetForWidget(sid);
+  if (navBtns[0]) navBtns[0].onclick = () => calResetForWidget(sid);
+  if (navBtns[1]) navBtns[1].onclick = () => calMoveForWidget(sid, -1);
   if (navBtns[2]) navBtns[2].onclick = () => calMoveForWidget(sid, 1);
+  const addNb = node.querySelector('.cal-add-nb');
+  if (addNb) {
+    addNb.onclick = () => {
+      setActiveCalendarWidget(sid);
+      const st = getCalWidgetState(sid);
+      if (st) openEvDialog(st.CY, st.CM, st.CS);
+    };
+  }
+  renderBrandIcon(node.querySelector('.ch-icon-gcal'), 'calendar', 18);
+  _bindServiceIconClick(node.querySelector('.ch-icon-gcal'), openGoogleCalendar);
+  _appendChGear(node.querySelector('.ch'), sid);
   node.addEventListener('mousedown', () => setActiveCalendarWidget(sid));
   return node;
 }
@@ -6020,6 +7246,12 @@ function _cloneDriveAnchor(widget){
   }
   const spin = node.querySelector('.nb-spin');
   if (spin) spin.onclick = () => driveRefreshForWidget(sid);
+  const fileList = node.querySelector('.drive-widget-files');
+  if (fileList) fileList.id = `driveFileList_${sid}`;
+  renderIcon(node.querySelector('.ch-icon-wp'), WEEKLY_PLAN_ICON_MARKER, 18);
+  renderWpEmptyIcon(node.querySelector('.wp-empty-icon'));
+  _bindServiceIconClick(node.querySelector('.ch-icon-wp'), () => openDriveWidgetFolder(sid));
+  _appendChGear(node.querySelector('.ch'), sid);
   return node;
 }
 
@@ -6047,6 +7279,32 @@ function _cloneTodoAnchor(widget){
   if (clearBtn) clearBtn.onclick = () => clearDoneTodosForWidget(sid);
   const syncBtn = node.querySelector('.todo-sync-btn');
   if (syncBtn) syncBtn.onclick = () => syncGoogleTasks();
+  renderBrandIcon(node.querySelector('.ch-icon-gtask'), 'tasks', 18);
+  _bindServiceIconClick(node.querySelector('.ch-icon-gtask'), openGoogleTasks);
+  _appendChGear(node.querySelector('.ch'), sid);
+  return node;
+}
+
+function _cloneGWorkspaceAnchor(widget){
+  const type = widget.type;
+  const cfg = GWORKSPACE_WIDGET_CONFIG[type];
+  if (!cfg) return null;
+  const tpl = _getAnchorTemplate(type);
+  if (!tpl) return null;
+  const node = tpl.cloneNode(true);
+  const sid = widget.id;
+  node.dataset.widgetId = sid;
+  node.dataset.widgetType = type;
+  const titleEl = node.querySelector('.ch-title');
+  if (titleEl) titleEl.textContent = widget.title || SP_WIDGET_TYPE_LABELS[type] || type;
+  const list = node.querySelector('.gfile-list');
+  if (list) list.id = `gfileList_${sid}`;
+  const spin = node.querySelector('.nb-spin');
+  if (spin) spin.onclick = () => void refreshGWorkspaceWidget(sid, type, { force: true });
+  const iconEl = node.querySelector(`.${cfg.iconClass}`);
+  renderBrandIcon(iconEl, cfg.brand, 18);
+  _bindServiceIconClick(iconEl, () => void openExternalUrl(cfg.homeUrl));
+  _appendChGear(node.querySelector('.ch'), sid);
   return node;
 }
 
@@ -6060,7 +7318,7 @@ function syncCatsFromWidgetState(state){
       tc: darkenColor(color),
       name: w.title || '카테고리',
       sub: w.sub || '',
-      icon: w.icon || '📚',
+      icon: normalizeIconMarker(w.icon || '📚'),
       items: Array.isArray(w.items) ? w.items : [],
       note: w.note || '',
       type: w.catType || 'normal',
@@ -6068,6 +7326,43 @@ function syncCatsFromWidgetState(state){
       _widgetId: w.id,
     });
   });
+}
+
+function syncCatsToWidgetState(state) {
+  if (!state?.widgets || !Array.isArray(CATS)) return;
+  const catWidgets = state.widgets.filter((w) => w.type === 'category');
+  CATS.forEach((cat, idx) => {
+    const w = cat._widgetId
+      ? state.widgets.find((x) => x.id === cat._widgetId)
+      : catWidgets[idx];
+    if (!w || w.type !== 'category') return;
+    w.items = Array.isArray(cat.items) ? [...cat.items] : [];
+    w.title = cat.name || w.title;
+    w.note = cat.note ?? '';
+    w.color = cat.color ?? w.color;
+    w.icon = cat.icon ?? w.icon;
+    w.sub = cat.sub ?? '';
+    w.driveRootId = cat.driveRootId ?? '';
+    w.catType = cat.type ?? 'normal';
+  });
+}
+
+let _categoryUiRefreshQueued = false;
+async function refreshCategoryUi() {
+  if (_categoryUiRefreshQueued) return;
+  _categoryUiRefreshQueued = true;
+  try {
+    if (_widgetGridState) syncCatsToWidgetState(_widgetGridState);
+    saveLegacyAppData();
+    if (_widgetGridState) {
+      try { await saveState(_widgetGridState); } catch (e) { console.warn('[refreshCategoryUi]', e); }
+      await _remountWidgetGridState();
+    } else {
+      buildCatPanels();
+    }
+  } finally {
+    _categoryUiRefreshQueued = false;
+  }
 }
 
 const CLOCK_TIMEZONES = [
@@ -6095,6 +7390,64 @@ const _stickySaveTimers = new Map();
 const _wxGeoResults = [];
 const _gemPendingAttach = new Map();
 const _gemStreamAbort = new Map();
+const _gemRevealState = new Map();
+
+function _stopGeminiReveal(widgetId) {
+  const st = _gemRevealState.get(widgetId);
+  if (st?.raf) cancelAnimationFrame(st.raf);
+  _gemRevealState.delete(widgetId);
+  document.getElementById(`gemStreaming_${widgetId}`)?.remove();
+}
+
+function _ensureGeminiStreamingBubble(widgetId) {
+  const box = document.getElementById(`gemMessages_${widgetId}`);
+  if (!box) return null;
+  let bubble = document.getElementById(`gemStreaming_${widgetId}`);
+  if (!bubble) {
+    bubble = document.createElement('div');
+    bubble.id = `gemStreaming_${widgetId}`;
+    bubble.className = 'gem-bubble model gem-streaming';
+    bubble.innerHTML = '<span class="gem-stream-text"></span><span class="gem-cursor">▍</span>';
+    box.appendChild(bubble);
+  }
+  box.scrollTop = box.scrollHeight;
+  return bubble;
+}
+
+function _scheduleGeminiReveal(widgetId, fullText) {
+  const bubble = _ensureGeminiStreamingBubble(widgetId);
+  const textEl = bubble?.querySelector('.gem-stream-text');
+  if (!textEl) return;
+
+  let st = _gemRevealState.get(widgetId);
+  if (!st) {
+    st = { shown: 0, target: '', raf: 0 };
+    _gemRevealState.set(widgetId, st);
+  }
+  st.target = fullText || '';
+
+  if (st.raf) return;
+
+  const tick = () => {
+    const cur = _gemRevealState.get(widgetId);
+    if (!cur) return;
+    const el = document.getElementById(`gemStreaming_${widgetId}`)?.querySelector('.gem-stream-text');
+    if (!el) {
+      cur.raf = 0;
+      return;
+    }
+    if (cur.shown < cur.target.length) {
+      cur.shown = Math.min(cur.shown + 2, cur.target.length);
+      el.textContent = cur.target.slice(0, cur.shown);
+      const box = document.getElementById(`gemMessages_${widgetId}`);
+      if (box) box.scrollTop = box.scrollHeight;
+      cur.raf = requestAnimationFrame(tick);
+    } else {
+      cur.raf = 0;
+    }
+  };
+  st.raf = requestAnimationFrame(tick);
+}
 
 function _stopPointerOnLocalInput(el) {
   if (!el) return;
@@ -6122,6 +7475,7 @@ function createLocalWidgetNode(widget){
   chTitle.textContent = widget.title || '';
   ch.appendChild(chIcon);
   ch.appendChild(chTitle);
+  _appendChGear(ch, sid);
   node.appendChild(ch);
 
   if (widget.type === 'clock') {
@@ -6590,8 +7944,8 @@ function createGeminiWidgetNode(widget) {
   const ch = document.createElement('div');
   ch.className = 'ch';
   const chIcon = document.createElement('span');
-  chIcon.className = 'ch-icon';
-  chIcon.textContent = '🤖';
+  chIcon.className = 'ch-icon ch-icon-gemini';
+  renderBrandIcon(chIcon, 'gemini', 18);
   const chTitle = document.createElement('span');
   chTitle.className = 'ch-title';
   chTitle.textContent = widget.title || 'Gemini';
@@ -6602,6 +7956,7 @@ function createGeminiWidgetNode(widget) {
   ch.appendChild(chIcon);
   ch.appendChild(chTitle);
   ch.appendChild(badge);
+  _appendChGear(ch, sid);
   node.appendChild(ch);
 
   const body = document.createElement('div');
@@ -6762,19 +8117,41 @@ async function newGeminiChat(widgetId) {
   await saveState(_widgetGridState);
 }
 
-async function _processAttachmentFile(filePath, fileName) {
+let _gemFilePickWidgetId = null;
+
+function _bytesToUint8Array(bytes) {
+  if (bytes instanceof Uint8Array) return bytes;
+  if (bytes instanceof ArrayBuffer) return new Uint8Array(bytes);
+  if (Array.isArray(bytes)) return Uint8Array.from(bytes);
+  if (bytes?.buffer instanceof ArrayBuffer) return new Uint8Array(bytes.buffer);
+  return new Uint8Array(bytes || []);
+}
+
+function _ensureGemFileInput() {
+  let inp = document.getElementById('gemFileInput');
+  if (!inp) {
+    inp = document.createElement('input');
+    inp.type = 'file';
+    inp.id = 'gemFileInput';
+    inp.style.display = 'none';
+    inp.accept = '.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.docx,.xlsx,.xls';
+    inp.addEventListener('change', () => {
+      const file = inp.files?.[0];
+      const wid = _gemFilePickWidgetId;
+      inp.value = '';
+      _gemFilePickWidgetId = null;
+      if (file && wid) void _processAttachmentBlob(file, wid);
+    });
+    document.body.appendChild(inp);
+  }
+  return inp;
+}
+
+async function _processAttachmentBytes(u8, fileName) {
   const lower = fileName.toLowerCase();
   if (lower.endsWith('.hwp') || lower.endsWith('.hwpx')) {
     return { error: 'HWP/HWPX는 지원 예정입니다' };
   }
-  let bytes;
-  try {
-    bytes = await tInvoke('plugin:fs|read_file', { path: filePath });
-  } catch (e) {
-    return { error: e?.message || '파일 읽기 실패' };
-  }
-  const buf = bytes instanceof ArrayBuffer ? bytes : bytes?.buffer || bytes;
-  const u8 = buf instanceof ArrayBuffer ? new Uint8Array(buf) : new Uint8Array(buf);
   const size = u8.byteLength;
 
   if (lower.endsWith('.docx')) {
@@ -6830,9 +8207,45 @@ async function _processAttachmentFile(filePath, fileName) {
   };
 }
 
-async function pickGeminiAttachment(widgetId) {
+async function _processAttachmentFile(filePath, fileName) {
+  let bytes;
   try {
-    const picked = await tInvoke('plugin:dialog|open', {
+    bytes = await tInvoke('plugin:fs|read_file', { path: filePath });
+  } catch (e) {
+    return { error: e?.message || '파일 읽기 실패' };
+  }
+  return _processAttachmentBytes(_bytesToUint8Array(bytes), fileName);
+}
+
+async function _processAttachmentBlob(file, widgetId) {
+  try {
+    const u8 = new Uint8Array(await file.arrayBuffer());
+    const processed = await _processAttachmentBytes(u8, file.name || 'file');
+    if (processed.error) {
+      showToast(`📎 ${processed.error}`);
+      return;
+    }
+    _pushGeminiAttachment(widgetId, processed);
+  } catch (e) {
+    showToast(`📎 첨부 실패: ${e?.message || '오류'}`);
+  }
+}
+
+function _pushGeminiAttachment(widgetId, processed) {
+  const list = _gemPendingAttach.get(widgetId) || [];
+  list.push(processed);
+  _gemPendingAttach.set(widgetId, list);
+  renderGeminiAttachPreview(widgetId);
+}
+
+async function pickGeminiAttachment(widgetId) {
+  if (!window.__TAURI__) {
+    _gemFilePickWidgetId = widgetId;
+    _ensureGemFileInput().click();
+    return;
+  }
+  try {
+    const picked = await tDialogOpen({
       multiple: false,
       title: '첨부 파일 선택',
       filters: [{
@@ -6842,18 +8255,18 @@ async function pickGeminiAttachment(widgetId) {
     });
     if (!picked) return;
     const filePath = Array.isArray(picked) ? picked[0] : picked;
+    if (!filePath) return;
     const fileName = String(filePath).split(/[\\/]/).pop() || 'file';
     const processed = await _processAttachmentFile(filePath, fileName);
     if (processed.error) {
       showToast(`📎 ${processed.error}`);
       return;
     }
-    const list = _gemPendingAttach.get(widgetId) || [];
-    list.push(processed);
-    _gemPendingAttach.set(widgetId, list);
-    renderGeminiAttachPreview(widgetId);
+    _pushGeminiAttachment(widgetId, processed);
   } catch (e) {
-    showToast(`📎 첨부 실패: ${e?.message || '오류'}`);
+    console.warn('[Gemini] dialog pick failed, using file input fallback:', e);
+    _gemFilePickWidgetId = widgetId;
+    _ensureGemFileInput().click();
   }
 }
 
@@ -6895,7 +8308,8 @@ async function sendGeminiMessage(widgetId) {
   const messages = (chat?.messages || []).filter((m) => m.role === 'user' || m.role === 'model');
 
   _setGeminiStreaming(widgetId, true);
-  if (streamEl) streamEl.textContent = '…';
+  if (streamEl) streamEl.textContent = '응답 생성 중…';
+  _ensureGeminiStreamingBubble(widgetId);
   const abort = new AbortController();
   _gemStreamAbort.set(widgetId, abort);
 
@@ -6904,13 +8318,17 @@ async function sendGeminiMessage(widgetId) {
     model,
     messages,
     attachmentParts: attachParts,
-    onChunk: (full) => { if (streamEl) streamEl.textContent = full; },
+    onChunk: (full) => {
+      _scheduleGeminiReveal(widgetId, full);
+      if (streamEl) streamEl.textContent = '응답 생성 중…';
+    },
     signal: abort.signal,
   });
 
   _gemStreamAbort.delete(widgetId);
   _setGeminiStreaming(widgetId, false);
   if (streamEl) streamEl.textContent = '';
+  _stopGeminiReveal(widgetId);
 
   if (result.aborted) return;
   if (result.error) {
@@ -6995,6 +8413,9 @@ function syncWidgetAnchors(state){
     } else if (w.type === 'todo') {
       const n = _cloneTodoAnchor(w);
       if (n) pool.appendChild(n);
+    } else if (GWORKSPACE_WIDGET_TYPES.includes(w.type)) {
+      const n = _cloneGWorkspaceAnchor(w);
+      if (n) pool.appendChild(n);
     } else if (w.type === 'gemini') {
       pool.appendChild(createGeminiWidgetNode(w));
     } else if (w.type === 'clock' || w.type === 'sticky' || w.type === 'pomodoro'
@@ -7031,6 +8452,62 @@ function getCalWidgetState(widgetId){
   return _calWidgetState.get(widgetId);
 }
 
+function _appendCalDayCell(grid, widgetId, st, dayNum, opts) {
+  const { isOther, year, month, day } = opts;
+  const el = document.createElement('div');
+  el.className = 'cday';
+  if (isOther) {
+    el.classList.add('other');
+    el.textContent = dayNum;
+    grid.appendChild(el);
+    return;
+  }
+  const dow = new Date(year, month, day).getDay();
+  if (dow === 0) el.classList.add('sun');
+  if (dow === 6) el.classList.add('sat');
+  const today = new Date();
+  const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+  if (isToday) el.classList.add('today');
+  if (day === st.CS) el.classList.add('sel');
+  const key = `${year}-${p(month + 1)}-${p(day)}`;
+  const evs = st.events[key] || [];
+  const inlineLimit = calTierInlineLimit(widgetId);
+  if (inlineLimit > 0 && evs.length) {
+    el.classList.add('has-inline-ev');
+    const num = document.createElement('div');
+    num.className = 'cday-num';
+    num.textContent = dayNum;
+    el.appendChild(num);
+    const evWrap = document.createElement('div');
+    evWrap.className = 'cday-evs';
+    const sorted = sortDayEvents(evs);
+    sorted.slice(0, inlineLimit).forEach((ev) => {
+      const chip = document.createElement('div');
+      chip.className = 'cday-ev-chip' + (ev.allDay ? ' allday' : '');
+      chip.style.background = ev.color;
+      chip.textContent = ev.allDay ? ev.title : `${ev.t} ${ev.title}`;
+      chip.title = ev.title;
+      evWrap.appendChild(chip);
+    });
+    if (sorted.length > inlineLimit) {
+      const more = document.createElement('div');
+      more.className = 'cday-ev-more';
+      more.textContent = `+${sorted.length - inlineLimit}`;
+      evWrap.appendChild(more);
+    }
+    el.appendChild(evWrap);
+  } else {
+    el.textContent = dayNum;
+    if (evs.length) el.classList.add('ev');
+  }
+  el.onclick = () => {
+    st.CS = day;
+    renderCalForWidget(widgetId);
+    renderCalEventsForWidget(widgetId, day);
+  };
+  grid.appendChild(el);
+}
+
 function renderCalForWidget(widgetId){
   const st = getCalWidgetState(widgetId);
   if (!st) return;
@@ -7040,38 +8517,19 @@ function renderCalForWidget(widgetId){
   if (!grid || !box) return;
   if (titleEl) titleEl.textContent = `${st.CY}년 ${st.CM + 1}월`;
   grid.innerHTML = '';
-  const today = new Date();
   const first = new Date(st.CY, st.CM, 1).getDay();
   const dim = new Date(st.CY, st.CM + 1, 0).getDate();
   const prev = new Date(st.CY, st.CM, 0).getDate();
   for (let i = first - 1; i >= 0; i--) {
-    const el = document.createElement('div');
-    el.className = 'cday other';
-    el.textContent = prev - i;
-    grid.appendChild(el);
+    _appendCalDayCell(grid, widgetId, st, prev - i, { isOther: true, year: st.CY, month: st.CM, day: 0 });
   }
   for (let d = 1; d <= dim; d++) {
-    const el = document.createElement('div');
-    el.className = 'cday';
-    const dow = new Date(st.CY, st.CM, d).getDay();
-    if (dow === 0) el.classList.add('sun');
-    if (dow === 6) el.classList.add('sat');
-    el.textContent = d;
-    const isToday = d === today.getDate() && st.CM === today.getMonth() && st.CY === today.getFullYear();
-    if (isToday) el.classList.add('today');
-    if (d === st.CS) el.classList.add('sel');
-    const key = `${st.CY}-${p(st.CM + 1)}-${p(d)}`;
-    if (st.events[key]?.length) el.classList.add('ev');
-    el.onclick = () => { st.CS = d; renderCalForWidget(widgetId); renderCalEventsForWidget(widgetId, d); };
-    grid.appendChild(el);
+    _appendCalDayCell(grid, widgetId, st, d, { isOther: false, year: st.CY, month: st.CM, day: d });
   }
   const total = first + dim;
   const rem = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let d = 1; d <= rem; d++) {
-    const el = document.createElement('div');
-    el.className = 'cday other';
-    el.textContent = d;
-    grid.appendChild(el);
+    _appendCalDayCell(grid, widgetId, st, d, { isOther: true, year: st.CY, month: st.CM + 1, day: d });
   }
   renderCalEventsForWidget(widgetId, st.CS);
 }
@@ -7115,14 +8573,6 @@ function renderCalEventsForWidget(widgetId, day){
       box.appendChild(e);
     });
   }
-  const add = document.createElement('div');
-  add.className = 'cal-add-btn';
-  add.textContent = `+ ${st.CM + 1}/${day} 일정 추가`;
-  add.onclick = () => {
-    setActiveCalendarWidget(widgetId);
-    openEvDialog(st.CY, st.CM, day);
-  };
-  box.appendChild(add);
 }
 
 function calMoveForWidget(widgetId, delta){
@@ -7150,43 +8600,27 @@ async function syncCalendarForWidget(widgetId){
   const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
   const st = getCalWidgetState(widgetId);
   if (!w || !st) return;
-  const calId = w.source?.calendarId || 'primary';
   const from = new Date(st.CY, st.CM - 1, 1).toISOString();
   const to = new Date(st.CY, st.CM + 2, 0, 23, 59, 59).toISOString();
-  const result = await fetchCalendarEventsCached(calId, from, to);
-  if (!result.error) {
-    st.events = buildEventMap(result.events || []);
-    renderCalForWidget(widgetId);
-  }
+  const result = await fetchWidgetCalendarEvents(w, from, to);
+  st.events = buildEventMap(result.events || [], result.colorMap || {});
+  renderCalForWidget(widgetId);
 }
 
 async function syncAllCalendarWidgets(){
   if (isContentSyncPaused() || !_widgetGridState) return;
   if (!await isAuthenticated()) return;
   const widgets = (_widgetGridState?.widgets || []).filter((w) => w.type === 'calendar');
-  const calIdToWidgetIds = new Map();
   for (const w of widgets) {
     initCalWidgetState(w.id, w);
-    const calId = w.source?.calendarId || 'primary';
-    if (!calIdToWidgetIds.has(calId)) calIdToWidgetIds.set(calId, []);
-    calIdToWidgetIds.get(calId).push(w.id);
+    const st = getCalWidgetState(w.id);
+    if (!st) continue;
+    const from = new Date(st.CY, st.CM - 1, 1).toISOString();
+    const to = new Date(st.CY, st.CM + 2, 0, 23, 59, 59).toISOString();
+    const result = await fetchWidgetCalendarEvents(w, from, to);
+    st.events = buildEventMap(result.events || [], result.colorMap || {});
+    renderCalForWidget(w.id);
   }
-  for (const [calId, widgetIds] of calIdToWidgetIds) {
-    const st0 = getCalWidgetState(widgetIds[0]);
-    const cy = st0?.CY ?? new Date().getFullYear();
-    const cm = st0?.CM ?? new Date().getMonth();
-    const from = new Date(cy, cm - 1, 1).toISOString();
-    const to = new Date(cy, cm + 2, 0, 23, 59, 59).toISOString();
-    const result = await fetchCalendarEventsCached(calId, from, to);
-    if (!result.error) {
-      const map = buildEventMap(result.events || []);
-      for (const wid of widgetIds) {
-        const st = getCalWidgetState(wid);
-        if (st) st.events = map;
-      }
-    }
-  }
-  for (const w of widgets) renderCalForWidget(w.id);
   const first = widgets[0];
   if (first) {
     const st = getCalWidgetState(first.id);
@@ -7216,12 +8650,19 @@ function renderTodoListForWidget(widgetId){
     const txt = document.createElement('div');
     txt.className = 'todo-txt';
     txt.textContent = item.text;
+    const bell = document.createElement('button');
+    bell.className = 'todo-bell' + (item.alarmDT ? ' bell-on' : '');
+    bell.title = item.alarmDT ? '알림 설정됨 — 클릭해서 변경' : '알림 설정';
+    bell.innerHTML = '🔔';
+    bell.onclick = (e) => { e.stopPropagation(); openAlarmMiniPopup(item.id, bell, widgetId); };
+
     const del = document.createElement('button');
     del.className = 'todo-del';
     del.innerHTML = '×';
     del.onclick = (e) => { e.stopPropagation(); deleteTodoItemForWidget(widgetId, item.id); };
     el.appendChild(chk);
     el.appendChild(txt);
+    el.appendChild(bell);
     el.appendChild(del);
     list.appendChild(el);
   });
@@ -7275,17 +8716,27 @@ function clearDoneTodosForWidget(widgetId){
 
 async function loadDriveImagesForWidget(widgetId, folderId){
   if (isContentSyncPaused()) return;
-  if (!folderId) { showDriveEmptyForWidget(widgetId, '폴더 ID를 설정해주세요'); return; }
+  if (!folderId) {
+    showDriveEmptyForWidget(widgetId, WP_EMPTY_MAIN, '위젯 ⚙ 설정에서 폴더 ID를 입력해 주세요');
+    return;
+  }
   showDriveLoadingForWidget(widgetId);
   const result = await listDriveImages(folderId);
   if (result.error) {
-    showDriveEmptyForWidget(widgetId, result.error === 'not_authenticated' ? 'Google 미연결' : result.error);
+    showDriveEmptyForWidget(
+      widgetId,
+      result.error === 'not_authenticated' ? 'Google 계정을 연결해 주세요' : result.error,
+      '',
+    );
     return;
   }
   if (!driveImgFiles[widgetId]) driveImgFiles[widgetId] = [];
   driveImgFiles[widgetId] = result.files || [];
   driveImgIdx[widgetId] = 0;
-  if (!driveImgFiles[widgetId].length) { showDriveEmptyForWidget(widgetId, '이미지 없음'); return; }
+  if (!driveImgFiles[widgetId].length) {
+    showDriveEmptyForWidget(widgetId, '이 폴더에는 표시할 사진이 없어요', WP_EMPTY_SUB);
+    return;
+  }
   await showDriveImageForWidget(widgetId, 0);
 }
 
@@ -7299,13 +8750,13 @@ function showDriveLoadingForWidget(widgetId){
   }
 }
 
-function showDriveEmptyForWidget(widgetId, msg){
+function showDriveEmptyForWidget(widgetId, main, sub = WP_EMPTY_SUB){
   const imgEl = document.getElementById(`driveImg_${widgetId}`);
   const mockEl = document.getElementById(`driveMock_${widgetId}`);
   if (imgEl) imgEl.style.display = 'none';
   if (mockEl) {
     mockEl.style.display = 'flex';
-    mockEl.innerHTML = `<div style="font-size:22px">📁</div><div style="font-size:12px;color:var(--text4);text-align:center">${msg}</div>`;
+    mockEl.innerHTML = wpEmptyStateMarkup(main, 48, sub);
   }
   const countEl = document.getElementById(`driveCount_${widgetId}`);
   if (countEl) countEl.textContent = '0 / 0';
@@ -7348,16 +8799,156 @@ async function showDriveImageForWidget(widgetId, idx){
 function drivePrevForWidget(widgetId){ void showDriveImageForWidget(widgetId, (driveImgIdx[widgetId] ?? 0) - 1); }
 function driveNextForWidget(widgetId){ void showDriveImageForWidget(widgetId, (driveImgIdx[widgetId] ?? 0) + 1); }
 
+async function loadDriveFileListForWidget(widgetId, folderId) {
+  const listEl = document.getElementById(`driveFileList_${widgetId}`);
+  if (!listEl) return;
+  if (!folderId) {
+    listEl.innerHTML = '<div class="db-empty">폴더 ID를 설정해주세요</div>';
+    return;
+  }
+  listEl.innerHTML = '<div class="db-loading">⏳ 로딩 중...</div>';
+  const result = await listDriveFolder(folderId);
+  if (result.error === 'not_authenticated') {
+    listEl.innerHTML = '<div class="db-unauth">🔐 Google 미연결</div>';
+    return;
+  }
+  if (result.error) {
+    listEl.innerHTML = `<div class="db-empty">❌ ${result.error}</div>`;
+    return;
+  }
+  const files = result.files || [];
+  if (!files.length) {
+    listEl.innerHTML = '<div class="db-empty">📭 비어있어요</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  files.forEach((f) => {
+    const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
+    const row = document.createElement('div');
+    row.className = 'db-item ' + (isFolder ? 'db-folder' : 'db-file');
+    const ico = document.createElement('span');
+    ico.className = 'db-ico';
+    ico.textContent = getDriveFileIcon(f.mimeType);
+    const lbl = document.createElement('span');
+    lbl.className = 'db-lbl';
+    lbl.textContent = f.name;
+    row.appendChild(ico);
+    row.appendChild(lbl);
+    bindGoogleDriveRowDrag(row, f);
+    row.addEventListener('click', () => {
+      if (row._didGoogleDrag) return;
+      if (isFolder) {
+        void openExternalUrl(`https://drive.google.com/drive/folders/${f.id}`);
+      } else if (f.webViewLink) {
+        void openPath(f.webViewLink);
+      }
+    });
+    listEl.appendChild(row);
+  });
+}
+
 async function driveRefreshForWidget(widgetId){
   const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
   if (!w) return;
-  await loadDriveImagesForWidget(widgetId, w.source?.folderId || '');
+  const folderId = w.source?.folderId || '';
+  await Promise.all([
+    loadDriveImagesForWidget(widgetId, folderId),
+    loadDriveFileListForWidget(widgetId, folderId),
+  ]);
+}
+
+function _gworkspaceFileUrl(cfg, file) {
+  if (file?.webViewLink) return file.webViewLink;
+  if (file?.id && cfg?.fileUrl) return cfg.fileUrl(file.id);
+  return cfg?.homeUrl || 'https://drive.google.com';
+}
+
+function renderGWorkspaceListForWidget(widgetId, widgetType, result) {
+  const listEl = document.getElementById(`gfileList_${widgetId}`);
+  const cfg = GWORKSPACE_WIDGET_CONFIG[widgetType];
+  if (!listEl || !cfg) return;
+  listEl.innerHTML = '';
+  if (result?.error === 'not_authenticated') {
+    listEl.innerHTML = '<div class="gfile-unauth">🔐 Google 미연결<br><span style="font-size:11px">설정에서 Google 계정을 연결해주세요</span></div>';
+    return;
+  }
+  if (result?.error) {
+    listEl.innerHTML = `<div class="gfile-empty">⚠️ ${result.error}</div>`;
+    return;
+  }
+  const files = result?.files || [];
+  if (!files.length) {
+    listEl.innerHTML = '<div class="gfile-empty">📭 파일이 없어요</div>';
+    return;
+  }
+  files.forEach((f) => {
+    const row = document.createElement('div');
+    row.className = 'gfile-item';
+    row.title = f.name || '';
+    const name = document.createElement('span');
+    name.className = 'gfile-name';
+    name.textContent = f.name || '(이름 없음)';
+    row.appendChild(name);
+    bindGoogleDriveRowDrag(row, f);
+    row.addEventListener('click', () => {
+      if (row._didGoogleDrag) return;
+      void openExternalUrl(_gworkspaceFileUrl(cfg, f));
+    });
+    listEl.appendChild(row);
+  });
+}
+
+async function loadGWorkspaceWidget(widgetId, widgetType, { force = false } = {}) {
+  if (isContentSyncPaused()) return;
+  const cfg = GWORKSPACE_WIDGET_CONFIG[widgetType];
+  if (!cfg) return;
+  const listEl = document.getElementById(`gfileList_${widgetId}`);
+  if (listEl) listEl.innerHTML = '<div class="gfile-empty">⏳ 로딩 중...</div>';
+  const fetcher = () => listDriveFilesByMime(cfg.mime);
+  const result = force
+    ? await fetcher()
+    : await fetchCached(
+      _gcalCache,
+      buildDriveMimeListKey(cfg.mime),
+      DEFAULT_LIST_TTL_MS,
+      fetcher,
+    );
+  renderGWorkspaceListForWidget(widgetId, widgetType, result);
+}
+
+async function refreshGWorkspaceWidget(widgetId, widgetType, { force = true } = {}) {
+  if (force) invalidateCache(_gcalCache, buildDriveMimeListKey(GWORKSPACE_WIDGET_CONFIG[widgetType]?.mime || ''));
+  await loadGWorkspaceWidget(widgetId, widgetType, { force });
+}
+
+async function syncAllGWorkspaceWidgets(widgetType) {
+  if (isContentSyncPaused() || !_widgetGridState) return;
+  for (const w of (_widgetGridState.widgets || []).filter((x) => x.type === widgetType)) {
+    await loadGWorkspaceWidget(w.id, widgetType);
+  }
+}
+
+async function syncAllGWorkspaceWidgetsAll() {
+  for (const type of GWORKSPACE_WIDGET_TYPES) {
+    await syncAllGWorkspaceWidgets(type);
+  }
+}
+
+function renderAllGWorkspaceWidgets() {
+  if (!_widgetGridState) return;
+  for (const w of _widgetGridState.widgets.filter((x) => GWORKSPACE_WIDGET_TYPES.includes(x.type))) {
+    void loadGWorkspaceWidget(w.id, w.type);
+  }
 }
 
 async function syncAllDriveWidgets(){
   if (isContentSyncPaused() || !_widgetGridState) return;
   for (const w of (_widgetGridState?.widgets || []).filter((x) => x.type === 'drive')) {
-    await loadDriveImagesForWidget(w.id, w.source?.folderId || '');
+    const folderId = w.source?.folderId || '';
+    await Promise.all([
+      loadDriveImagesForWidget(w.id, folderId),
+      loadDriveFileListForWidget(w.id, folderId),
+    ]);
   }
 }
 
@@ -7396,6 +8987,7 @@ async function applyImportedDashboardState(imported) {
   void fetchAllWeatherWidgets();
   await syncAllCalendarWidgets();
   await syncAllDriveWidgets();
+  await syncAllGWorkspaceWidgetsAll();
   await syncGoogleTasks(true);
 }
 
@@ -7407,7 +8999,7 @@ async function exportDashboardState({ includeKeys = true } = {}) {
       return;
     }
     const json = exportState(state, { includeKeys });
-    const path = await tInvoke('plugin:dialog|save', {
+    const path = await tDialogSave({
       filters: [{ name: 'JSON', extensions: ['json'] }],
       defaultPath: _backupDefaultFilename(),
     });
@@ -7423,7 +9015,7 @@ async function exportDashboardState({ includeKeys = true } = {}) {
 async function importDashboardState() {
   if (!confirm('현재 데이터를 덮어씁니다. 계속할까요?')) return;
   try {
-    const picked = await tInvoke('plugin:dialog|open', {
+    const picked = await tDialogOpen({
       multiple: false,
       filters: [{ name: 'JSON', extensions: ['json'] }],
       title: '백업 파일 가져오기',
@@ -7472,6 +9064,7 @@ async function _remountWidgetGridState(){
   renderAllTodoWidgets();
   initLocalWidgetRuntimes(_widgetGridState);
   initGeminiWidgetRuntimes(_widgetGridState);
+  renderAllGWorkspaceWidgets();
   if (wasLayoutEditing && layoutEditFocusId) {
     enterEditMode(mount, _widgetGridState, {
       focusWidgetId: layoutEditFocusId,
@@ -7498,6 +9091,7 @@ async function addWidgetByType(type){
   await saveState(_widgetGridState, { immediate: true });
   await syncAllCalendarWidgets();
   await syncAllDriveWidgets();
+  await syncAllGWorkspaceWidgetsAll();
   if (document.getElementById('settingsOverlay')?.classList.contains('sp-open')) {
     renderSpWidgetList();
   }
@@ -7509,9 +9103,23 @@ async function deleteWidgetById(widgetId, { confirm: askConfirm = true } = {}){
   if (askConfirm && !confirm('이 위젯을 삭제할까요?')) return;
   const prev = _stickySaveTimers.get(widgetId);
   if (prev) { clearTimeout(prev); _stickySaveTimers.delete(widgetId); }
+  _gemStreamAbort.get(widgetId)?.abort();
+  _gemStreamAbort.delete(widgetId);
+  _stopGeminiReveal(widgetId);
   _widgetGridState = removeWidget(_widgetGridState, widgetId);
   _calWidgetState.delete(widgetId);
-  await _remountWidgetGridState();
+  renderSpWidgetList();
+  const mount = document.getElementById('widgetGridMount');
+  if (mount) {
+    syncWidgetAnchors(_widgetGridState);
+    pruneWidgetCell(mount, _widgetGridState, widgetId, collectPanelAnchors(_widgetGridState));
+  }
+  try {
+    await _remountWidgetGridState();
+  } catch (e) {
+    console.warn('[WidgetGrid] remount after delete failed:', e);
+  }
+  renderSpWidgetList();
   _stopWxTimerIfNone();
   await saveState(_widgetGridState, { immediate: true });
   showToast('🗑 위젯이 삭제됐어요');
@@ -7552,21 +9160,7 @@ async function openWidgetSourceDialog(widgetId){
   if (geminiWrap) geminiWrap.style.display = 'none';
   if (w.type === 'calendar') {
     calWrap.style.display = '';
-    const sel = document.getElementById('wsfCalendar');
-    sel.innerHTML = '<option value="">불러오는 중...</option>';
-    const res = await fetchCalendarListCached();
-    sel.innerHTML = '';
-    if (res.error) {
-      sel.innerHTML = `<option value="primary">primary (오류: ${res.error})</option>`;
-    } else {
-      for (const c of res.calendars || []) {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.summary + (c.primary ? ' (기본)' : '');
-        sel.appendChild(opt);
-      }
-    }
-    sel.value = w.source?.calendarId || 'primary';
+    await populateWsfCalendarList(w);
   } else if (w.type === 'todo') {
     taskWrap.style.display = '';
     const sel = document.getElementById('wsfTaskList');
@@ -7625,7 +9219,12 @@ async function openWidgetSourceDialog(widgetId){
     if (geminiWrap) geminiWrap.style.display = '';
     const keyInp = document.getElementById('wsfGeminiKey');
     const modelSel = document.getElementById('wsfGeminiModel');
-    if (keyInp) keyInp.value = _widgetGridState?.secrets?.geminiApiKey || '';
+    if (keyInp) {
+      keyInp.value = '';
+      keyInp.placeholder = _getGeminiApiKey()
+        ? '저장됨 — 변경할 때만 새 키 입력'
+        : 'AI Studio API 키';
+    }
     _populateGeminiModelSelect(modelSel, w.config?.model);
   }
   dlg.classList.add('open');
@@ -7643,7 +9242,11 @@ async function saveWidgetSourceDialog(){
   const title = document.getElementById('wsfTitle')?.value?.trim();
   const patch = { title: title || w.title };
   if (w.type === 'calendar') {
-    patch.source = { calendarId: document.getElementById('wsfCalendar')?.value || 'primary' };
+    const calendarIds = getSelectedWsfCalendarIds();
+    patch.source = {
+      calendarIds,
+      calendarId: calendarIds[0] || 'primary',
+    };
   } else if (w.type === 'todo') {
     patch.source = { taskListId: document.getElementById('wsfTaskList')?.value || '' };
   } else if (w.type === 'drive') {
@@ -7681,7 +9284,9 @@ async function saveWidgetSourceDialog(){
     const model = document.getElementById('wsfGeminiModel')?.value || DEFAULT_GEMINI_MODEL;
     patch.config = { model };
     const apiKey = document.getElementById('wsfGeminiKey')?.value?.trim() || '';
-    _widgetGridState = updateStateSecrets(_widgetGridState, { geminiApiKey: apiKey });
+    if (apiKey) {
+      _widgetGridState = updateStateSecrets(_widgetGridState, { geminiApiKey: apiKey });
+    }
   }
   const savedId = _widgetSourceEditId;
   _widgetGridState = updateWidgetSource(_widgetGridState, savedId, patch);
@@ -7712,6 +9317,7 @@ async function _resumeDeferredContentSync(){
   try {
     await syncAllCalendarWidgets();
     await syncAllDriveWidgets();
+    await syncAllGWorkspaceWidgetsAll();
     await syncGoogleTasks(true);
     await fetchAllWeatherWidgets();
   } catch (e) {
@@ -7751,6 +9357,7 @@ async function initWidgetGrid(){
     initGeminiWidgetRuntimes(state);
     _bindWidgetLongPressOnce();
 
+    initWidgetTypePickerIcons();
     const typePicker = document.getElementById('widgetTypePicker');
     if (typePicker && !typePicker.dataset.bound) {
       typePicker.dataset.bound = '1';
@@ -7769,6 +9376,14 @@ async function initWidgetGrid(){
       document.getElementById('widgetSourceSave')?.addEventListener('click', () => void saveWidgetSourceDialog());
       document.getElementById('wsfWeatherSearch')?.addEventListener('click', () => void searchWeatherLocation());
       document.getElementById('wsfGeminiKeyGuide')?.addEventListener('click', () => openGeminiKeyGuideModal());
+      document.getElementById('wsfGeminiKeyClear')?.addEventListener('click', async () => {
+        if (!_widgetGridState) return;
+        const keyInp = document.getElementById('wsfGeminiKey');
+        if (keyInp) keyInp.value = '';
+        _widgetGridState = updateStateSecrets(_widgetGridState, { geminiApiKey: '' });
+        await saveState(_widgetGridState, { immediate: true });
+        showToast('🔑 API 키가 초기화됐어요');
+      });
       srcDlg.addEventListener('click', (e) => {
         if (e.target === srcDlg) closeWidgetSourceDialog();
       });
@@ -7788,6 +9403,7 @@ async function initWidgetGrid(){
 
     void syncAllCalendarWidgets();
     void syncAllDriveWidgets();
+    void syncAllGWorkspaceWidgetsAll();
   } catch (e) {
     console.warn('[WidgetGrid] init failed:', e);
     showToast('❌ 위젯 그리드를 불러오지 못했습니다');
@@ -7818,6 +9434,7 @@ function initDashboard(){
 function reloadDriveImages(){
   if (isContentSyncPaused() || !_widgetGridState) return;
   void syncAllDriveWidgets();
+  void syncAllGWorkspaceWidgetsAll();
 }
 
 /* ── Google 인증 상태 확인 + 자동 동기화 ── */
@@ -7981,7 +9598,7 @@ function syncGcalToWindow() { window.gcalEvents = gcalEvents; }
 function setGcalEvents(map) { gcalEvents = map || {}; syncGcalToWindow(); }
 syncGcalToWindow();
 
-function buildEventMap(items) {
+function buildEventMap(items, calendarColorMap = {}) {
   const map = {};
   items.forEach(item => {
     if (item.status === 'cancelled') return;
@@ -7991,7 +9608,10 @@ function buildEventMap(items) {
     if (!dateKey) return;
 
     const timeStr = allDay ? '종일' : start.slice(11, 16);
-    const color   = GCAL_COLOR_MAP[item.colorId] || GCAL_DEFAULT_COLOR;
+    const calId = item._calendarId || '';
+    const color = calendarColorMap[calId]
+      || GCAL_COLOR_MAP[item.colorId]
+      || GCAL_DEFAULT_COLOR;
 
     if (!map[dateKey]) map[dateKey] = [];
     map[dateKey].push({
@@ -7999,6 +9619,7 @@ function buildEventMap(items) {
       t:           timeStr,
       title:       item.summary    || '(제목 없음)',
       color,
+      calendarId:  calId,
       gcalLink:    item.htmlLink   || '',
       allDay,
       startDT:     item.start?.dateTime || item.start?.date || '',
@@ -8130,7 +9751,8 @@ let CATS = DEFAULT_CATS.map(c => ({ ...c, items: [], note: '' }));
 const _driveNav = {}; // { [catColor]: { folderId, breadcrumbs:[{id,name}], files:[], loading:false } }
 
 /* Drive 드래그 상태 */
-let _driveDragFile = null; // { fileId, fileName, mimeType, webViewLink }
+let _driveDragFile = null; // legacy HTML5 — WebView2에서는 pointer 경로 사용
+let _ptrGoogleFileDrag = null;
 
 /* Drive 컨텍스트 메뉴 상태 */
 let _drvCtx = null; // { file, state, reloadFn }
@@ -8141,6 +9763,191 @@ let _drvMove = null; // { file, currentParentId, reloadFn, navStack:[{id,name}],
 /* 무지개 7색 풀세트 (카테고리 7개일 때)
    빨:#ffb3b3  주:#ffc998  노:#ffe08a
    초:#a7f3c0  파:#93c5fd  남:#a5b4fc  보:#d8b4fe  */
+
+/* Google Drive 파일 드래그 → 카테고리 추가/다운로드 */
+function googleFileOpenUrl(file) {
+  if (file?.webViewLink) return file.webViewLink;
+  const isFolder = file?.mimeType === 'application/vnd.google-apps.folder';
+  if (isFolder && file?.id) return `https://drive.google.com/drive/folders/${file.id}`;
+  if (file?.id) return `https://drive.google.com/file/d/${file.id}/view`;
+  return '';
+}
+
+function googleFileToCatItem(file) {
+  const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+  const ic = isFolder ? '📁' : getDriveFileIcon(file.mimeType);
+  let tag = 'Drive';
+  const mime = file.mimeType || '';
+  if (mime.includes('spreadsheet')) tag = '시트';
+  else if (mime.includes('presentation')) tag = '슬라이드';
+  else if (mime.includes('document')) tag = '문서';
+  else if (isFolder) tag = '폴더';
+  else tag = getFileStyle(file.name || '').tag;
+  return {
+    ic,
+    lbl: file.name || '항목',
+    tag,
+    path: googleFileOpenUrl(file),
+  };
+}
+
+function clearGoogleFileDropHighlights() {
+  document.querySelectorAll('.item.drive-drop-hover').forEach((el) => el.classList.remove('drive-drop-hover'));
+  document.querySelectorAll('.cp-body.body-drop-over').forEach((el) => el.classList.remove('body-drop-over'));
+  document.querySelectorAll('.cp-drop.google-drop-over').forEach((el) => el.classList.remove('google-drop-over'));
+}
+
+function updateGoogleFilePointerTarget(clientX, clientY) {
+  if (!_ptrGoogleFileDrag) return;
+  clearGoogleFileDropHighlights();
+  _ptrGoogleFileDrag.target = null;
+  const hit = findGoogleFileDropTarget(clientX, clientY);
+  if (!hit) return;
+  _ptrGoogleFileDrag.target = hit;
+  if (hit.kind === 'folder') hit.row.classList.add('drive-drop-hover');
+  else if (hit.kind === 'body') hit.bodyEl.classList.add('body-drop-over');
+  else if (hit.kind === 'dropzone') hit.dz.classList.add('google-drop-over');
+}
+
+async function commitGoogleFilePointerDrop() {
+  const pr = _ptrGoogleFileDrag;
+  if (!pr?.moved || !pr.target) return false;
+
+  const dragFile = {
+    fileId: pr.file.id,
+    fileName: pr.file.name,
+    mimeType: pr.file.mimeType,
+    webViewLink: pr.file.webViewLink,
+  };
+
+  if (pr.target.kind === 'folder') {
+    const item = pr.target.item;
+    if (!item?.path) { showToast('❌ 경로가 없는 항목이에요'); return false; }
+    const stat = await statPath(item.path);
+    if (!stat?.isDir) { showToast('❌ 폴더 항목에만 드롭할 수 있어요'); return false; }
+    const isGFolder = dragFile.mimeType === 'application/vnd.google-apps.folder';
+    showToast(isGFolder
+      ? `⬇ ${dragFile.fileName} 폴더 다운로드 중...`
+      : `⬇ ${dragFile.fileName} 다운로드 중...`);
+    const result = isGFolder
+      ? await driveDownloadFolder(dragFile.fileId, dragFile.fileName, item.path)
+      : await driveDownloadFile(dragFile.fileId, dragFile.fileName, dragFile.mimeType, item.path);
+    if (result?.error) showToast('❌ ' + result.error);
+    else if (isGFolder) {
+      const n = result.downloaded ?? 0;
+      const skip = result.skipped ? ` · ${result.skipped}개 형식 제외` : '';
+      showToast(`✅ 폴더 다운로드 완료 (${n}개 파일${skip}) → ${item.lbl}`);
+    } else {
+      showToast(`✅ 다운로드 완료 → ${item.lbl}`);
+    }
+    return true;
+  }
+
+  await addGoogleDriveItemToCat(pr.target.cat, dragFile);
+  return true;
+}
+
+/** Tauri WebView2: HTML5 drag 대신 pointer capture + rect 히트 */
+function beginGoogleFilePointerDrag(row, file, startEvent) {
+  if (_ptrGoogleFileDrag || _ptrItemReorder) return;
+  const pid = startEvent.pointerId ?? 1;
+  const sx = startEvent.clientX;
+  const sy = startEvent.clientY;
+  let moved = false;
+  let ghost = null;
+
+  if (_widgetLongPressTimer) {
+    clearTimeout(_widgetLongPressTimer);
+    _widgetLongPressTimer = null;
+  }
+
+  try { row.setPointerCapture(pid); } catch (_) {}
+
+  _ptrGoogleFileDrag = {
+    file: {
+      id: file.id,
+      name: file.name,
+      mimeType: file.mimeType,
+      webViewLink: file.webViewLink,
+    },
+    row,
+    target: null,
+    moved: false,
+  };
+
+  const onMove = (ev) => {
+    if (ev.pointerId !== pid || !_ptrGoogleFileDrag) return;
+    if (!moved) {
+      if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 6) return;
+      moved = true;
+      _ptrGoogleFileDrag.moved = true;
+      row._didGoogleDrag = true;
+      ev.preventDefault();
+      row.classList.add('db-dragging');
+      document.body.classList.add('google-file-drag-active');
+      ghost = document.createElement('div');
+      ghost.className = 'item-drag-ghost';
+      ghost.textContent = (file.mimeType === 'application/vnd.google-apps.folder' ? '📁 ' : '📄 ')
+        + (file.name || '파일');
+      ghost.style.left = (ev.clientX + 12) + 'px';
+      ghost.style.top = (ev.clientY + 10) + 'px';
+      document.body.appendChild(ghost);
+    }
+    if (ghost) {
+      ghost.style.left = (ev.clientX + 12) + 'px';
+      ghost.style.top = (ev.clientY + 10) + 'px';
+    }
+    updateGoogleFilePointerTarget(ev.clientX, ev.clientY);
+  };
+
+  const endDrag = (ev) => {
+    if (ev.pointerId !== pid) return;
+    document.removeEventListener('pointermove', onMove, true);
+    document.removeEventListener('pointerup', endDrag, true);
+    document.removeEventListener('pointercancel', endDrag, true);
+    try { row.releasePointerCapture(pid); } catch (_) {}
+    if (ghost) ghost.remove();
+    row.classList.remove('db-dragging');
+    document.body.classList.remove('google-file-drag-active');
+    clearGoogleFileDropHighlights();
+    const hadMove = _ptrGoogleFileDrag?.moved;
+    void commitGoogleFilePointerDrop();
+    _ptrGoogleFileDrag = null;
+    setTimeout(() => { row._didGoogleDrag = false; }, 0);
+    if (hadMove) startEvent.preventDefault();
+  };
+
+  document.addEventListener('pointermove', onMove, true);
+  document.addEventListener('pointerup', endDrag, true);
+  document.addEventListener('pointercancel', endDrag, true);
+}
+
+function bindGoogleDriveRowDrag(row, file) {
+  if (!file?.id || !row) return;
+  row.draggable = false;
+  row.style.cursor = 'grab';
+  row.style.touchAction = 'none';
+  row.title = (file.name || '항목') + ' · 잡고 끌어 카테고리로 이동';
+  row.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || _ptrItemReorder || _ptrGoogleFileDrag) return;
+    e.stopPropagation();
+    beginGoogleFilePointerDrag(row, file, e);
+  });
+}
+
+async function addGoogleDriveItemToCat(cat, dragFile) {
+  if (!cat || !dragFile?.fileId) return false;
+  const file = {
+    id: dragFile.fileId,
+    name: dragFile.fileName,
+    mimeType: dragFile.mimeType,
+    webViewLink: dragFile.webViewLink,
+  };
+  cat.items.push(googleFileToCatItem(file));
+  await refreshCategoryUi();
+  showToast(`✅ "${file.name}" 추가됨`);
+  return true;
+}
 
 /* 아이템 드래그 상태 */
 let _dragSrc = null; // { cat, item }
@@ -8192,6 +9999,47 @@ function setFileDropHover(cat) {
   }
 }
 
+async function pickFilesForCategory(cat) {
+  if (!cat) return;
+  if (!window.__TAURI__) {
+    showToast('⚠️ 데스크톱 앱에서만 파일을 선택할 수 있어요');
+    return;
+  }
+  try {
+    const picked = await tDialogOpen({
+      multiple: true,
+      title: '파일 선택',
+    });
+    if (!picked) return;
+    const paths = Array.isArray(picked) ? picked : [picked];
+    await addPathsToCat(paths.filter(Boolean), cat);
+  } catch (e) {
+    console.error('[pickFilesForCategory]', e);
+    showToast('❌ 파일 선택에 실패했어요');
+  }
+}
+
+async function pickFolderForCategory(cat) {
+  if (!cat) return;
+  if (!window.__TAURI__) {
+    showToast('⚠️ 데스크톱 앱에서만 폴더를 선택할 수 있어요');
+    return;
+  }
+  try {
+    const picked = await tDialogOpen({
+      multiple: false,
+      directory: true,
+      title: '폴더 선택',
+    });
+    if (!picked) return;
+    const path = Array.isArray(picked) ? picked[0] : picked;
+    if (path) await addPathsToCat([path], cat);
+  } catch (e) {
+    console.error('[pickFolderForCategory]', e);
+    showToast('❌ 폴더 선택에 실패했어요');
+  }
+}
+
 /** OS 경로 배열 → 카테고리 아이템 추가 (Tauri drag-drop) */
 async function addPathsToCat(paths, cat) {
   if (!paths?.length || !cat) return 0;
@@ -8205,8 +10053,7 @@ async function addPathsToCat(paths, cat) {
     added++;
   }
   if (added > 0) {
-    buildCatPanels();
-    saveLegacyAppData();
+    void refreshCategoryUi();
     showToast(`✅ ${added}개 항목 추가됨`);
   }
   return added;
@@ -8311,7 +10158,7 @@ function buildCatPanels(){
 
     // 헤더
     const head=document.createElement('div'); head.className='cp-head';
-    const icon=document.createElement('div'); icon.className='cp-icon'; renderIcon(icon, cat.icon, 20);
+    const icon=document.createElement('div'); icon.className='cp-icon'; renderIcon(icon, normalizeIconMarker(cat.icon), 20);
     const meta=document.createElement('div'); meta.className='cp-meta';
     const name=document.createElement('div'); name.className='cp-name';
     name.style.color=cat.tc; name.textContent=cat.name; name.title='더블클릭으로 편집';
@@ -8334,98 +10181,95 @@ function buildCatPanels(){
     function makeRow(item) {
       const row=document.createElement('div'); row.className='item';
       const tagBg=hexRgba(cat.color,0.18);
-      // data URL이면 <img>, 아니면 이모지 텍스트
-      const icoHtml = item.ic?.startsWith('data:')
-        ? `<img src="${item.ic}" style="width:20px;height:20px;object-fit:cover;border-radius:4px;vertical-align:middle">`
-        : (item.ic || '📄');
-      row.innerHTML=`<span class="item-ico">${icoHtml}</span><span class="item-lbl">${item.lbl}</span><span class="item-tag" style="background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}">${item.tag}</span>`;
+      const icoSpan = document.createElement('span');
+      icoSpan.className = 'item-ico';
+      if (item.ic?.startsWith('data:')) {
+        const img = document.createElement('img');
+        img.src = item.ic;
+        img.style.cssText = 'width:20px;height:20px;object-fit:cover;border-radius:4px;vertical-align:middle';
+        icoSpan.appendChild(img);
+      } else {
+        renderIcon(icoSpan, item.ic || '📄', 18);
+      }
+      const lbl = document.createElement('span');
+      lbl.className = 'item-lbl';
+      lbl.textContent = item.lbl;
+      const tag = document.createElement('span');
+      tag.className = 'item-tag';
+      tag.style.cssText = `background:${tagBg};color:${cat.tc};border:1px solid ${hexRgba(cat.color,0.35)}`;
+      tag.textContent = item.tag;
+      row.appendChild(icoSpan);
+      row.appendChild(lbl);
+      row.appendChild(tag);
 
       installItemRowInteractions(row, cat, item);
 
       // 우클릭 컨텍스트 메뉴
       row.addEventListener('contextmenu',e=>{ e.preventDefault(); showCtx(e.clientX,e.clientY,cat,item); });
 
-      // Drive 파일 드래그 → 이 폴더 아이템에 드롭 → 다운로드
-      row.addEventListener('dragover', e => {
-        if (!_driveDragFile) return;
-        e.preventDefault(); e.stopPropagation();
-        e.dataTransfer.dropEffect = 'copy';
-        row.classList.add('drive-drop-hover');
-      });
-      row.addEventListener('dragleave', e => {
-        if (!row.contains(e.relatedTarget)) row.classList.remove('drive-drop-hover');
-      });
-      row.addEventListener('drop', async e => {
-        if (!_driveDragFile) return;
-        e.preventDefault(); e.stopPropagation();
-        row.classList.remove('drive-drop-hover');
-        if (!item.path) { showToast('❌ 경로가 없는 항목이에요'); return; }
-        const stat = await statPath(item.path);
-        if (!stat?.isDir) { showToast('❌ 폴더 항목에만 드롭할 수 있어요'); return; }
-        const { fileId, fileName, mimeType } = _driveDragFile;
-        showToast(`⬇ ${fileName} 다운로드 중...`);
-        const result = await driveDownloadFile(fileId, fileName, mimeType, item.path);
-        if (result?.error) showToast('❌ ' + result.error);
-        else showToast(`✅ 다운로드 완료 → ${item.lbl}`);
-      });
-
       return row;
     }
 
     cat.items.forEach(item=> body.appendChild(makeRow(item)));
 
-    // body 전체를 드롭 대상으로 (빈 공간 + 다른 카테고리로 이동)
-    body.addEventListener('dragenter', e=>{
-      if (_dragSrc && _dragSrc.cat !== cat) { e.preventDefault(); body.classList.add('body-drop-over'); }
-    });
-    body.addEventListener('dragover', e=>{
-      if (_dragSrc) e.preventDefault();
-    });
-    body.addEventListener('dragleave', e=>{
-      if (!body.contains(e.relatedTarget)) body.classList.remove('body-drop-over');
-    });
-    body.addEventListener('drop', async e=>{
-      body.classList.remove('body-drop-over');
-      if (_dragSrc) {
-        // 아이템을 이 카테고리 맨 끝으로 이동
-        if (e.target === body || !e.target.closest('.item')) {
-          e.preventDefault(); e.stopPropagation();
-          const srcIdx = _dragSrc.cat.items.indexOf(_dragSrc.item);
-          if (srcIdx >= 0) {
-            _dragSrc.cat.items.splice(srcIdx, 1);
-            cat.items.push(_dragSrc.item);
-          }
-          _dragSrc = null;
-          saveLegacyAppData();
-          buildCatPanels();
-        }
-      }
-    });
-
     // 드롭존 (body 아래 시각적 힌트 — OS 파일은 Tauri drag-drop 처리)
     const dz=document.createElement('div'); dz.className='cp-drop';
-    dz.textContent='📂 파일·폴더를 드래그하여 추가';
-    dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.style.background='rgba(196,181,253,0.18)'; });
-    dz.addEventListener('dragleave',()=>{ dz.style.background=''; });
-    dz.addEventListener('drop',async e=>{
-      e.preventDefault(); dz.style.background='';
-      if (_dragSrc) {
-        // 아이템 드래그 → 이 카테고리 끝으로 이동
-        const srcIdx = _dragSrc.cat.items.indexOf(_dragSrc.item);
-        if (srcIdx >= 0) { _dragSrc.cat.items.splice(srcIdx,1); cat.items.push(_dragSrc.item); }
-        _dragSrc = null;
-        saveLegacyAppData();
-        buildCatPanels();
-      }
-    });
+    dz.textContent='📂 여기에 드래그하거나 + 추가에서 선택';
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.background='rgba(196,181,253,0.18)'; });
+    dz.addEventListener('dragleave', () => { dz.style.background=''; });
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.style.background=''; });
 
     // 링크 추가 — 1줄 버튼 클릭 시 입력 폼 표시
     const acts=document.createElement('div'); acts.className='cp-drop-btns';
 
-    const linkToggleBtn = document.createElement('button');
-    linkToggleBtn.type = 'button';
-    linkToggleBtn.className = 'link-toggle-btn';
-    linkToggleBtn.textContent = '🔗 링크 추가';
+    const addToggleBtn = document.createElement('button');
+    addToggleBtn.type = 'button';
+    addToggleBtn.className = 'cp-add-toggle-btn';
+    addToggleBtn.textContent = '+ 추가';
+
+    const addMenu = document.createElement('div');
+    addMenu.className = 'cp-add-menu is-hidden';
+
+    const folderPickBtn = document.createElement('button');
+    folderPickBtn.type = 'button';
+    folderPickBtn.className = 'cp-add-opt';
+    folderPickBtn.textContent = '📁 폴더';
+
+    const filePickBtn = document.createElement('button');
+    filePickBtn.type = 'button';
+    filePickBtn.className = 'cp-add-opt';
+    filePickBtn.textContent = '📄 파일';
+
+    const linkPickBtn = document.createElement('button');
+    linkPickBtn.type = 'button';
+    linkPickBtn.className = 'cp-add-opt';
+    linkPickBtn.textContent = '🔗 링크';
+
+    addMenu.appendChild(folderPickBtn);
+    addMenu.appendChild(filePickBtn);
+    addMenu.appendChild(linkPickBtn);
+
+    function hideAddMenu() {
+      addMenu.classList.add('is-hidden');
+      addToggleBtn.classList.remove('is-open');
+      addToggleBtn.textContent = '+ 추가';
+    }
+
+    function showAddMenu() {
+      row.classList.add('is-hidden');
+      addMenu.classList.remove('is-hidden');
+      addToggleBtn.classList.add('is-open');
+      addToggleBtn.textContent = '닫기';
+    }
+
+    folderPickBtn.onclick = () => {
+      hideAddMenu();
+      void pickFolderForCategory(cat);
+    };
+    filePickBtn.onclick = () => {
+      hideAddMenu();
+      void pickFilesForCategory(cat);
+    };
 
     const row = document.createElement('div');
     row.className = 'link-input-row is-hidden';
@@ -8453,8 +10297,9 @@ function buildCatPanels(){
     cancelBtn.textContent = '취소';
 
     function showLinkForm(){
+      hideAddMenu();
       row.classList.remove('is-hidden');
-      linkToggleBtn.style.display = 'none';
+      addToggleBtn.style.display = 'none';
       titleInp.focus();
     }
 
@@ -8462,7 +10307,7 @@ function buildCatPanels(){
       titleInp.value = '';
       urlInp.value = '';
       row.classList.add('is-hidden');
-      linkToggleBtn.style.display = '';
+      addToggleBtn.style.display = '';
     }
 
     function submitLink(){
@@ -8472,12 +10317,15 @@ function buildCatPanels(){
       let lbl = titleInp.value.trim();
       if(!lbl){ try { lbl = new URL(url).hostname.replace(/^www\./,''); } catch{ lbl = url; } }
       cat.items.push({ ic:'🔗', lbl, tag:'URL', path: url });
-      saveLegacyAppData();
-      buildCatPanels();
+      void refreshCategoryUi();
       showToast('✅ 링크 추가됨');
     }
 
-    linkToggleBtn.addEventListener('click', showLinkForm);
+    addToggleBtn.addEventListener('click', () => {
+      if (addMenu.classList.contains('is-hidden')) showAddMenu();
+      else hideAddMenu();
+    });
+    linkPickBtn.addEventListener('click', showLinkForm);
     cancelBtn.addEventListener('click', hideLinkForm);
 
     titleInp.addEventListener('keydown', e=>{
@@ -8495,7 +10343,8 @@ function buildCatPanels(){
     row.appendChild(titleInp);
     row.appendChild(urlInp);
     row.appendChild(btnRow);
-    acts.appendChild(linkToggleBtn);
+    acts.appendChild(addToggleBtn);
+    acts.appendChild(addMenu);
     acts.appendChild(row);
 
     // ── 노트 영역 — 줄노트 배경 + 태그 방식 ──
@@ -8653,7 +10502,7 @@ function initPanelDragSort(){
       let insertIdx = info.idx > dragPanelIdx ? info.idx - 1 : info.idx;
       if(!info.insertBefore) insertIdx++;
       CATS.splice(Math.max(0, Math.min(insertIdx, CATS.length)), 0, moved);
-      buildCatPanels();  // saveState + 재렌더 포함
+      void refreshCategoryUi();
     }
 
     dragEl = null; dragPanelIdx = null;
@@ -8797,30 +10646,19 @@ function buildDriveBrowser(cat) {
         arr.className = 'db-arr'; arr.textContent = '›';
         row.appendChild(arr);
         row.onclick = () => {
+          if (row._didGoogleDrag) return;
           state.breadcrumbs.push({ id: f.id, name: f.name });
           loadFolder(f.id);
         };
       } else {
         row.onclick = () => {
+          if (row._didGoogleDrag) return;
           if (f.webViewLink) openPath(f.webViewLink);
           else showToast('🔗 ' + f.name);
         };
       }
 
-      // 드래그 (파일/폴더 모두 지원 — 로컬 카테고리로 다운로드)
-      if (!isFolder) {
-        row.draggable = true;
-        row.addEventListener('dragstart', e => {
-          _driveDragFile = { fileId: f.id, fileName: f.name, mimeType: f.mimeType, webViewLink: f.webViewLink };
-          e.dataTransfer.effectAllowed = 'copy';
-          e.dataTransfer.setData('text/plain', f.name);
-          requestAnimationFrame(() => row.classList.add('db-dragging'));
-        });
-        row.addEventListener('dragend', () => {
-          row.classList.remove('db-dragging');
-          _driveDragFile = null;
-        });
-      }
+      bindGoogleDriveRowDrag(row, f);
 
       // 우클릭 → Drive 컨텍스트 메뉴
       row.addEventListener('contextmenu', e => {
@@ -9108,7 +10946,7 @@ let _renameX=0, _renameY=0;
     ctx.classList.remove('show');
     if(!_ctxCat||!_ctxItem) return;
     const idx=_ctxCat.items.indexOf(_ctxItem);
-    if(idx>=0){ _ctxCat.items.splice(idx,1); buildCatPanels(); showToast(`🗑 "${_ctxItem.lbl}" 제거됨`); }
+    if(idx>=0){ _ctxCat.items.splice(idx,1); void refreshCategoryUi(); showToast(`🗑 "${_ctxItem.lbl}" 제거됨`); }
     _ctxCat=null; _ctxItem=null;
   });
 })();
@@ -9206,7 +11044,9 @@ const ITEM_ICON_SETS = [
 /** 카테고리 편집 — 항목 피커와 동일 풀 + Google Drive */
 const CAT_ICON_SETS = ITEM_ICON_SETS.map((set, i) => ({
   label: set.label,
-  icons: i === 0 ? ['__gdrive__', ...set.icons] : set.icons.slice(),
+  icons: i === 0
+    ? [GDRIVE_ICON_MARKER, GCAL_ICON_MARKER, GTASK_ICON_MARKER, GEMINI_ICON_MARKER, ...set.icons]
+    : set.icons.slice(),
 }));
 
 let _icpSelected = '';
@@ -9324,8 +11164,7 @@ function confirmIconPicker() {
   closeIconPicker();
   if (!_icpSelected || !_ctxItem) return;
   _ctxItem.ic = _icpSelected;
-  saveLegacyAppData();
-  buildCatPanels();
+  void refreshCategoryUi();
   showToast('🎨 아이콘이 변경됐어요');
 }
 
@@ -9629,8 +11468,7 @@ function confirmRename() {
   if (!val || !_ctxItem) return;
   const old = _ctxItem.lbl;
   _ctxItem.lbl = val;
-  saveLegacyAppData();
-  buildCatPanels();
+  void refreshCategoryUi();
   showToast(`✏️ "${old}" → "${val}"`);
 }
 
@@ -9674,27 +11512,6 @@ function hexRgba(hex,a){
 /* ══════════════════════════════════════════
    카테고리 헤드 편집 팝업
 ══════════════════════════════════════════ */
-/* Google Drive SVG 아이콘 마커 + SVG 소스 */
-const GDRIVE_ICON_MARKER = '__gdrive__';
-const GDRIVE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 87.3 78" width="20" height="18">
-  <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
-  <path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/>
-  <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25C86.9 56.1 87.3 54.55 87.3 53H60l5.55 10.55z" fill="#ea4335"/>
-  <path d="M43.65 25l13.75-25c-1.35-.8-2.9-1.2-4.5-1.2H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
-  <path d="M60 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.5c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
-  <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 60 53h27.4c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
-</svg>`;
-
-/* 이모지 또는 Drive SVG를 컨테이너에 렌더 */
-function renderIcon(container, iconValue, svgSize) {
-  if (iconValue === GDRIVE_ICON_MARKER) {
-    const size = svgSize || 20;
-    container.innerHTML = GDRIVE_SVG.replace(/width="\d+"/, `width="${size}"`).replace(/height="\d+"/, `height="${Math.round(size*0.9)}"`);
-  } else {
-    container.textContent = iconValue;
-  }
-}
-
 const CEP_COLORS = [
   '#ffb3b3','#ffc998','#ffe08a','#a7f3c0','#93c5fd','#a5b4fc','#d8b4fe',
   '#f87171','#fb923c','#fbbf24','#34d399','#60a5fa','#818cf8','#c084fc',
@@ -9727,7 +11544,7 @@ function _cepRenderTab(tabIdx) {
   icons.forEach(ico => {
     const btn = document.createElement('button');
     btn.className = 'cep-icon-btn' + (ico === cepSelectedIcon ? ' cep-sel' : '');
-    btn.title = ico === GDRIVE_ICON_MARKER ? 'Google Drive' : ico;
+    btn.title = GOOGLE_BRAND_TITLES[ico] || ico;
     renderIcon(btn, ico, 18);
     btn.onclick = () => {
       cepSelectedIcon = ico;
@@ -9752,7 +11569,7 @@ function setCepType(type) {
 function openCatEditPopup(e, catIdx) {
   cepCatIdx = catIdx;
   const cat = CATS[catIdx];
-  cepSelectedIcon  = cat.icon;
+  cepSelectedIcon  = normalizeIconMarker(cat.icon);
   cepSelectedColor = cat.color;
 
   // 아이콘 탭 피커
@@ -9812,7 +11629,7 @@ function openCatEditPopup(e, catIdx) {
   });
 
   // 이름·부제목 세팅
-  document.getElementById('cepPreviewIcon').textContent = cat.icon;
+  renderIcon(document.getElementById('cepPreviewIcon'), cat.icon, 22);
   document.getElementById('cepPreviewIcon').style.background = cat.color + '55';
   document.getElementById('cepNameInput').value = cat.name;
   document.getElementById('cepSubInput').value  = cat.sub || '';
@@ -9841,7 +11658,7 @@ function saveCatEditPopup() {
   const oldType        = CATS[cepCatIdx].type;
   const oldDriveRootId = CATS[cepCatIdx].driveRootId || '';
 
-  CATS[cepCatIdx].icon        = cepSelectedIcon;
+  CATS[cepCatIdx].icon        = normalizeIconMarker(cepSelectedIcon);
   CATS[cepCatIdx].name        = name;
   CATS[cepCatIdx].sub         = document.getElementById('cepSubInput').value.trim();
   CATS[cepCatIdx].color       = cepSelectedColor;
@@ -9855,7 +11672,7 @@ function saveCatEditPopup() {
     delete _driveNav[cepSelectedColor];
   }
 
-  buildCatPanels();
+  void refreshCategoryUi();
   closeCatEditPopup();
   showToast('✅ 카테고리 수정됨');
 }
@@ -9965,23 +11782,30 @@ function resetAllData(){
 /* ════════════════════════════════════════
    자동 업데이트 UI
 ════════════════════════════════════════ */
-var _ubState   = 'none'; // 'available' | 'downloading' | 'downloaded'
-var _ubVersion = '';    // 다운로드된 새 버전 문자열
+var _ubState   = 'none'; // 'downloading' | 'downloaded' | 'installing'
+var _ubVersion = '';
 
 function onUbBtnClick() {
-  if (_ubState !== 'downloaded') return;
-  // 앱 자체 오버레이 표시
-  const overlay = document.getElementById('updateOverlay');
-  const badge   = document.getElementById('uoVersionBadge');
-  if (badge && _ubVersion) badge.textContent = 'v' + _ubVersion + ' 설치 중';
-  if (overlay) overlay.classList.add('uo-show');
-  // 짧은 딜레이 후 silent 설치 (NSIS 창 없이)
-  setTimeout(() => {
-    installUpdate();
-  }, 650);
+  if (_ubState !== 'downloaded' || _updateInstallStarted) return;
+  beginInstallUpdate();
 }
 
 /* 설정 패널 업데이트 상태 표시 헬퍼 */
+const MANUAL_UPDATE_URL = 'https://github.com/ggugguai-star/Dashboard/releases/latest';
+
+function setSpUpdateManualLink(show) {
+  const wrap = document.getElementById('spUpdateManual');
+  const link = document.getElementById('spUpdateManualLink');
+  if (wrap) wrap.style.display = show ? 'block' : 'none';
+  if (link && !link._bound) {
+    link._bound = true;
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      void openExternalUrl(MANUAL_UPDATE_URL);
+    });
+  }
+}
+
 function setSpUpdateStatus(msg, color) {
   const el = document.getElementById('spUpdateStatus');
   if (el) { el.textContent = msg; el.style.color = color || 'var(--text4)'; }
@@ -10015,35 +11839,45 @@ async function loadAppVersionDisplay() {
     const progEl   = document.getElementById('ubProgress');
     const btnEl    = document.getElementById('ubBtn');
 
+    const badge = document.getElementById('uoVersionBadge');
     if (info.type === 'available') {
       _ubState = 'downloading';
-      verEl.textContent  = `🆕 새 버전 ${info.version} 다운로드 중...`;
-      progEl.textContent = '백그라운드에서 자동으로 받고 있어요';
-      btnEl.textContent  = '다운로드 중...';
-      btnEl.disabled     = true;
-      banner.classList.add('ub-show');
+      _ubVersion = info.version || '';
+      if (badge && _ubVersion) badge.textContent = `v${_ubVersion.replace(/^v/i, '')}`;
+      setUpdateOverlayProgress(4, '업데이트 파일을 받고 있어요');
       setSpUpdateBtnState(false);
-      setSpUpdateStatus(`🆕 새 버전 ${info.version} 발견! 다운로드 중...`, '#7c3aed');
+      setSpUpdateStatus(`🆕 새 버전 ${info.version} — 업데이트 중...`, '#7c3aed');
     } else if (info.type === 'progress') {
-      verEl.textContent  = `🆕 새 버전 다운로드 중...`;
-      progEl.textContent = `${info.percent}% 완료`;
-      setSpUpdateStatus(`다운로드 중... ${info.percent}%`, '#7c3aed');
+      const overlayPct = info.overlayPercent ?? mapDownloadOverlayPercent(info.percent || 0);
+      setUpdateOverlayProgress(overlayPct, '업데이트 파일을 받고 있어요');
+      if (verEl) verEl.textContent = `🆕 새 버전 ${info.version || _ubVersion} 업데이트 중`;
+      if (progEl) progEl.textContent = `${overlayPct}%`;
+      setSpUpdateStatus(`업데이트 중... ${overlayPct}%`, '#7c3aed');
     } else if (info.type === 'downloaded') {
-      _ubState   = 'downloaded';
-      _ubVersion = info.version;
-      verEl.textContent  = `✅ 버전 ${info.version} 업데이트 준비 완료!`;
-      progEl.textContent = '지금 재시작하거나, 다음에 앱을 닫을 때 자동으로 설치돼요';
-      btnEl.textContent  = '지금 재시작하여 업데이트';
-      btnEl.disabled     = false;
-      banner.classList.add('ub-show');
+      _ubState = 'downloaded';
+      _ubVersion = info.version || _pendingUpdateVersion;
+      if (badge && _ubVersion) badge.textContent = `v${_ubVersion.replace(/^v/i, '')}`;
+      setUpdateOverlayProgress(info.overlayPercent ?? 82, '새 버전을 적용하고 있어요');
       setSpUpdateBtnState(false);
-      setSpUpdateStatus(`✅ 버전 ${info.version} 준비 완료 — 배너에서 설치하세요`, '#059669');
+      setSpUpdateStatus(`업데이트 적용 중... ${_ubVersion}`, '#7c3aed');
+      beginInstallUpdate();
     } else if (info.type === 'not-available') {
+      hideUpdateOverlay();
       setSpUpdateBtnState(false);
+      setSpUpdateManualLink(false);
       setSpUpdateStatus('✅ 현재 최신 버전이에요!', '#059669');
     } else if (info.type === 'error') {
+      hideUpdateOverlay();
+      _updateInstallStarted = false;
       setSpUpdateBtnState(false);
-      setSpUpdateStatus('❌ 확인 실패: ' + (info.message || '알 수 없는 오류'), '#dc2626');
+      const isKeyRotation = info.code === 'key-rotation'
+        || /different key/i.test(info.message || '');
+      const isUpdateLoop = info.code === 'update-loop';
+      setSpUpdateManualLink(isKeyRotation || isUpdateLoop);
+      setSpUpdateStatus(
+        (isKeyRotation || isUpdateLoop ? '⚠️ ' : '❌ 확인 실패: ') + (info.message || '알 수 없는 오류'),
+        isKeyRotation || isUpdateLoop ? '#b45309' : '#dc2626',
+      );
     }
   });
 })();
@@ -10195,8 +12029,7 @@ document.addEventListener('keydown', e => {
 
 /* ── Google Calendar 열기 ── */
 function openGoogleCalendar(){
-  const url = 'https://calendar.google.com';
-  openPath(url).catch(() => window.open(url, '_blank'));
+  void openExternalUrl('https://calendar.google.com');
 }
 
 /* ── OAuth 가이드 JS ── */
@@ -10274,6 +12107,7 @@ async function doGoogleDisconnect(){
 var todoItems = [];   // [{ id, text, done, alarmDT, taskId?, taskListId? }]  — loadAppData()에서 복원됨
 var calAlarms  = {};  // { [eventId]: { alarmDT, title } }
 var _alarmMiniTarget = null;
+var _alarmMiniWidgetId = null;
 var _alarmQueue = [];
 var _alarmShowing = false;
 var _gtasksListId   = null;  // Google Tasks 기본 목록 ID
@@ -10428,6 +12262,26 @@ function checkAlarms(){
   });
   if (todoDirty) { saveLegacyAppData(); renderTodoList(); }
 
+  let widgetDirty = false;
+  const dirtyWidgetIds = new Set();
+  for (const w of (_widgetGridState?.widgets || []).filter((x) => x.type === 'todo')) {
+    for (const item of (w.items || [])) {
+      if (!item.alarmDT) continue;
+      const t = parseLocalDateTime(item.alarmDT);
+      if (!Number.isFinite(t)) continue;
+      if (now >= t) {
+        if (now - t < STALE) queueAlarmNotif({ type: 'todo', label: item.text, dt: item.alarmDT });
+        item.alarmDT = '';
+        widgetDirty = true;
+        dirtyWidgetIds.add(w.id);
+      }
+    }
+  }
+  if (widgetDirty) {
+    void saveState(_widgetGridState);
+    dirtyWidgetIds.forEach((wid) => renderTodoListForWidget(wid));
+  }
+
   let calDirty = false;
   Object.entries(calAlarms).forEach(([evId, al]) => {
     const t = parseLocalDateTime(al.alarmDT);
@@ -10483,10 +12337,19 @@ function triggerTestAlarmForQA(){
   });
 }
 
+function _findAlarmTodoItem(todoId){
+  if (_alarmMiniWidgetId) {
+    const w = _widgetGridState?.widgets?.find((x) => x.id === _alarmMiniWidgetId);
+    return w?.items?.find((t) => t.id === todoId) || null;
+  }
+  return todoItems.find((t) => t.id === todoId) || null;
+}
+
 /* ── 투두 알림 미니 팝업 ── */
-function openAlarmMiniPopup(todoId, btnEl){
+function openAlarmMiniPopup(todoId, btnEl, widgetId){
   _alarmMiniTarget = todoId;
-  const item = todoItems.find(t => t.id === todoId);
+  _alarmMiniWidgetId = widgetId || null;
+  const item = _findAlarmTodoItem(todoId);
   if(!item) return;
 
   document.getElementById('ampItemText').textContent = item.text;
@@ -10521,6 +12384,7 @@ function closeAlarmMiniPopup(){
   popup.style.display = '';   // 인라인 style 초기화 → CSS class(display:none)가 적용되도록
   document.getElementById('alarmMiniOverlay').style.display = 'none';
   _alarmMiniTarget = null;
+  _alarmMiniWidgetId = null;
 }
 
 function saveAlarmMiniPopup(){
@@ -10530,11 +12394,16 @@ function saveAlarmMiniPopup(){
   // datetime-local은 분 단위 — 60초 이상 과거만 거부 (현재 분은 허용)
   if (parseLocalDateTime(dt) < Date.now() - 60000) { showToast('⚠️ 이미 지난 시간이에요'); return; }
 
-  const item = todoItems.find(t => t.id === id);
+  const item = _findAlarmTodoItem(id);
   if(!item) return;
   item.alarmDT = dt;
-  saveLegacyAppData();
-  renderTodoList();
+  if (_alarmMiniWidgetId) {
+    void saveState(_widgetGridState);
+    renderTodoListForWidget(_alarmMiniWidgetId);
+  } else {
+    saveLegacyAppData();
+    renderTodoList();
+  }
   closeAlarmMiniPopup();
   const d = new Date(dt);
   showToast('🔔 알림 설정 — ' + d.toLocaleString('ko-KR', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }));
@@ -10542,8 +12411,18 @@ function saveAlarmMiniPopup(){
 
 function clearAlarmMiniPopup(){
   const id = _alarmMiniTarget;
-  const item = todoItems.find(t => t.id === id);
-  if(item){ item.alarmDT = ''; saveLegacyAppData(); renderTodoList(); }
+  const widgetId = _alarmMiniWidgetId;
+  const item = _findAlarmTodoItem(id);
+  if (item) {
+    item.alarmDT = '';
+    if (widgetId) {
+      void saveState(_widgetGridState);
+      renderTodoListForWidget(widgetId);
+    } else {
+      saveLegacyAppData();
+      renderTodoList();
+    }
+  }
   closeAlarmMiniPopup();
   showToast('🔕 알림이 해제됐어요');
 }
@@ -10689,7 +12568,8 @@ async function checkSetupAuthStatus(){
 ════════════════════════════════════════════════════════════════ */
 Object.assign(window, {
   // ── 외부 URL 열기 / 창 제어 ──
-  openPath, hideToTray, snapToCurrentMonitor,
+  openPath, hideToTray, showDesktopPeek, snapToCurrentMonitor,
+  pickFilesForCategory, pickFolderForCategory,
   // ── 배율 / UI ──
   adjustScale, applySettings, setScalePreset,
   spScalePreset, spScaleInput, onSetupSliderInput, onSfSlider, toggleScaleFloater,

@@ -15,6 +15,11 @@ export function buildCalendarListKey() {
   return 'cal:list';
 }
 
+/** @param {string} mimeType */
+export function buildDriveMimeListKey(mimeType) {
+  return `drive:mime:${mimeType}`;
+}
+
 /**
  * @param {{ defaultTtlMs?: number }} [options]
  */

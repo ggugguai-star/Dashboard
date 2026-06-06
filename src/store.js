@@ -22,26 +22,29 @@ export const STATE_TMP = 'dashboard-state.json.tmp';
 export const BACKUP_COUNT = 5;
 
 const WIDGET_DEFAULTS = {
-  calendar: { w: 4, h: 4, minW: 4, minH: 4 },
-  drive: { w: 3, h: 3, minW: 3, minH: 3 },
-  todo: { w: 3, h: 4, minW: 3, minH: 4 },
-  category: { w: 2, h: 3, minW: 2, minH: 3 },
+  calendar: { w: 4, h: 4, minW: 3, minH: 3 },
+  drive: { w: 3, h: 3, minW: 3, minH: 2 },
+  todo: { w: 3, h: 3, minW: 3, minH: 2 },
+  gsheets: { w: 3, h: 3, minW: 2, minH: 2 },
+  gslides: { w: 3, h: 3, minW: 2, minH: 2 },
+  gdocs: { w: 3, h: 3, minW: 2, minH: 2 },
+  category: { w: 2, h: 2, minW: 2, minH: 2 },
   clock: { w: 2, h: 2, minW: 2, minH: 2 },
   sticky: { w: 2, h: 2, minW: 2, minH: 2 },
   pomodoro: { w: 2, h: 2, minW: 2, minH: 2 },
   dday: { w: 2, h: 2, minW: 2, minH: 2 },
   weather: { w: 3, h: 2, minW: 2, minH: 2 },
-  gemini: { w: 4, h: 4, minW: 3, minH: 3 },
+  gemini: { w: 4, h: 3, minW: 3, minH: 2 },
 };
 
 const TYPE_ORDER = {
-  calendar: 0, drive: 1, todo: 2, category: 3,
-  clock: 4, sticky: 5, pomodoro: 6, dday: 7, weather: 8, gemini: 9,
+  calendar: 0, drive: 1, todo: 2, gsheets: 3, gslides: 4, gdocs: 5, category: 6,
+  clock: 7, sticky: 8, pomodoro: 9, dday: 10, weather: 11, gemini: 12,
 };
 
 const TYPE_PREFIX = {
-  calendar: 'cal', drive: 'wk', todo: 'memo', category: 'cat',
-  clock: 'clock', sticky: 'note', pomodoro: 'pomo', dday: 'dday',
+  calendar: 'cal', drive: 'wk', todo: 'memo', gsheets: 'sht', gslides: 'sld', gdocs: 'gdoc',
+  category: 'cat', clock: 'clock', sticky: 'note', pomodoro: 'pomo', dday: 'dday',
   weather: 'wx', gemini: 'ai',
 };
 
@@ -49,6 +52,9 @@ const WIDGET_TITLES = {
   calendar: '내 캘린더',
   drive: 'Weekly Plan',
   todo: '메모 · 할 일',
+  gsheets: 'Google Sheets',
+  gslides: 'Google Slides',
+  gdocs: 'Google Docs',
   category: '카테고리',
   clock: '시계',
   sticky: '스티키 메모',
@@ -83,14 +89,30 @@ function applyLayoutToStateWidgets(widgets, layout) {
   });
 }
 
+const LEGACY_WIDGET_H = {
+  calendar: 4,
+  todo: 4,
+  gemini: 4,
+};
+
 function enrichWidget(widget) {
   const d = WIDGET_DEFAULTS[widget.type] || { w: 2, h: 2, minW: 2, minH: 2 };
+  const minW = d.minW;
+  const minH = d.minH;
+  let w = Math.max(widget.w ?? d.w, minW);
+  let h = Math.max(widget.h ?? d.h, minH);
+  const legacyH = LEGACY_WIDGET_H[widget.type];
+  if (legacyH && (widget.h ?? legacyH) >= legacyH && d.h < legacyH) {
+    h = Math.max(d.h, minH);
+  }
+  const title = widget.title || WIDGET_TITLES[widget.type] || widget.id;
   return {
     ...widget,
-    w: widget.w ?? d.w,
-    h: widget.h ?? d.h,
-    minW: widget.minW ?? d.minW,
-    minH: widget.minH ?? d.minH,
+    title,
+    w,
+    h,
+    minW,
+    minH,
   };
 }
 
@@ -154,7 +176,7 @@ export function seedDefaultWidgets(state) {
       id: 'cal-1',
       type: 'calendar',
       title: '내 캘린더',
-      source: { calendarId: 'primary' },
+      source: { calendarIds: ['primary'], calendarId: 'primary' },
     },
     {
       id: 'wk-1',
@@ -165,6 +187,7 @@ export function seedDefaultWidgets(state) {
     {
       id: 'memo-1',
       type: 'todo',
+      title: WIDGET_TITLES.todo,
       source: { taskListId: '' },
       items: [],
     },
@@ -289,6 +312,7 @@ export function buildStateFromLocalStorage(snapshot, options = {}) {
   widgets.push({
     id: 'memo-1',
     type: 'todo',
+    title: WIDGET_TITLES.todo,
     source: { taskListId: String(gtasksListId) },
     items: Array.isArray(todos) ? todos : [],
   });
@@ -423,7 +447,7 @@ export function normalizeWidgetLayout(state, { force = false } = {}) {
 }
 
 function ensureWidgetStateSeeded(state) {
-  let next = state ?? createEmptyState();
+  let next = hydrateGeminiApiKey(state ?? createEmptyState());
   if (!Array.isArray(next.widgets) || next.widgets.length === 0) {
     next = seedDefaultWidgets(next);
   }
@@ -588,13 +612,16 @@ export function createWidget(type, widgets) {
   const id = generateWidgetId(type, widgets);
   const base = { id, type };
   if (type === 'calendar') {
-    return { ...base, title: WIDGET_TITLES.calendar, source: { calendarId: 'primary' } };
+    return { ...base, title: WIDGET_TITLES.calendar, source: { calendarIds: ['primary'], calendarId: 'primary' } };
   }
   if (type === 'drive') {
     return { ...base, title: WIDGET_TITLES.drive, source: { folderId: '' } };
   }
   if (type === 'todo') {
     return { ...base, title: WIDGET_TITLES.todo, source: { taskListId: '' }, items: [] };
+  }
+  if (type === 'gsheets' || type === 'gslides' || type === 'gdocs') {
+    return { ...base, title: WIDGET_TITLES[type], source: {} };
   }
   if (type === 'category') {
     const n = parseInt(String(id).replace('cat-', ''), 10) || 1;
@@ -710,10 +737,32 @@ export function updateWidgetSource(state, widgetId, patch) {
   return next;
 }
 
-/** secrets 부분 갱신 */
+/** secrets 부분 갱신 (Gemini API 키는 settings·localStorage에도 백업) */
 export function updateStateSecrets(state, patch) {
   const next = cloneState(state);
   next.secrets = { ...(next.secrets || {}), ...patch };
+  if (patch.geminiApiKey !== undefined) {
+    next.settings = { ...(next.settings || {}), geminiApiKey: patch.geminiApiKey };
+    if (typeof localStorage !== 'undefined') {
+      if (patch.geminiApiKey) localStorage.setItem('geminiApiKey', patch.geminiApiKey);
+      else localStorage.removeItem('geminiApiKey');
+    }
+  }
+  return next;
+}
+
+/** 저장된 Gemini API 키 복원 (secrets → settings → localStorage) */
+export function hydrateGeminiApiKey(state) {
+  const next = cloneState(state ?? createEmptyState());
+  if (!next.secrets || typeof next.secrets !== 'object') next.secrets = {};
+  const current = String(next.secrets.geminiApiKey || '').trim();
+  if (current) return next;
+  const fromSettings = String(next.settings?.geminiApiKey || '').trim();
+  const fromLs = typeof localStorage !== 'undefined'
+    ? String(localStorage.getItem('geminiApiKey') || '').trim()
+    : '';
+  const key = fromSettings || fromLs;
+  if (key) next.secrets.geminiApiKey = key;
   return next;
 }
 
@@ -836,7 +885,7 @@ export function normalizeImportedState(parsed) {
     next.grid = { cols: GRID_COLS };
   }
   if (typeof next.schema !== 'number') next.schema = SCHEMA_VERSION;
-  return next;
+  return hydrateGeminiApiKey(next);
 }
 
 /** 가져오기 = 전체 replace (부분 병합 없음) */

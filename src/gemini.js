@@ -132,27 +132,32 @@ export async function streamGenerateContent({
   const decoder = new TextDecoder();
   let full = '';
   let buffer = '';
+  const flushSseText = (chunk) => {
+    const delta = extractTextFromSseChunk(chunk);
+    if (!delta) return;
+    full += delta;
+    if (typeof onChunk === 'function') onChunk(full);
+  };
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
+
+    let lineBreak;
+    while ((lineBreak = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, lineBreak);
+      buffer = buffer.slice(lineBreak + 1);
+      if (line.trim()) flushSseText(line);
+    }
+
     const parts = buffer.split('\n\n');
-    buffer = parts.pop() || '';
-    for (const block of parts) {
-      const delta = extractTextFromSseChunk(block);
-      if (delta) {
-        full += delta;
-        if (typeof onChunk === 'function') onChunk(full);
-      }
+    if (parts.length > 1) {
+      buffer = parts.pop() || '';
+      for (const block of parts) flushSseText(block);
     }
   }
-  if (buffer) {
-    const delta = extractTextFromSseChunk(buffer);
-    if (delta) {
-      full += delta;
-      if (typeof onChunk === 'function') onChunk(full);
-    }
-  }
+  if (buffer.trim()) flushSseText(buffer);
   return { text: full };
 }
 

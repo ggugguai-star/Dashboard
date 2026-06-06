@@ -11,10 +11,11 @@ const FONTS_DIR = path.join(__dirname, '..', 'src', 'fonts');
 const FONTS_CSS  = path.join(FONTS_DIR, 'fonts.css');
 const GOOGLE_URL =
   'https://fonts.googleapis.com/css2' +
-  '?family=Noto+Sans+KR:wght@300;400;500;600;700' +
-  '&family=Gowun+Dodum' +
-  '&family=DM+Sans:wght@300;400;500;600' +
+  '?family=Bricolage+Grotesque:opsz,wght@12..96,400..800' +
+  '&family=JetBrains+Mono:wght@400;500' +
   '&display=swap';
+const PRETENDARD_URL =
+  'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css';
 
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
@@ -65,21 +66,21 @@ async function main() {
     process.stdout.write(`\r[fonts] ${++idx}/${matches.length} 다운로드 완료`);
   }
   console.log('\n[fonts] fonts.css 저장 중...');
-  fs.writeFileSync(FONTS_CSS, css, 'utf8');
+  const header =
+    `/* UI.md §2 — Bricolage Grotesque + JetBrains Mono (로컬) */\n` +
+    `@import url('${PRETENDARD_URL}');\n`;
+  fs.writeFileSync(FONTS_CSS, header + css, 'utf8');
   console.log('[fonts] ✅ 완료!');
 }
 
 main().catch((err) => {
   console.warn('\n[fonts] ⚠️  다운로드 실패:', err.message);
-  console.warn('[fonts] 온라인에서 Google Fonts CDN을 사용합니다.');
-  // 오프라인 폴백 — CDN 재사용
+  console.warn('[fonts] 온라인 CDN 폴백을 사용합니다.');
   fs.writeFileSync(
     FONTS_CSS,
-    "@import url('https://fonts.googleapis.com/css2" +
-      "?family=Noto+Sans+KR:wght@300;400;500;600;700" +
-      "&family=Gowun+Dodum" +
-      "&family=DM+Sans:wght@300;400;500;600" +
-      "&display=swap');\n",
+    `/* UI.md §2 — CDN 폴백 */\n` +
+      `@import url('${PRETENDARD_URL}');\n` +
+      `@import url('${GOOGLE_URL}');\n`,
     'utf8'
   );
 });

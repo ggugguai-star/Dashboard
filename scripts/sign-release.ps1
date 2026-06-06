@@ -1,10 +1,10 @@
 # 서명 + latest.json 생성 + GitHub Release 업로드
 # Usage:
-#   .\scripts\sign-release.ps1 -Version 2.1.0
-#   .\scripts\sign-release.ps1 -Version 2.1.0 -Password "키-비밀번호"
+#   .\scripts\sign-release.ps1 -Version 3.0.0
+#   .\scripts\sign-release.ps1 -Version 3.0.0 -Password "키-비밀번호"
 #   (또는 %USERPROFILE%\.tauri\sign-password.txt 한 줄에 비밀번호 저장)
 param(
-  [string]$Version = "2.1.0",
+  [string]$Version = "3.0.0",
   [string]$Password = ""
 )
 
@@ -65,7 +65,7 @@ if (-not (Test-Path $sigFile)) { throw "No .sig produced: $sigFile" }
 $signature = (Get-Content $sigFile -Raw).Trim()
 $notesText = $env:RELEASE_NOTES
 if (-not $notesText) {
-  $notesText = "v$Version — 항목 드래그 정렬, 알림 날짜/시간 분리, 아이콘 편집 확대, 클릭 실행·OS 드롭 개선"
+  $notesText = "v$Version — v3.0 개선: 아이콘 피커·캡처·초기화면 클릭·트레이 등 UX 개선"
 }
 $latest = @{
   version   = "v$Version"
