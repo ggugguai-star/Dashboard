@@ -1,0 +1,43 @@
+[package]
+name        = "work-dashboard"
+version     = "3.4.1"
+edition     = "2021"
+description = "업무 대시보드 — Tauri v2 앱"
+authors     = ["dashboard"]
+
+# lib 크레이트: Tauri v2 권장 구조 (main.rs + lib.rs)
+[lib]
+name       = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+# ── 빌드 의존성 ──────────────────────────────
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+# ── 런타임 의존성 ─────────────────────────────
+[dependencies]
+# Tauri 코어
+tauri = { version = "2", features = ["tray-icon"] }
+
+# 공식 Tauri 플러그인
+tauri-plugin-shell            = "2"
+tauri-plugin-fs               = "2"
+tauri-plugin-dialog           = "2"
+tauri-plugin-clipboard-manager= "2"
+tauri-plugin-autostart        = "2"
+tauri-plugin-updater          = "2"
+tauri-plugin-global-shortcut  = "2"
+tauri-plugin-process          = "2"
+tauri-plugin-window-state     = "2"
+tauri-plugin-http             = "2"
+
+# OAuth 로컬 서버 (포트 59123) — 5대 원칙 §4 허용 구간
+tiny_http    = "0.12"
+
+# 직렬화
+serde        = { version = "1", features = ["derive"] }
+serde_json   = "1"
+
+# OAuth 토큰 — OS Credential Manager / Keychain
+keyring      = "3"
+dirs         = "6"

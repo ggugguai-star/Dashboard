@@ -1,0 +1,19 @@
+# ── AI 오케스트레이션 도구/프로세스 파일 (제품 레포에서 제외) ──
+agent_orchestrator.py
+MDs/
+MDs_backup_*/
+.cursorrules
+.cursorrules.bak
+
+# ── 빌드 산출물 ──
+build/
+dist/
+*.spec
+*.exe
+
+# ── 파이썬 캐시 ──
+__pycache__/
+*.pyc
+
+# 참고: AGENTS.md 와 .cursor/rules/ 는 일부러 추적합니다(레포 설정이라 버전관리 가치 있음).
+# agent_orchestrator.py 를 레포에 포함하고 싶으면 위 첫 줄을 지우세요.

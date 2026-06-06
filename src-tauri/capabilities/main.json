@@ -1,0 +1,101 @@
+{
+  "identifier": "main-capability",
+  "description": "업무 대시보드 — 권한 설정",
+  "windows": ["main"],
+  "permissions": [
+
+    "core:default",
+
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-available-monitors",
+    "core:window:allow-current-monitor",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "core:window:allow-is-visible",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+
+    "core:app:allow-version",
+
+    "core:path:default",
+
+    "core:window:allow-set-focus",
+    "core:window:allow-minimize",
+
+    "core:event:default",
+
+    "shell:allow-open",
+
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-rename",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-copy-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [{ "path": "**" }]
+    },
+
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "dialog:allow-ask",
+    "dialog:allow-confirm",
+
+    "clipboard-manager:allow-read-image",
+
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled",
+
+    "updater:allow-check",
+    "updater:allow-download",
+    "updater:allow-install",
+    "updater:allow-download-and-install",
+
+    "process:allow-exit",
+    "process:allow-restart",
+
+    "window-state:allow-restore-state",
+    "window-state:allow-save-window-state",
+    "window-state:allow-filename",
+
+    "http:default"
+  ]
+}

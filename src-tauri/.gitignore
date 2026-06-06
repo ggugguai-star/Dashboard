@@ -1,0 +1,8 @@
+# Rust 빌드 산출물
+/target/
+
+# Tauri 생성 파일
+gen/
+
+# 디버그 심볼
+*.pdb
