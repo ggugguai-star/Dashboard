@@ -15,6 +15,16 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tauriConfPath = path.join(root, 'src-tauri', 'tauri.conf.json');
 const cargoTomlPath = path.join(root, 'src-tauri', 'Cargo.toml');
 const nsisDir = path.join(root, 'src-tauri', 'target', 'release', 'bundle', 'nsis');
+const releasesDir = path.join(root, 'releases');
+const GITHUB_REPO = 'ggugguai-star/Dashboard';
+
+function cdnAssetName(exeName) {
+  return exeName.replace(/\.exe$/i, '.bin');
+}
+
+function cdnInstallerUrl(exeName) {
+  return `https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@main/releases/${cdnAssetName(exeName)}`;
+}
 
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { cwd: root, stdio: 'inherit', shell: process.platform === 'win32', ...opts });
@@ -69,6 +79,15 @@ function readSig(exePath) {
   return fs.readFileSync(sigPath, 'utf8').trim();
 }
 
+function publishInstallerToRepo(exePath, exeName) {
+  fs.mkdirSync(releasesDir, { recursive: true });
+  const destExe = path.join(releasesDir, exeName);
+  const destBin = path.join(releasesDir, cdnAssetName(exeName));
+  fs.copyFileSync(exePath, destExe);
+  fs.copyFileSync(exePath, destBin);
+  return destBin;
+}
+
 function writeLatestJson(version, signature, exeName) {
   const payload = {
     version: `v${version}`,
@@ -76,7 +95,7 @@ function writeLatestJson(version, signature, exeName) {
     pub_date: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
     platforms: {
       'windows-x86_64': {
-        url: `https://github.com/ggugguai-star/Dashboard/releases/download/v${version}/${exeName}`,
+        url: cdnInstallerUrl(exeName),
         signature,
       },
     },
@@ -119,6 +138,7 @@ if (!srcExe) {
 const exePath = asciiReleaseName(srcExe, version);
 const exeName = path.basename(exePath);
 const signature = readSig(exePath);
+publishInstallerToRepo(exePath, exeName);
 const latestPath = writeLatestJson(version, signature, exeName);
 
 const tag = `v${version}`;
@@ -140,4 +160,4 @@ run('node', ['scripts/verify-update-release.mjs', version]);
 console.log('[release] 완료');
 console.log(`  exe: ${exePath}`);
 console.log(`  latest.json: ${latestPath}`);
-console.log('  필수: latest.json + src-tauri 버전 파일을 main에 commit/push (jsdelivr/raw 엔드포인트)');
+console.log('  필수: latest.json + releases/*.exe 를 main에 commit/push (jsdelivr CDN)');

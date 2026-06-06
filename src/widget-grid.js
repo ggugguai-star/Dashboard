@@ -19,6 +19,7 @@ let _editMode = false;
 let _focusWidgetId = null;
 let _mounted = null;
 let _editTeardown = null;
+let _entryTeardown = null;
 let _dragSession = null;
 let _resizeSession = null;
 let _layoutDirty = false;
@@ -345,6 +346,30 @@ function removeDragHandles(canvas) {
   canvas.querySelectorAll('.widget-drag-handle').forEach((h) => h.remove());
 }
 
+function createCornerGripSvg() {
+  return '<path d="M7 25.5 H19.5 C23.5 25.5 25.5 23.5 25.5 19.5 V7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+}
+
+function cornerGripMarkup() {
+  return `<svg class="widget-corner-grip" viewBox="0 0 32 32" aria-hidden="true">${createCornerGripSvg()}</svg>`;
+}
+
+function ensureEditEntryHandles(canvas) {
+  canvas.querySelectorAll('.widget-cell').forEach((shell) => {
+    if (shell.querySelector(':scope > .widget-corner-zone')) return;
+    const zone = document.createElement('div');
+    zone.className = 'widget-corner-zone';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'widget-edit-entry-handle';
+    btn.setAttribute('aria-label', '위젯 편집 모드 진입');
+    btn.title = '드래그하여 편집';
+    btn.innerHTML = cornerGripMarkup();
+    zone.appendChild(btn);
+    shell.appendChild(zone);
+  });
+}
+
 function ensureResizeHandles(canvas, focusWidgetId = null) {
   canvas.querySelectorAll('.widget-cell').forEach((shell) => {
     if (focusWidgetId && shell.dataset.widgetId !== focusWidgetId) return;
@@ -352,7 +377,7 @@ function ensureResizeHandles(canvas, focusWidgetId = null) {
       const handle = document.createElement('div');
       handle.className = 'widget-resize-handle';
       handle.setAttribute('aria-label', '위젯 크기 조절');
-      handle.innerHTML = '<span class="widget-resize-grip">↘</span>';
+      handle.innerHTML = cornerGripMarkup();
       shell.appendChild(handle);
     }
   });
@@ -571,6 +596,79 @@ function previewResize(state, container, session) {
 
   const resized = previewWidgets.find((w) => w.id === widgetId);
   if (resized) showResizeGhost(canvas, resized, metrics);
+}
+
+const EDIT_ENTRY_DRAG_THRESHOLD = 6;
+
+function attachEditEntryHandlers(container, onEnterEdit) {
+  const canvas = getCanvas(container);
+  if (!canvas || typeof onEnterEdit !== 'function') return () => {};
+
+  let session = null;
+
+  const finishSession = (e) => {
+    if (!session || (e && session.pointerId !== e.pointerId)) return;
+    try {
+      session.handle.releasePointerCapture(session.pointerId);
+    } catch (_) {
+      /* already released */
+    }
+    session.handle.classList.remove('is-active');
+    session.handle.removeEventListener('pointermove', onPointerMove);
+    session.handle.removeEventListener('pointerup', onPointerUp);
+    session.handle.removeEventListener('pointercancel', onPointerCancel);
+    session = null;
+  };
+
+  const onPointerMove = (e) => {
+    if (!session || session.pointerId !== e.pointerId || session.entered || _editMode) return;
+    const dx = e.clientX - session.startX;
+    const dy = e.clientY - session.startY;
+    if (Math.hypot(dx, dy) >= EDIT_ENTRY_DRAG_THRESHOLD) {
+      session.entered = true;
+      onEnterEdit(session.widgetId);
+    }
+  };
+
+  const onPointerUp = (e) => finishSession(e);
+  const onPointerCancel = (e) => finishSession(e);
+
+  const onPointerDown = (e) => {
+    if (_editMode || e.button !== 0) return;
+    const handle = e.target.closest('.widget-edit-entry-handle');
+    if (!handle || !canvas.contains(handle)) return;
+
+    const shell = handle.closest('.widget-cell');
+    const widgetId = shell?.dataset?.widgetId;
+    if (!widgetId) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    handle.setPointerCapture(e.pointerId);
+    handle.classList.add('is-active');
+
+    session = {
+      pointerId: e.pointerId,
+      widgetId,
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      entered: false,
+    };
+
+    handle.addEventListener('pointermove', onPointerMove);
+    handle.addEventListener('pointerup', onPointerUp);
+    handle.addEventListener('pointercancel', onPointerCancel);
+  };
+
+  canvas.addEventListener('pointerdown', onPointerDown);
+
+  return () => {
+    canvas.removeEventListener('pointerdown', onPointerDown);
+    if (session) {
+      finishSession();
+    }
+  };
 }
 
 function attachDragHandlers(container, state) {
@@ -844,6 +942,8 @@ export function renderGrid(container, state, options = {}) {
     canvas.appendChild(shell);
   }
 
+  ensureEditEntryHandles(canvas);
+
   if (_editMode) {
     ensureDragHandles(canvas, _focusWidgetId);
     ensureResizeHandles(canvas, _focusWidgetId);
@@ -952,13 +1052,18 @@ export function collectPanelAnchors(state = null) {
  * @param {HTMLElement} rootEl
  * @param {object} state
  * @param {object} [anchors]
+ * @param {{ onEnterEdit?: (id: string) => void }} [hooks]
  * @returns {() => void} teardown
  */
-export function mountWidgetGrid(rootEl, state, anchors = null) {
+export function mountWidgetGrid(rootEl, state, anchors = null, hooks = {}) {
   detachWidgetObservers();
   if (_editTeardown) {
     _editTeardown();
     _editTeardown = null;
+  }
+  if (_entryTeardown) {
+    _entryTeardown();
+    _entryTeardown = null;
   }
   _editMode = false;
   _layoutDirty = false;
@@ -970,6 +1075,7 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
 
   _mounted = { rootEl, state, anchors: resolvedAnchors, metrics };
   attachWidgetObservers(rootEl);
+  _entryTeardown = attachEditEntryHandlers(rootEl, hooks.onEnterEdit);
 
   let raf = 0;
   const onResize = () => {
@@ -993,6 +1099,10 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
       _editTeardown();
       _editTeardown = null;
     }
+    if (_entryTeardown) {
+      _entryTeardown();
+      _entryTeardown = null;
+    }
     _editMode = false;
     _dragSession = null;
     _resizeSession = null;
@@ -1009,11 +1119,12 @@ export function mountWidgetGrid(rootEl, state, anchors = null) {
  * @param {object} state
  * @param {object} [anchors]
  * @param {() => void} [prevTeardown]
+ * @param {{ onEnterEdit?: (id: string) => void }} [hooks]
  * @returns {() => void}
  */
-export function remountWidgetGrid(rootEl, state, anchors = null, prevTeardown = null) {
+export function remountWidgetGrid(rootEl, state, anchors = null, prevTeardown = null, hooks = {}) {
   if (typeof prevTeardown === 'function') prevTeardown();
-  return mountWidgetGrid(rootEl, state, anchors);
+  return mountWidgetGrid(rootEl, state, anchors, hooks);
 }
 
 /** 위젯 삭제 등 경량 DOM 갱신 — 셸 제거 후 레이아웃만 재계산 */

@@ -28,6 +28,9 @@ const OAUTH = {
   clientSecret:'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',
   redirectUri: 'http://127.0.0.1:59123',
   scope: [
+    'openid',
+    'email',
+    'profile',
     'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/drive',
@@ -156,6 +159,28 @@ export async function getValidAccessToken() {
     }
   }
   return tokens.access_token;
+}
+
+/** OAuth 사용자 프로필 (이메일·이름·아바타) */
+export async function fetchGoogleUserProfile() {
+  const token = await getValidAccessToken();
+  if (!token) return null;
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return null;
+    return {
+      email: data.email || '',
+      name: data.name || data.given_name || '',
+      picture: data.picture || '',
+    };
+  } catch (err) {
+    console.warn('[Auth] fetchGoogleUserProfile:', err);
+    return null;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════

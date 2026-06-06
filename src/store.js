@@ -117,7 +117,15 @@ function enrichWidget(widget) {
 }
 
 let saveTimer = null;
+let pendingSavePayload = null;
+let writeChain = Promise.resolve();
 const SAVE_DEBOUNCE_MS = 300;
+
+function enqueueStateWrite(task) {
+  const next = writeChain.then(task, task);
+  writeChain = next.catch(() => {});
+  return next;
+}
 
 function cloneState(state) {
   return JSON.parse(JSON.stringify(state));
@@ -459,50 +467,56 @@ async function ensureAppDataDir(fs) {
 }
 
 async function rotateBackups(fs) {
-  const { BaseDirectory } = fs;
-  const mainExists = await fs.exists(STATE_FILE, { baseDir: BaseDirectory.AppData });
-  if (!mainExists) return;
+  try {
+    const { BaseDirectory } = fs;
+    if (!(await fs.exists(STATE_FILE, { baseDir: BaseDirectory.AppData }))) return;
 
-  const oldest = `${STATE_FILE}.bak.${BACKUP_COUNT}`;
-  if (await fs.exists(oldest, { baseDir: BaseDirectory.AppData })) {
-    await fs.remove(oldest, { baseDir: BaseDirectory.AppData });
-  }
+    const oldest = `${STATE_FILE}.bak.${BACKUP_COUNT}`;
+    if (await fs.exists(oldest, { baseDir: BaseDirectory.AppData })) {
+      await fs.remove(oldest, { baseDir: BaseDirectory.AppData });
+    }
 
-  for (let i = BACKUP_COUNT - 1; i >= 1; i--) {
-    const from = `${STATE_FILE}.bak.${i}`;
-    const to = `${STATE_FILE}.bak.${i + 1}`;
-    if (await fs.exists(from, { baseDir: BaseDirectory.AppData })) {
+    for (let i = BACKUP_COUNT - 1; i >= 1; i--) {
+      const from = `${STATE_FILE}.bak.${i}`;
+      const to = `${STATE_FILE}.bak.${i + 1}`;
+      if (!(await fs.exists(from, { baseDir: BaseDirectory.AppData }))) continue;
       await fs.copyFile(from, to, {
         fromBaseDir: BaseDirectory.AppData,
         toBaseDir: BaseDirectory.AppData,
       });
       await fs.remove(from, { baseDir: BaseDirectory.AppData });
     }
-  }
 
-  await fs.copyFile(STATE_FILE, `${STATE_FILE}.bak.1`, {
-    fromBaseDir: BaseDirectory.AppData,
-    toBaseDir: BaseDirectory.AppData,
-  });
+    if (await fs.exists(STATE_FILE, { baseDir: BaseDirectory.AppData })) {
+      await fs.copyFile(STATE_FILE, `${STATE_FILE}.bak.1`, {
+        fromBaseDir: BaseDirectory.AppData,
+        toBaseDir: BaseDirectory.AppData,
+      });
+    }
+  } catch (err) {
+    console.warn('[store] rotateBackups skipped:', err);
+  }
 }
 
 async function writeStateAtomic(fs, state) {
-  const { BaseDirectory } = fs;
-  await ensureAppDataDir(fs);
-  const json = `${JSON.stringify(state, null, 2)}\n`;
-  await fs.writeTextFile(STATE_TMP, json, { baseDir: BaseDirectory.AppData });
-  await rotateBackups(fs);
-  const tmpExists = await fs.exists(STATE_TMP, { baseDir: BaseDirectory.AppData });
-  const mainExists = await fs.exists(STATE_FILE, { baseDir: BaseDirectory.AppData });
-  if (mainExists) {
-    await fs.remove(STATE_FILE, { baseDir: BaseDirectory.AppData });
-  }
-  if (tmpExists) {
-    await fs.rename(STATE_TMP, STATE_FILE, {
-      oldPathBaseDir: BaseDirectory.AppData,
-      newPathBaseDir: BaseDirectory.AppData,
-    });
-  }
+  return enqueueStateWrite(async () => {
+    const { BaseDirectory } = fs;
+    await ensureAppDataDir(fs);
+    const json = `${JSON.stringify(state, null, 2)}\n`;
+    await fs.writeTextFile(STATE_TMP, json, { baseDir: BaseDirectory.AppData });
+    await rotateBackups(fs);
+    const tmpExists = await fs.exists(STATE_TMP, { baseDir: BaseDirectory.AppData });
+    const mainExists = await fs.exists(STATE_FILE, { baseDir: BaseDirectory.AppData });
+    if (mainExists) {
+      await fs.remove(STATE_FILE, { baseDir: BaseDirectory.AppData });
+    }
+    if (tmpExists) {
+      await fs.rename(STATE_TMP, STATE_FILE, {
+        oldPathBaseDir: BaseDirectory.AppData,
+        newPathBaseDir: BaseDirectory.AppData,
+      });
+    }
+  });
 }
 
 /** Tauri AppData에서 상태 로드. 없으면 localStorage 마이그레이션 시도. */
@@ -536,8 +550,10 @@ export async function loadState() {
 export async function saveState(state, options = {}) {
   const { immediate = false } = options;
   const payload = cloneState(state);
+  pendingSavePayload = payload;
 
   const run = async () => {
+    pendingSavePayload = null;
     const fs = await getFsApi();
     await writeStateAtomic(fs, payload);
   };
@@ -556,6 +572,18 @@ export async function saveState(state, options = {}) {
     saveTimer = null;
     run().catch((err) => console.warn('saveState error:', err));
   }, SAVE_DEBOUNCE_MS);
+}
+
+/** 대기 중인 저장을 즉시 디스크에 반영 (업데이트 설치 전 등) */
+export async function flushSaveState(state) {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  const payload = state ?? pendingSavePayload;
+  pendingSavePayload = null;
+  if (!payload) return;
+  await saveState(payload, { immediate: true });
 }
 
 /** 1회 멱등 localStorage → JSON 이전 */

@@ -167,7 +167,7 @@ h1, h2, .display {
 /* UI.md §5 — 표준 인터랙티브 요소 tactile 적용 */
 .nb, .tb-btn, .btn-next, .btn-back, .widget-type-opt, .widget-edit-btn,
 .widget-action-btn, .widget-backup-btn, .todo-add-btn, .todo-bell, .todo-del,
-.link-add-btn, .note-add-btn, .cp-icon, .cp-gear, .ch-gear, .ctx-i,
+.link-add-btn, .note-add-btn, .cp-icon, .cp-add, .cp-gear, .ch-gear, .ctx-i,
 .sf-minus, .sf-plus, .sf-settings-btn, .sp-widget-act, .gem-send-btn,
 .gem-attach-btn, .gem-new-chat, .res-card, .cnum, .scale-preset,
 .widget-type-opt, .item, .ch-icon-drive, .ch-icon-wp, .ch-icon-gcal, .ch-icon-gtask,
@@ -182,7 +182,7 @@ h1, h2, .display {
 .nb:active, .tb-btn:active, .btn-next:active, .btn-back:active,
 .widget-type-opt:active, .widget-edit-btn:active, .widget-action-btn:active,
 .todo-add-btn:active, .todo-bell:active, .link-add-btn:active, .note-add-btn:active,
-.cp-icon:active, .cp-gear:active, .ch-gear:active, .ctx-i:active,
+.cp-icon:active, .cp-add:active, .cp-gear:active, .ch-gear:active, .ctx-i:active,
 .sf-minus:active, .sf-plus:active, .gem-send-btn:active, .gem-attach-btn:active,
 .res-card:active, .cnum:active, .scale-preset:active, .item:active {
   transform: scale(var(--press-scale));
@@ -548,26 +548,19 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border-bottom: 1px solid var(--glass-border);
   box-shadow: 0 1px 0 rgba(255,255,255,0.85), 0 3px 16px rgba(120,100,200,0.07);
 }
-.tb-left { display: flex; align-items: center; gap: 14px; }
-.tb-logo { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text1); letter-spacing: var(--tracking-tight); }
-.tb-date { font-size: 17px; color: var(--text2); }
+.tb-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+.tb-logo { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text1); letter-spacing: var(--tracking-tight); flex-shrink: 0; }
+.tb-date { font-size: 17px; color: var(--text2); flex-shrink: 0; white-space: nowrap; }
 
 /* 드래그 가능 영역 힌트 — 헤더 호버 시 미세 커서 변화 */
-.topbar:not(:has(.tb-btn:hover)):not(:has(.g-chip:hover)) { cursor: grab; }
+.topbar:not(:has(.tb-btn:hover)):not(:has(.tb-menu-item:hover)) { cursor: grab; }
 .topbar:active { cursor: grabbing; }
 
-.tb-right { display: flex; align-items: center; gap: 10px; }
-/* 헤더 내 클릭 요소는 드래그 영역에서 제외 */
-.tb-right,
 .tb-btn,
-.g-chip,
-.tb-btn-scale { -webkit-app-region: no-drag; }
-.g-chip {
-  display: flex; align-items: center; gap: 7px; padding: 5px 13px;
-  border-radius: 999px; background: rgba(255,255,255,0.65);
-  border: 1px solid var(--glass-border2); font-size: 12px; color: var(--text2);
-}
-.g-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+.tb-menu-google,
+.tb-btn-scale,
+.tb-menu-overlay,
+.tb-menu-panel { -webkit-app-region: no-drag; }
 
 /* 헤더 아이콘 버튼 공통 */
 .tb-btn {
@@ -582,29 +575,141 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .tb-btn:hover { background: rgba(255,255,255,0.9); color: var(--text1); transform: translateY(-1px) scale(1.07); }
 
-/* 설정 버튼 — 톱니바퀴 SVG */
-.tb-btn-gear svg {
-  width: 16px; height: 16px; transition: transform .35s ease;
+/* 햄버거 메뉴 */
+.tb-btn-menu {
+  flex-shrink: 0;
+  color: var(--text-muted);
 }
-.tb-btn-gear:hover svg { transform: rotate(60deg); }
-
-/* 바탕화면 보기 버튼 */
-.tb-btn-desktop svg { width: 16px; height: 16px; }
-.tb-btn-desktop:hover {
-  background: rgba(196,181,253,0.35) !important;
-  color: #6d28d9 !important;
-  border-color: rgba(196,181,253,0.55) !important;
+.tb-btn-menu svg {
+  width: 18px;
+  height: 18px;
+}
+.tb-btn-menu.is-open {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text1);
+  border-color: rgba(196, 181, 253, 0.45);
 }
 
-/* 종료 버튼 */
-.tb-btn-quit svg { width: 14px; height: 14px; }
-.tb-btn-quit:hover { background: rgba(253,164,175,0.35) !important; color: #be123c !important; border-color: rgba(253,164,175,0.5) !important; }
+.tb-user-avatar-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--pastel-lavender), var(--pastel-sky));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b21b6;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+}
+.tb-user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tb-user-avatar.is-hidden { display: none; }
+.tb-user-fallback.is-hidden { display: none; }
+.tb-user-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text);
+}
 
-/* 동기화 버튼 */
-.tb-btn-sync { font-size: 16px; }
+/* Google 연결 상태 (햄버거 메뉴 하단) */
+.tb-menu-google {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 10px 12px 8px;
+  border-top: 1px solid rgba(196, 181, 253, 0.28);
+  font-size: 12px;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+.tb-menu-google .tb-user-label { flex: 1; min-width: 0; }
+.tb-menu-google.is-offline .tb-user-label { color: var(--text-muted); font-weight: 500; }
+
+/* 헤더 드롭다운 메뉴 */
+.tb-menu-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  background: rgba(30, 20, 60, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.tb-menu-overlay.open { display: block; }
+.tb-menu-panel {
+  position: fixed;
+  top: calc(var(--topbar-h, 56px) + 6px);
+  left: 16px;
+  min-width: 232px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-stroke);
+  border-bottom-color: var(--glass-stroke-bottom);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 var(--glass-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tb-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-soft), transform var(--dur-fast) var(--ease-soft);
+}
+.tb-menu-item:hover {
+  background: rgba(196, 181, 253, 0.2);
+  transform: translateX(1px);
+}
+.tb-menu-item:active { transform: scale(0.98); }
+.tb-menu-ico {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--glass-border2);
+  color: var(--text2);
+  font-size: 15px;
+}
+.tb-menu-ico svg {
+  width: 16px;
+  height: 16px;
+}
+.tb-menu-item.tb-menu-item-quit:hover .tb-menu-ico {
+  color: #be123c;
+  border-color: rgba(253, 164, 175, 0.45);
+}
+.tb-menu-label { flex: 1; min-width: 0; }
 .sync-ico { display: inline-block; transition: transform .35s ease; }
-.tb-btn-sync:not(.spinning):hover .sync-ico { transform: rotate(60deg); }
-.tb-btn-sync.spinning .sync-ico { animation: spin .7s linear infinite; }
+.tb-menu-item.spinning .sync-ico { animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* 배율 버튼 — 텍스트 배율% 표시 */
@@ -928,7 +1033,63 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   color: var(--primary);
   border-color: rgba(110,91,242,0.35);
 }
-.widget-resize-grip { pointer-events: none; font-weight: 700; }
+.widget-resize-handle .widget-corner-grip {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.widget-cell.is-resizing .widget-resize-handle .widget-corner-grip {
+  color: var(--primary);
+}
+.widget-corner-zone {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
+  z-index: 4;
+  pointer-events: auto;
+}
+.widget-edit-entry-handle {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  opacity: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  transition: opacity var(--dur-fast) var(--ease-soft);
+}
+.widget-corner-zone:hover .widget-edit-entry-handle,
+.widget-edit-entry-handle.is-active {
+  opacity: 1;
+}
+.widget-edit-entry-handle:active {
+  cursor: grabbing;
+}
+#dashboard.widget-grid-editing .widget-corner-zone {
+  display: none;
+}
+.widget-corner-grip {
+  width: 28px;
+  height: 28px;
+  color: rgba(110,91,242,0.6);
+  pointer-events: none;
+  transition: color var(--dur-fast) var(--ease-soft);
+}
+.widget-corner-zone:hover .widget-corner-grip,
+.widget-edit-entry-handle.is-active .widget-corner-grip {
+  color: rgba(110,91,242,0.88);
+}
 .widget-resize-ghost,
 .widget-drag-ghost {
   display: none;
@@ -1842,14 +2003,23 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 .cp-meta{flex:1;min-width:0}
 .cp-name{font-size:13.5px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cp-sub{font-size:11px;color:var(--text4);letter-spacing:0.07em;margin-top:2px}
-.cp-gear{
+.cp-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.cp-add,.cp-gear{
   opacity:0;width:24px;height:24px;border-radius:7px;
   background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.7);
-  color:var(--text4);cursor:pointer;font-size:11px;
+  color:var(--text4);cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  transition:opacity .12s;
+  transition:opacity .12s, background .12s, border-color .12s, color .12s;
+  font-family:var(--font-sans);padding:0;
 }
-.cp-head:hover .cp-gear{opacity:1}
+.cp-add{font-size:15px;font-weight:500;line-height:1}
+.cp-gear{font-size:11px}
+.cp-head:hover .cp-add,.cp-head:hover .cp-gear,.cp-add.is-open{opacity:1}
+.cp-add:hover,.cp-add.is-open{
+  background:rgba(255,255,255,0.9);
+  border-color:rgba(139,92,246,0.35);
+  color:var(--text1);
+}
 
 /* 아이템 목록 */
 .cp-body{flex:1;padding:7px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(196,181,253,0.3) transparent;}
@@ -1903,23 +2073,8 @@ body.item-reorder-active .item{cursor:grabbing !important}
   border-radius:11px;padding:9px;
   text-align:center;font-size:11px;color:var(--text4);flex-shrink:0;
 }
-.cp-drop-btns{display:flex;flex-direction:column;gap:0;padding:5px 9px 9px;}
-.cp-add-toggle-btn {
-  width: 100%; box-sizing: border-box;
-  padding: 7px 10px; border-radius: 9px;
-  border: 1px solid rgba(196,181,253,0.38);
-  background: rgba(255,255,255,0.52);
-  font-size: 11.5px; font-weight: 600; color: var(--text2);
-  cursor: pointer; text-align: center;
-  font-family: var(--font-sans);
-  transition: background .15s, border-color .15s, color .15s;
-}
-.cp-add-toggle-btn:hover,
-.cp-add-toggle-btn.is-open {
-  background: rgba(255,255,255,0.88);
-  border-color: rgba(139,92,246,0.35);
-  color: var(--text1);
-}
+.cp-drop-btns{display:flex;flex-direction:column;gap:0;padding:0 9px 9px;}
+.cp-drop-btns:has(.cp-add-menu.is-hidden):has(.link-input-row.is-hidden){display:none}
 .cp-add-menu {
   display: flex; flex-direction: column; gap: 5px;
   padding: 0 0 4px;
@@ -3375,6 +3530,7 @@ body.google-file-drag-active .gfile-item { cursor: grabbing !important; }
   .widget-cell,
   .widget-drag-handle,
   .widget-resize-handle,
+  .widget-edit-entry-handle,
   .widget-edit-btn,
   .widget-backup-btn,
   .widget-action-btn {
@@ -3580,52 +3736,67 @@ body.google-file-drag-active .gfile-item { cursor: grabbing !important; }
     <!-- 헤더 -->
     <div class="topbar" data-tauri-drag-region>
       <div class="tb-left">
+        <button type="button" class="tb-btn tb-btn-menu" id="tbMenuBtn"
+                aria-label="메뉴" aria-expanded="false" aria-controls="tbMenuPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <line x1="4" y1="7" x2="20" y2="7"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <line x1="4" y1="17" x2="20" y2="17"/>
+          </svg>
+        </button>
         <span class="tb-logo">대시보드</span>
         <span class="tb-date" id="tbDate"></span>
       </div>
-      <div class="tb-right">
-        <!-- Google 연결 상태 -->
-        <div class="g-chip">
-          <div class="g-chip-dot"></div>
-          Google 연결됨
+    </div>
+
+    <div class="tb-menu-overlay" id="tbMenuOverlay" aria-hidden="true">
+      <nav class="tb-menu-panel" id="tbMenuPanel" aria-label="대시보드 메뉴">
+        <button type="button" class="tb-menu-item" id="btnSync" data-action="sync">
+          <span class="tb-menu-ico"><span class="sync-ico">↻</span></span>
+          <span class="tb-menu-label">동기화</span>
+        </button>
+        <button type="button" class="tb-menu-item" data-action="desktop">
+          <span class="tb-menu-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="13" rx="2"/>
+              <path d="M8 20h8"/><path d="M12 17v3"/>
+            </svg>
+          </span>
+          <span class="tb-menu-label">바탕화면 보기</span>
+        </button>
+        <button type="button" class="tb-menu-item" id="tbAddWidgetBtn" data-action="add-widget">
+          <span class="tb-menu-ico">+</span>
+          <span class="tb-menu-label">위젯 추가</span>
+        </button>
+        <button type="button" class="tb-menu-item" data-action="settings">
+          <span class="tb-menu-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <span class="tb-menu-label">설정</span>
+        </button>
+        <button type="button" class="tb-menu-item tb-menu-item-quit" data-action="hide">
+          <span class="tb-menu-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </span>
+          <span class="tb-menu-label">대시보드 숨기기</span>
+        </button>
+        <div class="tb-menu-google is-offline" id="tbGoogleUser" title="Google 계정">
+          <span class="tb-user-avatar-wrap">
+            <img class="tb-user-avatar is-hidden" id="tbUserAvatar" alt="" referrerpolicy="no-referrer">
+            <span class="tb-user-fallback" id="tbUserFallback">G</span>
+          </span>
+          <span class="tb-user-label" id="tbUserLabel">Google 미연결</span>
         </div>
-        <!-- 동기화 버튼 -->
-        <div class="tb-btn tb-btn-sync" id="btnSync"
-             onclick="doSync()" title="동기화 (Google Calendar · Drive)"><span class="sync-ico">↻</span></div>
-        <!-- 바탕화면 보기 (트레이로 숨김 → Win+D 대체) -->
-        <div class="tb-btn tb-btn-desktop" onclick="showDesktopPeek()" title="바탕화면 보기 (트레이로 숨김)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="13" rx="2"/>
-            <path d="M8 20h8"/>
-            <path d="M12 17v3"/>
-          </svg>
-        </div>
-        <!-- 설정 버튼 (톱니바퀴) -->
-        <div class="tb-btn tb-btn-gear" onclick="reopenSetup()" title="설정">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
-                     a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
-                     A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
-                     l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
-                     A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
-                     l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
-                     a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
-                     l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
-                     a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </div>
-        <!-- 트레이로 숨기기 (✕ 버튼 → 트레이로 이동, 완전 종료 아님) -->
-        <div class="tb-btn tb-btn-quit" onclick="showDesktopPeek()" title="바탕화면 보기 (트레이로 숨김)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </div>
-      </div>
+      </nav>
     </div>
 
     <!-- 플로팅 배율 조절기 -->
@@ -3873,7 +4044,7 @@ body.google-file-drag-active .gfile-item { cursor: grabbing !important; }
       <div class="sp-tab-pane" id="sppane-widgets">
         <div class="sp-section">
           <div class="sp-sec-title">위젯 관리</div>
-          <p class="sp-inp-hint" style="margin:-4px 0 10px">추가·설정·삭제는 여기서 할 수 있어요. 크기·위치 변경은 위젯을 <strong>길게 누른 뒤</strong> 조절하고 「완료」를 누르세요.</p>
+          <p class="sp-inp-hint" style="margin:-4px 0 10px">추가·설정·삭제는 여기서 할 수 있어요. 크기·위치 변경은 위젯 <strong>우측 하단 모서리 핸들을 드래그해</strong> 편집 모드로 들어간 뒤 조절하고 「완료」를 누르세요.</p>
           <div class="sp-widget-list" id="spWidgetList"></div>
           <div class="cat-add-row" id="spAddWidgetBtn">
             <span style="font-size:18px;line-height:1">+</span>
@@ -4391,6 +4562,7 @@ import {
   listDriveFolder, listDriveImages, listDriveFilesByMime, getDriveImageData,
   driveTrashFile, driveMoveFile, driveDownloadFile, driveDownloadFolder,
   tasksGetDefaultList, getTaskLists, tasksListTasks, tasksCreateTask, tasksPatchTask, tasksDeleteTask,
+  fetchGoogleUserProfile,
 } from './google-api.js';
 import {
   createGoogleCache,
@@ -4403,7 +4575,7 @@ import {
   DEFAULT_LIST_TTL_MS,
 } from './google-cache.js';
 import {
-  loadState, saveState, addWidget, removeWidget, updateWidgetSource, normalizeWidgetLayout,
+  loadState, saveState, flushSaveState, addWidget, removeWidget, updateWidgetSource, normalizeWidgetLayout,
   updateStateSecrets, createGeminiChat, appendGeminiMessage, updateGeminiChatTitle,
   deleteGeminiChat, setActiveGeminiChat, listGeminiChatsForWidget, getGeminiChat,
   exportState, importState, DEFAULT_GEMINI_MODEL,
@@ -4967,6 +5139,8 @@ async function getAppVersion() {
 }
 
 const UPDATE_ATTEMPT_KEY = 'dashboardLastUpdateAttempt';
+const UPDATE_ATTEMPT_AT_KEY = 'dashboardLastUpdateAttemptAt';
+const UPDATE_LOOP_COOLDOWN_MS = 60 * 60 * 1000;
 
 function parseVersionParts(v) {
   return String(v || '0').replace(/^v/i, '').split('.').map((n) => parseInt(n, 10) || 0);
@@ -5144,16 +5318,24 @@ async function checkForUpdates() {
     }
 
     const lastAttempt = localStorage.getItem(UPDATE_ATTEMPT_KEY);
+    const lastAttemptAt = Number(localStorage.getItem(UPDATE_ATTEMPT_AT_KEY) || 0);
+    const inLoopCooldown = lastAttemptAt > 0 && (Date.now() - lastAttemptAt) < UPDATE_LOOP_COOLDOWN_MS;
     if (
       currentVersion && targetVersion && lastAttempt === targetVersion
       && compareVersions(currentVersion, targetVersion) < 0
+      && inLoopCooldown
     ) {
+      const retryMin = Math.max(1, Math.ceil((UPDATE_LOOP_COOLDOWN_MS - (Date.now() - lastAttemptAt)) / 60000));
       _emitUpdateStatus({
         type: 'error',
         code: 'update-loop',
-        message: `v${targetVersion} 설치를 시도했지만 앱 버전이 v${currentVersion}으로 남아 있어요. 자동 업데이트를 중단했습니다. GitHub 릴리즈에서 설치 파일을 직접 받아 설치해 주세요.`,
+        message: `v${targetVersion} 설치가 완료되지 않았어요(현재 v${currentVersion}). ${retryMin}분 후 자동으로 다시 시도합니다.`,
       });
       return;
+    }
+    if (lastAttempt === targetVersion && !inLoopCooldown) {
+      localStorage.removeItem(UPDATE_ATTEMPT_KEY);
+      localStorage.removeItem(UPDATE_ATTEMPT_AT_KEY);
     }
 
     _pendingUpdateRid     = metadata.rid   ?? null;
@@ -5166,7 +5348,13 @@ async function checkForUpdates() {
     // 발견 즉시 백그라운드 다운로드 시작
     _startDownloadProgress(metadata).catch(e => {
       console.warn('[Updater] 다운로드 실패:', e);
-      _emitUpdateStatus({ type: 'error', message: e.message || String(e) });
+      localStorage.removeItem(UPDATE_ATTEMPT_KEY);
+      localStorage.removeItem(UPDATE_ATTEMPT_AT_KEY);
+      const msg = String(e.message || e);
+      const hint = /github\.com|403|404|blocked|fetch|network|timeout/i.test(msg)
+        ? ' 설치 파일 CDN(jsdelivr) 접속을 확인해 주세요.'
+        : '';
+      _emitUpdateStatus({ type: 'error', message: (msg || '다운로드 실패') + hint });
     });
 
   } catch (e) {
@@ -5190,6 +5378,12 @@ async function checkForUpdates() {
     } else if (/missing field|No data|notFound/i.test(msg)) {
       console.info('[Updater] 릴리즈 메타데이터 없음:', msg);
       _emitUpdateStatus({ type: 'not-available' });
+    } else if (/dashboard-state\.json/i.test(msg)) {
+      console.warn('[Updater] state file conflict during check:', msg);
+      _emitUpdateStatus({
+        type: 'error',
+        message: '대시보드 설정 저장 충돌이 감지됐어요. v3.3.3 이상으로 업데이트하면 해결됩니다. 잠시 후 다시 시도해 주세요.',
+      });
     } else {
       _emitUpdateStatus({ type: 'error', message: msg });
     }
@@ -5259,8 +5453,16 @@ async function installUpdate() {
     return;
   }
   try {
+    if (_widgetGridState) {
+      try { await flushSaveState(_widgetGridState); } catch (e) {
+        console.warn('[Updater] state flush before install (continuing):', e);
+      }
+    }
     const targetVersion = normalizeVersionLabel(_pendingUpdateVersion);
-    if (targetVersion) localStorage.setItem(UPDATE_ATTEMPT_KEY, targetVersion);
+    if (targetVersion) {
+      localStorage.setItem(UPDATE_ATTEMPT_KEY, targetVersion);
+      localStorage.setItem(UPDATE_ATTEMPT_AT_KEY, String(Date.now()));
+    }
     setUpdateOverlayProgress(100, '업데이트를 마무리하고 있어요');
     if (_downloadedBytesRid !== null) {
       await tInvoke('plugin:updater|install', {
@@ -5279,6 +5481,8 @@ async function installUpdate() {
     await tInvoke('plugin:process|restart').catch(() => {});
   } catch (e) {
     console.error('[installUpdate]', e);
+    localStorage.removeItem(UPDATE_ATTEMPT_KEY);
+    localStorage.removeItem(UPDATE_ATTEMPT_AT_KEY);
     hideUpdateOverlay();
     _updateInstallStarted = false;
     _emitUpdateStatus({ type: 'error', message: e.message || String(e) });
@@ -5421,7 +5625,8 @@ function injectScaleStyle(){
     .topbar          { height: ${Math.round(48*r)}px !important; padding: 0 ${Math.round(20*r)}px !important; }
     .tb-logo         { font-size: ${Math.round(18*r)}px !important; }
     .tb-date         { font-size: ${Math.round(18*r)}px !important; }
-    .g-chip          { font-size: ${Math.round(11*r)}px !important; padding: ${Math.round(4*r)}px ${Math.round(12*r)}px !important; }
+    .tb-menu-google  { font-size: ${Math.round(11*r)}px !important; padding: ${Math.round(8*r)}px ${Math.round(10*r)}px ${Math.round(6*r)}px !important; }
+    .tb-user-avatar-wrap { width: ${Math.round(26*r)}px !important; height: ${Math.round(26*r)}px !important; }
     .tb-btn          { width:${Math.round(34*r)}px !important; height:${Math.round(34*r)}px !important; font-size:${Math.round(14*r)}px !important; }
     .gc              { border-radius: ${Math.round(20*r)}px !important; }
     .ch              { padding: ${Math.round(11*r)}px ${Math.round(14*r)}px ${Math.round(9*r)}px !important; }
@@ -7005,19 +7210,22 @@ async function driveRefresh(type){
 /* ── 동기화 버튼 (실제 Google Calendar 연동) ── */
 async function doSync(){
   const btn = document.getElementById('btnSync');
+  if (!btn) return;
   btn.classList.add('spinning');
   showToast('🔄 동기화 중...');
 
-  const status = await getAuthStatus();
-  if (!status.authenticated) {
-    btn.classList.remove('spinning');
-    showToast('⚠️ Google 계정을 먼저 연결해 주세요 (설정 → Google 탭)');
-    return;
-  }
+  try {
+    const status = await getAuthStatus();
+    if (!status.authenticated) {
+      showToast('⚠️ Google 계정을 먼저 연결해 주세요 (설정 → Google 탭)');
+      return;
+    }
 
-  await syncAllCalendarWidgets();
-  btn.classList.remove('spinning');
-  showToast('✅ 동기화 완료');
+    await syncAllCalendarWidgets();
+    showToast('✅ 동기화 완료');
+  } finally {
+    btn.classList.remove('spinning');
+  }
 }
 
 function launchDashboard(){
@@ -7091,40 +7299,67 @@ function _hideWidgetEditUi(){
   });
 }
 
-let _widgetLongPressTimer = null;
+function _widgetGridMountHooks() {
+  return { onEnterEdit: (id) => startWidgetLayoutEdit(id) };
+}
 
-function _bindWidgetLongPressOnce() {
-  const mount = document.getElementById('widgetGridMount');
-  if (!mount || mount.dataset.longPressBound) return;
-  mount.dataset.longPressBound = '1';
+function closeTopbarMenu() {
+  const overlay = document.getElementById('tbMenuOverlay');
+  const btn = document.getElementById('tbMenuBtn');
+  if (!overlay?.classList.contains('open')) return;
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  if (btn) {
+    btn.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+}
 
-  const clearPress = () => {
-    if (_widgetLongPressTimer) {
-      clearTimeout(_widgetLongPressTimer);
-      _widgetLongPressTimer = null;
-    }
-  };
+function toggleTopbarMenu() {
+  const overlay = document.getElementById('tbMenuOverlay');
+  const btn = document.getElementById('tbMenuBtn');
+  if (!overlay || !btn) return;
+  const open = !overlay.classList.contains('open');
+  overlay.classList.toggle('open', open);
+  overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+  btn.classList.toggle('is-open', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
 
-  mount.addEventListener('pointerdown', (e) => {
-    if (isEditMode() || e.button !== 0) return;
-    if (e.target.closest(
-      'button, input, textarea, a, select, .item, .nb, .cal-add-nb, .ch-nav, .cp-gear, .ch-gear, .cp-icon, .ch-icon, '
-      + '.todo-chk, .todo-add-row, .todo-bell, .gem-input-row, .gem-sidebar, .gem-attach-btn, '
-      + '.db-item, .gfile-item, .drive-widget-files, '
-      + '.widget-drag-handle, .widget-resize-handle, .widget-done-btn',
-    )) return;
-    const shell = e.target.closest('.widget-cell');
-    if (!shell?.dataset?.widgetId) return;
-    const widgetId = shell.dataset.widgetId;
-    clearPress();
-    _widgetLongPressTimer = setTimeout(() => {
-      _widgetLongPressTimer = null;
-      startWidgetLayoutEdit(widgetId);
-    }, 520);
+function _bindTopbarMenuOnce() {
+  const btn = document.getElementById('tbMenuBtn');
+  const overlay = document.getElementById('tbMenuOverlay');
+  const panel = document.getElementById('tbMenuPanel');
+  if (!btn || !overlay || btn.dataset.bound) return;
+  btn.dataset.bound = '1';
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleTopbarMenu();
   });
 
-  for (const evt of ['pointerup', 'pointercancel', 'pointerleave']) {
-    mount.addEventListener(evt, clearPress);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeTopbarMenu();
+  });
+
+  panel?.addEventListener('click', (e) => e.stopPropagation());
+
+  panel?.querySelectorAll('.tb-menu-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      const action = item.dataset.action;
+      closeTopbarMenu();
+      if (action === 'sync') void doSync();
+      else if (action === 'desktop' || action === 'hide') void showDesktopPeek();
+      else if (action === 'add-widget') openWidgetTypePicker();
+      else if (action === 'settings') reopenSetup();
+    });
+  });
+
+  if (!window.__tbMenuEscBound) {
+    window.__tbMenuEscBound = true;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeTopbarMenu();
+    });
   }
 }
 
@@ -9056,7 +9291,7 @@ async function _remountWidgetGridState(){
   const layoutEditFocusId = wasLayoutEditing ? getEditFocusWidgetId() : null;
   syncWidgetAnchors(_widgetGridState);
   const anchors = collectPanelAnchors(_widgetGridState);
-  _widgetGridTeardown = remountWidgetGrid(mount, _widgetGridState, anchors, _widgetGridTeardown);
+  _widgetGridTeardown = remountWidgetGrid(mount, _widgetGridState, anchors, _widgetGridTeardown, _widgetGridMountHooks());
   for (const w of _widgetGridState.widgets.filter((x) => x.type === 'calendar')) {
     initCalWidgetState(w.id, w);
     renderCalForWidget(w.id);
@@ -9346,7 +9581,7 @@ async function initWidgetGrid(){
     root.style.display = '';
     syncWidgetAnchors(state);
     const anchors = collectPanelAnchors(state);
-    _widgetGridTeardown = mountWidgetGrid(mount, state, anchors);
+    _widgetGridTeardown = mountWidgetGrid(mount, state, anchors, _widgetGridMountHooks());
 
     for (const w of state.widgets.filter((x) => x.type === 'calendar')) {
       initCalWidgetState(w.id, w);
@@ -9355,7 +9590,6 @@ async function initWidgetGrid(){
     renderAllTodoWidgets();
     initLocalWidgetRuntimes(state);
     initGeminiWidgetRuntimes(state);
-    _bindWidgetLongPressOnce();
 
     initWidgetTypePickerIcons();
     const typePicker = document.getElementById('widgetTypePicker');
@@ -9424,6 +9658,7 @@ if (typeof window !== 'undefined') {
 function initDashboard(){
   startClock();
   setupTauriFileDrop().catch(e => console.warn('[TauriFileDrop]', e));
+  _bindTopbarMenuOnce();
   checkGoogleAuth();      // 인증 상태 확인 → 자동 동기화 + Drive 이미지
   startAlarmWatcher();    // 알림 워처 시작
   _bindBackupUiOnce();
@@ -9568,19 +9803,54 @@ async function syncCalendarSilent(){
   await syncAllCalendarWidgets();
 }
 
-function updateGoogleChip(authenticated){
-  const chip = document.querySelector('.g-chip');
-  if (!chip) return;
-  const dot = chip.querySelector('.g-chip-dot');
-  if (authenticated) {
-    if (dot) dot.style.background = '#22c55e';
-    chip.title = 'Google 연결됨';
-    chip.style.cursor = 'default';
-    chip.innerHTML = '<div class="g-chip-dot" style="background:#22c55e"></div>Google 연결됨';
+let _googleProfileCache = null;
+
+async function updateGoogleChip(authenticated) {
+  const userEl = document.getElementById('tbGoogleUser');
+  const avatar = document.getElementById('tbUserAvatar');
+  const fallback = document.getElementById('tbUserFallback');
+  const label = document.getElementById('tbUserLabel');
+  if (!userEl || !label) return;
+
+  if (!authenticated) {
+    _googleProfileCache = null;
+    userEl.classList.add('is-offline');
+    userEl.title = 'Google 미연결 — 설정에서 연결하세요';
+    if (avatar) {
+      avatar.classList.add('is-hidden');
+      avatar.removeAttribute('src');
+    }
+    if (fallback) {
+      fallback.classList.remove('is-hidden');
+      fallback.textContent = 'G';
+    }
+    label.textContent = 'Google 미연결';
+    return;
+  }
+
+  userEl.classList.remove('is-offline');
+  if (!_googleProfileCache) {
+    _googleProfileCache = await fetchGoogleUserProfile();
+  }
+  const profile = _googleProfileCache;
+  const display = profile?.name || profile?.email || 'Google 연결됨';
+  label.textContent = display;
+  userEl.title = profile?.email || display;
+
+  if (profile?.picture && avatar) {
+    avatar.src = profile.picture;
+    avatar.classList.remove('is-hidden');
+    if (fallback) fallback.classList.add('is-hidden');
   } else {
-    if (dot) dot.style.background = '#94a3b8';
-    chip.title = 'Google 미연결 — 설정에서 연결하세요';
-    chip.innerHTML = '<div class="g-chip-dot" style="background:#94a3b8"></div>Google 미연결';
+    const initial = (profile?.name || profile?.email || 'G').charAt(0).toUpperCase();
+    if (avatar) {
+      avatar.classList.add('is-hidden');
+      avatar.removeAttribute('src');
+    }
+    if (fallback) {
+      fallback.classList.remove('is-hidden');
+      fallback.textContent = initial;
+    }
   }
 }
 
@@ -9855,11 +10125,6 @@ function beginGoogleFilePointerDrag(row, file, startEvent) {
   const sy = startEvent.clientY;
   let moved = false;
   let ghost = null;
-
-  if (_widgetLongPressTimer) {
-    clearTimeout(_widgetLongPressTimer);
-    _widgetLongPressTimer = null;
-  }
 
   try { row.setPointerCapture(pid); } catch (_) {}
 
@@ -10173,7 +10438,9 @@ function buildCatPanels(){
     const gear=document.createElement('div'); gear.className='cp-gear'; gear.textContent='⚙';
     gear.onclick=(e)=>{ e.stopPropagation(); openCatEditPopup(e, CATS.indexOf(cat)); };
     icon.onclick=(e)=>{ e.stopPropagation(); openCatEditPopup(e, CATS.indexOf(cat)); };
-    head.appendChild(icon); head.appendChild(meta); head.appendChild(gear);
+    const actions=document.createElement('div'); actions.className='cp-actions';
+    actions.appendChild(gear);
+    head.appendChild(icon); head.appendChild(meta); head.appendChild(actions);
 
     // ── 아이템 목록 (드래그 리오더 지원) ──
     const body=document.createElement('div'); body.className='cp-body';
@@ -10212,20 +10479,15 @@ function buildCatPanels(){
 
     cat.items.forEach(item=> body.appendChild(makeRow(item)));
 
-    // 드롭존 (body 아래 시각적 힌트 — OS 파일은 Tauri drag-drop 처리)
-    const dz=document.createElement('div'); dz.className='cp-drop';
-    dz.textContent='📂 여기에 드래그하거나 + 추가에서 선택';
-    dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.background='rgba(196,181,253,0.18)'; });
-    dz.addEventListener('dragleave', () => { dz.style.background=''; });
-    dz.addEventListener('drop', e => { e.preventDefault(); dz.style.background=''; });
-
     // 링크 추가 — 1줄 버튼 클릭 시 입력 폼 표시
     const acts=document.createElement('div'); acts.className='cp-drop-btns';
 
     const addToggleBtn = document.createElement('button');
     addToggleBtn.type = 'button';
-    addToggleBtn.className = 'cp-add-toggle-btn';
-    addToggleBtn.textContent = '+ 추가';
+    addToggleBtn.className = 'cp-add';
+    addToggleBtn.title = '추가';
+    addToggleBtn.textContent = '+';
+    if (cat.type !== 'drive') actions.insertBefore(addToggleBtn, gear);
 
     const addMenu = document.createElement('div');
     addMenu.className = 'cp-add-menu is-hidden';
@@ -10252,14 +10514,12 @@ function buildCatPanels(){
     function hideAddMenu() {
       addMenu.classList.add('is-hidden');
       addToggleBtn.classList.remove('is-open');
-      addToggleBtn.textContent = '+ 추가';
     }
 
     function showAddMenu() {
       row.classList.add('is-hidden');
       addMenu.classList.remove('is-hidden');
       addToggleBtn.classList.add('is-open');
-      addToggleBtn.textContent = '닫기';
     }
 
     folderPickBtn.onclick = () => {
@@ -10321,7 +10581,8 @@ function buildCatPanels(){
       showToast('✅ 링크 추가됨');
     }
 
-    addToggleBtn.addEventListener('click', () => {
+    addToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (addMenu.classList.contains('is-hidden')) showAddMenu();
       else hideAddMenu();
     });
@@ -10343,7 +10604,6 @@ function buildCatPanels(){
     row.appendChild(titleInp);
     row.appendChild(urlInp);
     row.appendChild(btnRow);
-    acts.appendChild(addToggleBtn);
     acts.appendChild(addMenu);
     acts.appendChild(row);
 
@@ -10414,7 +10674,7 @@ function buildCatPanels(){
       panel.appendChild(head);
       panel.appendChild(buildDriveBrowser(cat));
     } else {
-      panel.appendChild(head); panel.appendChild(body); panel.appendChild(dz);
+      panel.appendChild(head); panel.appendChild(body);
       panel.appendChild(acts); panel.appendChild(noteArea);
     }
     zone.appendChild(panel);
@@ -10613,7 +10873,7 @@ function buildDriveBrowser(cat) {
       return;
     }
     if (state.authError) {
-      listEl.innerHTML = '<div class="db-unauth">🔐 Google 계정을 연결해야 해요<br><button class="db-unauth-btn" onclick="document.querySelector(\'.tb-btn-gear\').click()">설정에서 연결</button></div>';
+      listEl.innerHTML = '<div class="db-unauth">🔐 Google 계정을 연결해야 해요<br><button class="db-unauth-btn" onclick="reopenSetup()">설정에서 연결</button></div>';
       return;
     }
     if (state.errMsg) {
@@ -11689,6 +11949,7 @@ document.addEventListener('click', e => {
   if (popup && popup.classList.contains('cep-open') &&
       !e.target.closest('.cep-panel') &&
       !e.target.closest('.cp-gear') &&
+      !e.target.closest('.cp-add') &&
       !e.target.closest('.cp-icon')) {
     closeCatEditPopup();
   }
@@ -12453,6 +12714,7 @@ function evdToggleAlarm(){
     if(log){ log.style.display = 'block'; log.textContent = msg; }
     // 인증 성공 시 대시보드 Google 상태 즉시 갱신 (설정창 재연결 포함)
     if(msg && msg.includes('연결 성공')){
+      _googleProfileCache = null;
       updateGoogleChip(true);
       updateSettingsGoogleStatus(true);
       if(typeof checkGoogleAuth === 'function') checkGoogleAuth();
@@ -12477,6 +12739,7 @@ async function doSetupGoogleConnect(){
       hideLog();
       setSetupConnected();
       showToast('✅ Google 계정 연결 완료!');
+      _googleProfileCache = null;
       updateGoogleChip(true);
       syncCalendarSilent();
       // 1.2초 후 자동으로 다음 스텝
