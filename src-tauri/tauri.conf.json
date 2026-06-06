@@ -1,65 +1,61 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "업무 대시보드",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "identifier": "com.work.dashboard",
-
   "build": {
     "frontendDist": "../src"
   },
-
   "app": {
     "withGlobalTauri": true,
-
     "windows": [
       {
-        "label":       "main",
-        "title":       "업무 대시보드",
-        "width":       1280,
-        "height":      800,
-        "minWidth":    800,
-        "minHeight":   600,
+        "label": "main",
+        "title": "업무 대시보드",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
         "decorations": false,
         "transparent": false,
         "skipTaskbar": true,
-        "visible":     true,
-        "resizable":   true,
-        "center":      true
+        "visible": true,
+        "resizable": true,
+        "center": true
       }
     ],
-
     "security": {
       "csp": "default-src 'self' tauri://localhost; connect-src 'self' tauri://localhost ipc: http://ipc.localhost https://ipc.localhost http://127.0.0.1:59123 https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://drive.googleapis.com https://tasks.googleapis.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://generativelanguage.googleapis.com; img-src 'self' tauri://localhost data: blob: https://*.googleapis.com https://*.googleusercontent.com https://www.gstatic.com; style-src 'self' tauri://localhost 'unsafe-inline' 'unsafe-hashes'; script-src 'self' tauri://localhost 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'; font-src 'self' tauri://localhost data:; media-src 'self' blob: data:",
       "dangerousDisableAssetCspModification": true
     }
   },
-
   "bundle": {
-    "active":    true,
-    "targets":   "nsis",
-    "createUpdaterArtifacts": false,
+    "active": true,
+    "targets": "nsis",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/icon.ico",
       "icons/icon.png"
     ],
     "publisher": "dashboard",
     "copyright": "Copyright © 2026",
-
     "windows": {
       "digestAlgorithm": "sha256",
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       },
       "nsis": {
-        "installMode":           "currentUser",
+        "installMode": "currentUser",
         "displayLanguageSelector": false,
-        "languages":             ["Korean", "English"],
-        "compression":            "lzma",
+        "languages": [
+          "Korean",
+          "English"
+        ],
+        "compression": "lzma",
         "minimumWebview2Version": "109.0.1518.0"
       }
     }
   },
-
   "plugins": {
     "shell": {
       "open": "(ms-screenclip:|https?://|mailto:|tel:|file:|[a-zA-Z]:[/\\\\]|\\\\\\\\).*"
@@ -67,6 +63,8 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhBRTQ1RDU3RDFDQzUzNzYKUldSMlU4elJWMTNraXNhNFlvS3pqR0ZkUUFWeGF0cm5FMzRTeHoxQWJ5VmNlTnV6T3pUaWNGanIK",
       "endpoints": [
+        "https://cdn.jsdelivr.net/gh/ggugguai-star/Dashboard@main/latest.json",
+        "https://raw.githubusercontent.com/ggugguai-star/Dashboard/main/latest.json",
         "https://github.com/ggugguai-star/Dashboard/releases/latest/download/latest.json"
       ],
       "windows": {
