@@ -747,13 +747,19 @@ function attachWidgetGestureHandlers(container, state, hooks = {}) {
 
     zone.style.pointerEvents = 'none';
     const below = document.elementFromPoint(e.clientX, e.clientY);
-    if (below && below !== zone && shell.contains(below)
-      && below.closest('button, input, textarea, select, label, a, [role="button"], .nb, .ch-nav, .widget-action-btn')) {
-      // 이동존이 버튼 위를 덮고 있어도, 클릭이 버튼에 도달하도록 잠시 존을 통과시킨다.
-      setTimeout(() => { zone.style.pointerEvents = ''; }, 350);
-      return;
-    }
     zone.style.pointerEvents = '';
+    if (below && below !== zone && shell.contains(below)) {
+      const clickable = below.closest('button, a, [role="button"], .nb, .ch-nav, .widget-action-btn');
+      if (clickable) {
+        // 이동존(상단 띠)에 가려진 버튼을 직접 실행해 클릭이 먹게 한다.
+        e.preventDefault();
+        clickable.click();
+        return;
+      }
+      if (below.closest('input, textarea, select, label')) {
+        return;   // 입력류 위에서는 드래그를 시작하지 않는다.
+      }
+    }
 
     zone.setPointerCapture(e.pointerId);
     zone.classList.add('is-active');
