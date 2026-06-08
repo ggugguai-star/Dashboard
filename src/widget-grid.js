@@ -4,6 +4,7 @@
 import {
   GRID_COLS,
   compactLayout,
+  compactVertical,
   moveElement,
   resizeElement,
   pixelToCell,
@@ -126,11 +127,10 @@ export function applyWidgetResponsive(shell, type, width, height) {
   shell.style.setProperty('--widget-h', `${Math.round(height)}px`);
 
   if (type === 'category') {
-    const minCol = categoryMinColForTier(tier);
-    const grid = `repeat(auto-fill, minmax(${minCol}px, 1fr))`;
     const catZone = shell.querySelector(':scope > .cat-zone');
     if (catZone) {
-      catZone.style.gridTemplateColumns = grid;
+      const count = Math.max(1, catZone.querySelectorAll(':scope > .cat-panel').length);
+      catZone.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
     }
   }
 }
@@ -339,14 +339,14 @@ function clearWidgetLayoutEditing(canvas) {
 function cornerGripMarkup() {
   return `<svg class="widget-corner-grip" viewBox="0 0 40 40" aria-hidden="true">
     <defs>
-      <linearGradient id="wg-grip-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <linearGradient id="wg-grip-grad" x1="100%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stop-color="rgba(255,255,255,0.92)"/>
         <stop offset="55%" stop-color="rgba(236,232,255,0.78)"/>
         <stop offset="100%" stop-color="rgba(196,181,253,0.55)"/>
       </linearGradient>
     </defs>
-    <path class="widget-corner-grip-arc" d="M6 34 C6 22 14 14 26 14 L34 14" fill="none" stroke="url(#wg-grip-grad)" stroke-width="3.2" stroke-linecap="round"/>
-    <path class="widget-corner-grip-shine" d="M8 32 C8 24 14 18 24 16" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.4" stroke-linecap="round"/>
+    <path class="widget-corner-grip-arc" d="M34 6 C34 20 20 34 6 34" fill="none" stroke="url(#wg-grip-grad)" stroke-width="3.2" stroke-linecap="round"/>
+    <path class="widget-corner-grip-shine" d="M32 10 C32 21 21 32 10 32" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.4" stroke-linecap="round"/>
   </svg>`;
 }
 
@@ -452,7 +452,10 @@ function commitDrag(state, container, session) {
   const item = layout.find((el) => el.i === widgetId);
   if (!item) return state;
 
-  const nextLayout = compactLayout(moveElement(layout, item, cell.x, cell.y));
+  // 가로 컴팩션(compactHorizontal)은 사용자가 의도적으로 옮긴 열(x) 위치를 무시하고
+  // 왼쪽 빈칸으로 다시 당겨버려 "원하는 자리에 못 놓는" 문제를 일으킨다.
+  // 드래그 이동은 충돌 처리 + 세로 빈칸 제거만 적용해 사용자가 고른 위치를 보존한다.
+  const nextLayout = compactVertical(moveElement(layout, item, cell.x, cell.y));
   const nextWidgets = applyLayoutToWidgets(state.widgets, nextLayout);
   state.widgets = nextWidgets;
   _layoutDirty = true;
@@ -478,7 +481,7 @@ function previewDrag(state, container, session) {
   const item = layout.find((el) => el.i === widgetId);
   if (!item) return;
 
-  const previewLayout = compactLayout(moveElement(layout, item, cell.x, cell.y));
+  const previewLayout = compactVertical(moveElement(layout, item, cell.x, cell.y));
   const previewWidgets = applyLayoutToWidgets(state.widgets, previewLayout);
 
   const canvas = getCanvas(container);
@@ -581,7 +584,7 @@ function previewResize(state, container, session) {
 }
 
 const RESIZE_DRAG_THRESHOLD = 6;
-const MOVE_LONG_PRESS_MS = 320;
+const MOVE_DRAG_THRESHOLD = 6;  // 롱프레스 제거 — 움직임 감지 즉시 드래그
 const MOVE_CANCEL_SLOP = 10;
 
 function beginGestureEdit(container, state, widgetId, hooks) {
@@ -602,7 +605,6 @@ async function endGestureEdit(container, state, hooks, { save = true } = {}) {
   if (!_editMode) return;
   if (save && typeof hooks?.onSessionEnd === 'function') {
     await hooks.onSessionEnd();
-    return;
   }
   exitEditMode(container, state);
   clearWidgetLayoutEditing(getCanvas(container));
@@ -752,27 +754,19 @@ function attachWidgetGestureHandlers(container, state, hooks = {}) {
     }
 
     zone.setPointerCapture(e.pointerId);
+    zone.classList.add('is-active');
 
-    const session = {
+    moveLocal = {
       pointerId: e.pointerId,
       widgetId,
       shell,
       zone,
       startX: e.clientX,
       startY: e.clientY,
-      armed: false,
+      armed: true,   // 즉시 활성화 (롱프레스 없음)
       dragging: false,
       timer: null,
     };
-
-    session.timer = setTimeout(() => {
-      if (!moveLocal || moveLocal !== session) return;
-      session.armed = true;
-      session.zone.classList.add('is-active');
-      beginGestureEdit(container, state, session.widgetId, hooks);
-    }, MOVE_LONG_PRESS_MS);
-
-    moveLocal = session;
   };
 
   const onMoveMove = (e) => {
@@ -780,17 +774,10 @@ function attachWidgetGestureHandlers(container, state, hooks = {}) {
     const dx = e.clientX - moveLocal.startX;
     const dy = e.clientY - moveLocal.startY;
 
-    if (!moveLocal.armed) {
-      if (Math.hypot(dx, dy) > MOVE_CANCEL_SLOP) {
-        clearTimeout(moveLocal.timer);
-        moveLocal = null;
-        try { e.target.releasePointerCapture(e.pointerId); } catch (_) {}
-      }
-      return;
-    }
-
     if (!moveLocal.dragging) {
+      if (Math.hypot(dx, dy) < MOVE_DRAG_THRESHOLD) return;
       moveLocal.dragging = true;
+      beginGestureEdit(container, state, moveLocal.widgetId, hooks);
       const metrics = renderGrid(container, state, { layoutOnly: true });
       setCanvasInteracting(canvas, true);
       moveLocal.shell.classList.add('is-dragging');

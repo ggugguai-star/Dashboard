@@ -14,7 +14,7 @@
  *   weeklyPlanTitle  → drive 위젯 title
  */
 
-import { compactVertical, GRID_COLS, collides, packLayoutFirstFit } from './layout-engine.js';
+import { compactVertical, compactLayout, GRID_COLS, collides, packLayoutFirstFit } from './layout-engine.js';
 
 export const SCHEMA_VERSION = 3;
 export const STATE_FILE = 'dashboard-state.json';
@@ -173,42 +173,71 @@ export function generateChatId() {
   return `chat-${n}-${r}`;
 }
 
-/** 신규 사용자 기본 4종 위젯 시드 */
+/** 신규 사용자 기본 7종 위젯 시드 — 12열 2행 그리드 */
 export function seedDefaultWidgets(state) {
   const next = cloneState(state);
   if (Array.isArray(next.widgets) && next.widgets.length > 0) {
     return next;
   }
+  // Row 1 (y=0, h=5): 캘린더(6) | 카테고리1(3) | 카테고리2(3)
+  // Row 2 (y=5, h=4): 할일(3) | 구글시트(3) | 구글드라이브(3) | 제미나이(3)
   next.widgets = [
     {
       id: 'cal-1',
       type: 'calendar',
       title: '내 캘린더',
       source: { calendarIds: ['primary'], calendarId: 'primary' },
+      x: 0, y: 0, w: 6, h: 5,
+    },
+    {
+      id: 'cat-1',
+      type: 'category',
+      title: '카테고리 1',
+      color: '#ffb3b3',
+      icon: '📁',
+      items: [],
+      x: 6, y: 0, w: 3, h: 5,
+    },
+    {
+      id: 'cat-2',
+      type: 'category',
+      title: '카테고리 2',
+      color: '#b3d9ff',
+      icon: '📂',
+      items: [],
+      x: 9, y: 0, w: 3, h: 5,
+    },
+    {
+      id: 'todo-1',
+      type: 'todo',
+      title: WIDGET_TITLES.todo,
+      source: { taskListId: '' },
+      items: [],
+      x: 0, y: 5, w: 3, h: 4,
+    },
+    {
+      id: 'gs-1',
+      type: 'gsheets',
+      title: 'Google Sheets',
+      source: { fileId: '' },
+      x: 3, y: 5, w: 3, h: 4,
     },
     {
       id: 'wk-1',
       type: 'drive',
       title: 'Weekly Plan',
       source: { folderId: '' },
+      x: 6, y: 5, w: 3, h: 4,
     },
     {
-      id: 'memo-1',
-      type: 'todo',
-      title: WIDGET_TITLES.todo,
-      source: { taskListId: '' },
-      items: [],
-    },
-    {
-      id: 'cat-1',
-      type: 'category',
-      title: '카테고리',
-      color: '#ffb3b3',
-      icon: '📚',
-      items: [],
+      id: 'gem-1',
+      type: 'gemini',
+      title: 'Gemini',
+      source: {},
+      x: 9, y: 5, w: 3, h: 4,
     },
   ];
-  next.widgets = autoPackWidgets(next.widgets);
+  next.widgets = next.widgets.map((w) => enrichWidget(w));
   return next;
 }
 
@@ -441,7 +470,7 @@ function isLegacySingleColumnLayout(widgets) {
   return widgets.every((w) => (w.x ?? 0) === 0);
 }
 
-/** 12열 그리드 기준 좌표 보정 + 겹침/미배치 시 자동 배치 */
+/** 12열 그리드 기준 좌표 보정 + 겹침/미배치 시 자동 배치 + 항상 위쪽 압축 */
 export function normalizeWidgetLayout(state, { force = false } = {}) {
   const next = cloneState(state ?? createEmptyState());
   next.grid = { cols: GRID_COLS };
@@ -450,7 +479,15 @@ export function normalizeWidgetLayout(state, { force = false } = {}) {
     || widgets.some((w) => w.x == null || w.y == null)
     || layoutHasOverlap(widgets)
     || isLegacySingleColumnLayout(widgets);
-  next.widgets = needsPack ? autoPackWidgets(widgets) : widgets;
+  const packed = needsPack ? autoPackWidgets(widgets) : widgets;
+  // 항상 compactLayout으로 위쪽 빈 공간 제거
+  const layout = compactLayout(packed.map((w) => ({
+    i: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: w.minW, minH: w.minH,
+  })));
+  next.widgets = packed.map((w) => {
+    const pos = layout.find((el) => el.i === w.id);
+    return pos ? { ...w, x: pos.x, y: pos.y } : w;
+  });
   return next;
 }
 
@@ -716,21 +753,33 @@ export function createWidget(type, widgets) {
   throw new Error(`Unknown widget type: ${type}`);
 }
 
-/** 위젯 추가 + 하단 배치 후 compactVertical */
+/** 위→아래, 좌→우 순으로 빈 첫 자리를 찾아 반환 */
+function findFirstFitSpot(layout, w, h, cols = GRID_COLS) {
+  for (let y = 0; y < 96; y++) {
+    for (let x = 0; x <= cols - w; x++) {
+      const probe = { i: '__probe__', x, y, w, h };
+      if (!layout.some((other) => collides(probe, other))) return { x, y };
+    }
+  }
+  const fallbackY = layout.reduce((m, el) => Math.max(m, el.y + el.h), 0);
+  return { x: 0, y: fallbackY };
+}
+
+/** 위젯 추가 — 위쪽부터 빈 자리에 배치 후 compactLayout */
 export function addWidget(state, type) {
   const next = cloneState(state);
   const widget = enrichWidget(createWidget(type, next.widgets));
   const layout = stateWidgetsToLayout(next.widgets);
-  const maxY = layout.reduce((m, el) => Math.max(m, el.y + el.h), 0);
-  widget.x = 0;
-  widget.y = maxY;
+  const spot = findFirstFitSpot(layout, widget.w, widget.h);
+  widget.x = spot.x;
+  widget.y = spot.y;
   next.widgets.push(widget);
-  const packed = compactVertical(stateWidgetsToLayout(next.widgets));
+  const packed = compactLayout(stateWidgetsToLayout(next.widgets));
   next.widgets = applyLayoutToStateWidgets(next.widgets, packed);
   return next;
 }
 
-/** 위젯 삭제 + compactVertical 재배치 (빈 그리드 허용) */
+/** 위젯 삭제 + compactLayout 재배치 */
 export function removeWidget(state, widgetId) {
   const next = cloneState(state);
   next.widgets = next.widgets.filter((w) => w.id !== widgetId);
@@ -738,7 +787,7 @@ export function removeWidget(state, widgetId) {
     next.geminiChats = next.geminiChats.filter((c) => c.widgetId !== widgetId);
   }
   if (next.widgets.length > 0) {
-    const packed = compactVertical(stateWidgetsToLayout(next.widgets));
+    const packed = compactLayout(stateWidgetsToLayout(next.widgets));
     next.widgets = applyLayoutToStateWidgets(next.widgets, packed);
   }
   return next;

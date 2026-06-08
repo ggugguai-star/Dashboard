@@ -23,6 +23,14 @@
 - 예) Rust: `#[tauri::command] fn save(p:&str)->Result<(),String>{ std::fs::write(p,"x").map_err(|e|e.to_string()) }`
   / 프론트: `try { await invoke('save',{p}) } catch(e){ showToast(String(e)) }`
 
+## 0.2 파일 분리 원칙 (거대 단일 파일 금지)
+- 프론트엔드는 **HTML / CSS / JS 를 별도 파일로 분리**한다. 인라인 `<style>`·`<script>` 가 수천 줄로
+  비대해진 **단일 거대 파일(monolith) 금지.** 권장: `index.html`(마크업·링크) + `styles.css`(또는 기능별 CSS)
+  + 기능별 JS 모듈(`<script type="module" src="...">`).
+- 한 파일이 **약 1,500줄을 넘거나** 여러 관심사가 섞이면 분리한다.
+- 이유: (1) AI 편집 속도·정확도↑ (거대 파일은 매 편집마다 토큰 폭증·느림), (2) 단계 diff 가 작아져
+  2차 QA(diff 약 12000자 상한)와 시너지, (3) 회귀 격리. **처음부터 분리해 설계하라.**
+
 ## 1. 작업 흐름 (단계 단위, 1단계씩)
 1. 모든 개발은 '단계(Step)' 단위로 잘게 쪼갠다. 절대 여러 단계를 몰아서 처리하지 않는다.
 2. 각 단계 시작 전 `./MDs/{단계번호}_PROMPT.md` 를 먼저 생성한다(무엇을·왜·어떻게, 한국어).

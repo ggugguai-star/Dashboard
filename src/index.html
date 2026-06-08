@@ -984,29 +984,35 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 .widget-cell.is-dragging { z-index: 20; opacity: 0.94; }
 .widget-cell.is-resizing { z-index: 21; }
+/* ── 이동 존 ── */
 .widget-move-zone {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 36px;
   z-index: 5;
   cursor: grab;
   touch-action: none;
   user-select: none;
   background: transparent;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.widget-cell:hover .widget-move-zone {
+  background: linear-gradient(180deg, rgba(139,92,246,0.10) 0%, transparent 100%);
+  box-shadow: inset 0 2px 0 rgba(139,92,246,0.18);
 }
 .widget-move-zone.is-active {
   cursor: grabbing;
-  background: linear-gradient(180deg, rgba(236,232,255,0.55), transparent);
+  background: linear-gradient(180deg, rgba(139,92,246,0.22) 0%, transparent 100%);
+  box-shadow: inset 0 2px 0 rgba(139,92,246,0.35);
 }
 #dashboard.widget-grid-editing .widget-move-zone { z-index: 6; }
+
+/* ── 크기 조절 존 ── */
 .widget-corner-zone {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 48px;
-  height: 48px;
+  right: 0; bottom: 0;
+  width: 52px; height: 52px;
   z-index: 6;
   pointer-events: auto;
   cursor: nwse-resize;
@@ -1015,31 +1021,31 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  padding: 0 2px 2px 0;
+  padding: 0 3px 3px 0;
   opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-soft);
+  transition: opacity 0.2s ease;
 }
 .widget-cell:hover .widget-corner-zone,
 .widget-corner-zone.is-active {
   opacity: 1;
 }
-.widget-corner-zone.is-active {
-  cursor: grabbing;
-}
+.widget-corner-zone.is-active { cursor: grabbing; }
 .widget-corner-grip {
-  width: 36px;
-  height: 36px;
+  width: 38px; height: 38px;
   pointer-events: none;
-  filter: drop-shadow(0 2px 6px rgba(80,50,180,0.22));
-  transition: transform var(--dur-fast) var(--ease-soft), filter var(--dur-fast) var(--ease-soft);
+  filter: drop-shadow(0 2px 8px rgba(80,50,180,0.28));
+  transition: transform 0.18s cubic-bezier(0.34,1.4,0.64,1), filter 0.18s ease;
 }
-.widget-corner-zone:hover .widget-corner-grip,
+.widget-corner-zone:hover .widget-corner-grip {
+  transform: scale(1.15);
+  filter: drop-shadow(0 5px 14px rgba(110,91,242,0.5));
+}
 .widget-corner-zone.is-active .widget-corner-grip {
-  transform: scale(1.06);
-  filter: drop-shadow(0 4px 10px rgba(110,91,242,0.35));
+  transform: scale(1.22);
+  filter: drop-shadow(0 6px 18px rgba(110,91,242,0.6));
 }
 .widget-cell.is-resizing .widget-corner-grip {
-  transform: scale(1.1);
+  transform: scale(1.18);
 }
 .widget-resize-ghost,
 .widget-drag-ghost {
@@ -1073,11 +1079,36 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
   border-radius: inherit;
   animation: none;
 }
-.widget-cell[data-widget-type="calendar"] .cal-grid-wrap { flex-shrink: 0; }
-.widget-cell[data-widget-type="calendar"] .cal-events-box {
+/* 달력 그리드는 위젯 크기에 비례해 커지고(flex:1), 일정 목록은 1~2줄 높이로 고정해
+   그 이상은 내부 스크롤로 처리한다 — 그리드 자체에서 날짜별 일정을 바로 확인할 수 있으므로
+   목록은 보조 역할만 하면 충분하다. */
+.widget-cell[data-widget-type="calendar"] .cal-grid-wrap {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  transition: flex 0.15s ease;
+}
+.widget-cell[data-widget-type="calendar"] .cal-dates {
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
+}
+.widget-cell[data-widget-type="calendar"] .cday.has-inline-ev {
+  min-height: 0;
+  height: 100%;
+}
+.widget-cell[data-widget-type="calendar"] .cal-events-box {
+  flex: 0 0 auto;
+  max-height: 64px;
+  min-height: 0;
   overflow-y: auto;
+}
+.widget-cell[data-widget-tier="spacious"][data-widget-type="calendar"] .cal-events-box {
+  max-height: 84px;
+}
+.widget-cell[data-widget-tier="compact"][data-widget-type="calendar"] .cal-events-box {
+  max-height: 48px;
 }
 .widget-cell[data-widget-type="calendar"] .ch {
   padding: 10px 12px 8px;
@@ -3511,7 +3542,7 @@ body.google-file-drag-active .gfile-item { cursor: grabbing !important; }
         <div class="step-page active" id="sp0">
           <span class="s-emoji">🖥️</span>
           <div class="s-title">화면 설정</div>
-          <div class="s-sub">모니터 해상도와 업무 카테고리 수를<br>선택해 주세요.</div>
+          <div class="s-sub">모니터 해상도와 화면 배율을 선택해 주세요.</div>
 
           <label class="s-label">모니터 해상도</label>
           <div class="res-grid">
@@ -3533,16 +3564,6 @@ body.google-file-drag-active .gfile-item { cursor: grabbing !important; }
             </div>
           </div>
 
-          <div style="height:24px"></div>
-          <label class="s-label">업무 카테고리 수</label>
-          <div class="cat-nums">
-            <div class="cnum" onclick="selCat(this)">3</div>
-            <div class="cnum" onclick="selCat(this)">4</div>
-            <div class="cnum sel" onclick="selCat(this)">5</div>
-            <div class="cnum" onclick="selCat(this)">6</div>
-            <div class="cnum" onclick="selCat(this)">7</div>
-          </div>
-          <p style="font-size:12px;color:var(--text4);margin-top:6px">설정 후에도 언제든 변경할 수 있어요.</p>
 
           <!-- 배율 설정 -->
           <div class="scale-section">
@@ -6902,8 +6923,11 @@ function openEvDialog(year, month, day, existingEv){
     document.getElementById('evdTitle').value    = '';
     setEvDate(dateStr);
     document.getElementById('evdAllDay').checked = false;
-    setEvTime('evdStartTime', '09:00');
-    setEvTime('evdEndTime', '10:00');
+    const _now = new Date();
+    const _startHm = `${_p2(_now.getHours())}:${_p2(_now.getMinutes())}`;
+    const _endHm   = `${_p2((_now.getHours() + 1) % 24)}:${_p2(_now.getMinutes())}`;
+    setEvTime('evdStartTime', _startHm);
+    setEvTime('evdEndTime',   _endHm);
     document.getElementById('evdLocation').value = '';
     document.getElementById('evdDesc').value     = '';
     document.getElementById('evdTimeRow').style.display = '';
@@ -7182,11 +7206,6 @@ function _bindSetupUiOnce() {
     if (el.dataset.boundClick) return;
     el.dataset.boundClick = '1';
     el.addEventListener('click', () => selRes(el));
-  });
-  document.querySelectorAll('#sp0 .cnum').forEach((el) => {
-    if (el.dataset.boundClick) return;
-    el.dataset.boundClick = '1';
-    el.addEventListener('click', () => selCat(el));
   });
   document.querySelectorAll('#sp0 .scale-preset').forEach((el) => {
     if (el.dataset.boundClick) return;
@@ -11928,10 +11947,20 @@ initAutoLaunchUI();
 /* ────────────────────────────────────────
    전체 초기화
 ──────────────────────────────────────── */
-function resetAllData(){
+async function resetAllData(){
   if(!confirm('⚠️ 모든 데이터(카테고리·할 일·메모·설정·Google 연결)가 초기화됩니다.\n계속하시겠어요?')) return;
+  // Google 토큰 삭제 (keyring + 폴백 파일) — await로 완료 보장
+  await googleDisconnect().catch(() => {});
+  // 앱 상태 파일 삭제 (AppData/dashboard-state.json + 백업 5개)
+  const APP_DATA = 4;
+  const stateFiles = [
+    'dashboard-state.json', 'dashboard-state.json.tmp',
+    ...Array.from({ length: 5 }, (_, i) => `dashboard-state.json.bak.${i + 1}`),
+  ];
+  await Promise.allSettled(
+    stateFiles.map(f => tInvoke('plugin:fs|remove', { path: f, options: { baseDir: APP_DATA } }))
+  );
   localStorage.clear();
-  googleDisconnect();
   location.reload();
 }
 
@@ -12513,9 +12542,9 @@ function openAlarmMiniPopup(todoId, btnEl, widgetId){
   if(item.alarmDT){
     setAmpDt(item.alarmDT.slice(0,16));
   } else {
-    const d = new Date(Date.now() + 60*60*1000);
-    const pad = n => String(n).padStart(2,'0');
-    setAmpDt(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    const _d = new Date();
+    const _p  = n => String(n).padStart(2,'0');
+    setAmpDt(`${_d.getFullYear()}-${_p(_d.getMonth()+1)}-${_p(_d.getDate())}T${_p(_d.getHours())}:${_p(_d.getMinutes())}`);
   }
 
   const clearBtn = document.getElementById('ampClearBtn');
