@@ -22,8 +22,6 @@ __pycache__/
 node_modules/
 src-tauri/target/
 src-tauri/gen/
-releases/*.bin
-releases/*.exe
 MDs_pipeline_bak_*/
 _pre_reset_backup/
 *.bak
