@@ -158,6 +158,29 @@ body {
 }
 ```
 
+## 4.1 엣지 굴절(렌징) 강화 — 최신 iOS "Liquid Glass" 핵심
+유리의 정체성은 가장자리에서 빛이 휘는 것(refraction). 위 `.glass` 에 `.refract` 를 더해
+'밝은 림 → 어두운 림'의 1px 굴절 테두리를 만든다(빛이 모서리로 모이는 느낌).
+```css
+.glass.refract::after {
+  content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
+  pointer-events:none;
+  background: linear-gradient(135deg,
+    var(--glass-highlight), transparent 30%, transparent 70%, var(--glass-stroke-bottom));
+  /* 테두리만 남기는 마스크 트릭 */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+```
+- **(고급/선택) 진짜 렌징**: SVG `feDisplacementMap` 으로 배경을 미세 왜곡한다. 콘텐츠가 아니라
+  **배경 전용 레이어**에만 적용해 가독성을 지킨다(과하면 멀미 — scale 6~10 권장).
+```html
+<svg width="0" height="0" aria-hidden="true"><filter id="glass-lens">
+  <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="2" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="8"/>
+</filter></svg>
+```
+
 ## 5. 컴포넌트 패턴
 > 마우스/포인터로 누르거나 올리는 모든 컨트롤(버튼·카드·칩·아이콘 등)에는 §6.1 `.tactile`을 함께 붙여
 > "통통거리는" 촉감을 준다. 호버 떠오름이 필요하면 `.tactile.lift`.
@@ -171,6 +194,88 @@ body {
 - **입력 필드**: `--bg-elevated` 살짝 불투명 + 1px 보더(`--glass-stroke-bottom`), focus 시 `--primary` 링.
 - **모달/시트**: 화면을 `backdrop-filter: blur(8px)`로 덮고, 시트는 `.glass` + `--radius-xl`, 하단에서 스프링으로 등장.
 - **태그/뱃지**: 파스텔 배경(`--pastel-*`) + 진한 텍스트. 채도 낮게, 둥글게(`--radius-pill`).
+
+## 5.1 상태 컴포넌트 패턴 (필수 5종)
+> 모든 앱이 자주 쓰는 상태 UI. **기존 토큰만 사용**(새 색/폰트 발명 금지), 라이트 전용, 접근성 준수.
+> 즉흥 구현 대신 아래 패턴을 표준으로 쓴다.
+
+**1) 로딩 / 스켈레톤** — 콘텐츠 자리에 파스텔 블록을 깔고 은은한 shimmer. (스피너 남발 금지)
+```css
+.skeleton { background: linear-gradient(100deg,
+    var(--pastel-lavender) 30%, var(--glass-fill-strong) 50%, var(--pastel-sky) 70%);
+  background-size: 200% 100%; border-radius: var(--radius-sm);
+  animation: skeleton-shimmer 1.4s var(--ease-soft) infinite; }
+@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; opacity: .7; } }
+```
+
+**2) 빈 상태 (Empty State)** — `.glass` 패널 중앙 정렬: 아이콘(또는 일러스트) + 한 줄 설명(`--text-muted`) + 1차 액션 버튼.
+```css
+.empty-state { display: grid; place-items: center; gap: var(--space-4);
+  padding: var(--space-7); text-align: center; color: var(--text-muted); }
+.empty-state .title { color: var(--text-strong); font-family: var(--font-display); }
+```
+
+**3) 토스트 / 알림** — `.glass` + `--radius-pill`, 화면 모서리에 `--ease-spring` 으로 등장 후 자동 소멸. 좌측에 상태색 바(`--success/--warning/--danger/--info`). 색만으로 정보 전달 금지(아이콘/텍스트 병행).
+```css
+.toast { display:flex; gap: var(--space-2); align-items:center;
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg); border-left: 4px solid var(--info);
+  animation: toast-in var(--dur) var(--ease-spring); }
+.toast.is-success{border-left-color:var(--success)} .toast.is-error{border-left-color:var(--danger)}
+@keyframes toast-in { from{opacity:0; transform: translateY(8px)} to{opacity:1;transform:none} }
+```
+
+**4) 폼 에러** — 입력 필드 보더를 `--danger` 로, 아래 helper 텍스트도 `--danger`. 스크린리더용 `aria-invalid`/`aria-describedby` 연결.
+```css
+.field-error input, .field-error textarea { border-color: var(--danger); }
+.field-error input:focus { outline: 2px solid var(--danger); outline-offset: 2px; }
+.field-error .hint { color: var(--danger); font-size: var(--text-sm); margin-top: var(--space-1); }
+```
+```html
+<div class="field-error">
+  <input aria-invalid="true" aria-describedby="e1">
+  <p id="e1" class="hint">이메일 형식이 올바르지 않습니다.</p>
+</div>
+```
+
+**5) 테이블 / 목록** — 행은 투명, 헤더는 `--glass-fill-strong` sticky. 호버 시 미세 떠오름(`.tactile.lift` 또는 배경 강조). 얼룩(zebra)은 파스텔을 아주 옅게.
+```css
+.table { width:100%; border-collapse: separate; border-spacing: 0; }
+.table thead th { position: sticky; top:0; background: var(--glass-fill-strong);
+  backdrop-filter: blur(var(--glass-blur)); text-align:left; color: var(--text-strong);
+  padding: var(--space-3) var(--space-4); }
+.table tbody td { padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--glass-stroke-bottom); }
+.table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--pastel-sky) 30%, transparent); }
+.table tbody tr:hover { background: var(--primary-soft); }
+```
+
+## 5.2 선택 상태 (Selection — iOS 시그니처)
+press/hover 와 별개로 "선택됨(selected)" 상태를 명확히 표현한다.
+
+**세그먼티드 컨트롤 — 슬라이딩 선택 pill** (iOS 대표 인터랙션). `--seg-i`(선택 인덱스)/`--seg-n`(개수)를 JS 가 갱신하면 pill 이 `--ease-spring` 으로 미끄러진다.
+```css
+.segmented { position:relative; display:inline-grid; grid-auto-flow:column; grid-auto-columns:1fr;
+  padding: var(--space-1); background: var(--glass-fill); border:1px solid var(--glass-stroke);
+  border-radius: var(--radius-pill); }
+.segmented > button { position:relative; z-index:1; border:0; background:transparent; cursor:pointer;
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); font:inherit;
+  color: var(--text-muted); transition: color var(--dur) var(--ease-soft); }
+.segmented > button[aria-selected="true"] { color: var(--text-strong); }
+.segmented::after { content:""; position:absolute; z-index:0; top:var(--space-1); bottom:var(--space-1);
+  left:var(--space-1); width: calc((100% - var(--space-2)) / var(--seg-n, 2));
+  transform: translateX(calc(100% * var(--seg-i, 0)));
+  background: var(--glass-fill-strong); border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-highlight);
+  transition: transform var(--dur) var(--ease-spring); }
+```
+**선택된 리스트/탭 항목** — 배경 `--primary-soft` + 1px 프라이머리 링. 색만으로 알리지 말고 체크 아이콘 병행.
+```css
+.list-item.is-selected, [role="option"][aria-selected="true"] {
+  background: var(--primary-soft); color: var(--text-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent); }
+```
 
 ## 6. 모션
 ```css
@@ -224,6 +329,39 @@ body {
 - 스프링은 지속시간이 물리에 종속된다. 더 통통하게(감쇠↓) 만들면 settle이 길어지니, **자주 누르는 컨트롤은 짧게(스내피)**,
   카드 등장·모달엔 길고 탄력 있게 배분한다.
 
+### 6.2 화면/뷰 전환 (View Transitions — iOS식 push/pop·모핑)
+페이지·뷰 전환을 "교체"가 아니라 iOS처럼 "흐르게" 한다. **View Transitions API** 사용
+(Tauri WebView2=Chromium 지원). SPA 는 `document.startViewTransition`, MPA 는 `@view-transition`.
+```css
+/* 기본 크로스페이드 */
+@view-transition { navigation: auto; }              /* MPA 자동 전환(지원 시) */
+::view-transition-old(root), ::view-transition-new(root) {
+  animation-duration: var(--dur); animation-timing-function: var(--ease-soft); }
+
+/* iOS식 push: 새 화면 오른쪽→가운데, 옛 화면 살짝 왼쪽으로 */
+.vt-push::view-transition-old(root){ animation: vt-old-left var(--dur) var(--ease-soft) both; }
+.vt-push::view-transition-new(root){ animation: vt-new-right var(--dur) var(--ease-spring) both; }
+@keyframes vt-old-left { to { transform: translateX(-18%); opacity:.6 } }
+@keyframes vt-new-right { from { transform: translateX(100%) } to { transform: none } }
+
+/* 공유요소 모핑: 같은 이름을 양쪽 요소에 부여하면 자동 모핑 */
+.hero { view-transition-name: hero; }
+
+/* reduced-motion: 전환 애니메이션 제거 */
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){ animation:none !important } }
+```
+```js
+function navigate(updateDOM){               // updateDOM: 실제 화면 교체 함수
+  if(!document.startViewTransition){ updateDOM(); return; }   // 미지원 즉시 폴백
+  document.documentElement.classList.add('vt-push');
+  const t = document.startViewTransition(updateDOM);
+  t.finished.finally(()=>document.documentElement.classList.remove('vt-push'));
+}
+```
+- 뒤로가기(pop)는 방향만 반대로(`vt-pop` 클래스에서 키프레임 반전).
+- 모달/시트 등장은 §6 의 `--ease-spring` 유지 — 전환(navigate)과 등장(appear)은 구분해서 쓴다.
+
 ## 7. 접근성 (필수)
 ```css
 /* 투명도 줄이기 선호 → 유리 대신 불투명 표면 */
@@ -245,6 +383,9 @@ body {
 - ✅ 따뜻한 오프화이트 + 멀티톤 파스텔 메시, 떠 있는 유리 패널, 큰 라운드, 부드러운 그림자.
 - ✅ Pretendard(본문) + Bricolage Grotesque(디스플레이) 조합 유지.
 - ✅ 클릭/호버되는 컨트롤엔 `.tactile`로 스프링 촉감 부여(색이 아닌 `scale`로 반응). 호버는 `pointer:fine` 전용.
+- ✅ 화면 전환은 View Transitions API로 iOS식 push/pop·공유요소 모핑(미지원 시 즉시 교체 폴백).
+- ✅ "선택됨"은 세그먼티드 슬라이딩 pill·`--primary-soft` 강조로 명확히(누름/호버와 구분, 체크 아이콘 병행).
+- ✅ 큰 유리 패널엔 `.refract`로 엣지 굴절 림을 더해 "진짜 유리" 느낌(가독성 해치는 과한 왜곡 금지).
 - ❌ 다크모드/`prefers-color-scheme: dark` 스타일 추가.
 - ❌ `--ease-tactile`의 settle보다 짧게 `--dur-tactile`을 강제로 줄여 바운스를 끊기.
 - ❌ 터치 기기에서 hover 효과가 눌린 채 끼게 두기(반드시 `@media (hover:hover) and (pointer:fine)`).

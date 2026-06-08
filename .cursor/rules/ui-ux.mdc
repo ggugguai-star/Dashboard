@@ -1,0 +1,17 @@
+---
+description: UI/UX 작성 시 프로젝트 루트 UI.md 의 디자인 토큰과 최신 트렌드를 100% 준수.
+globs: *.tsx,*.jsx,*.ts,*.js,*.css,*.scss,*.html,*.vue,*.svelte,*.astro
+alwaysApply: false
+---
+
+# UI/UX 디자인 절대 규칙 (프론트엔드 전용)
+
+- 프론트엔드 및 UI/UX를 구성할 때는 **반드시 프로젝트 루트의 `UI.md` 파일을 먼저 읽고**,
+  명시된 디자인 토큰(색상·폰트·간격·레이아웃)과 최신 트렌드(iOS Liquid Glass · 엣지 굴절 ·
+  화면 전환(View Transitions) · 슬라이딩 선택 등)를 **100% 엄격하게 준수**하여 렌더링한다.
+- **테마 기본값은 '라이트(밝은 톤)'다. 다크모드는 만들지 않는다.**
+  사용자가 0_MASTER_PLAN.md에서 명시적으로 다크모드를 요구한 경우에만 예외로 추가한다.
+  (다크모드 토글/`prefers-color-scheme: dark` 스타일을 임의로 넣지 마라.)
+- 기본 스택은 Tauri v2다. UI는 웹 기술(HTML/CSS/TS)로 작성하며 `src-tauri/`의 Rust 코어와 연동한다.
+- `UI.md` 와 충돌하는 임의 스타일/색상/폰트를 새로 만들지 않는다.
+- `UI.md` 가 없으면 RESULT 문서에 그 사실을 보고하고, 밝은 톤의 접근성 기본값으로 작성한다.
