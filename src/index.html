@@ -9158,7 +9158,9 @@ async function exportDashboardState({ includeKeys = true } = {}) {
     });
     if (!path) return;
     const filePath = Array.isArray(path) ? path[0] : path;
-    await tInvoke('plugin:fs|write_text_file', { path: filePath, contents: json });
+    await tInvoke('plugin:fs|write_text_file', new TextEncoder().encode(json), {
+      headers: { path: encodeURIComponent(filePath) }
+    });
     showToast('✅ 백업 저장됨');
   } catch (e) {
     showToast(`⚠️ 보내기 실패: ${e?.message || '오류'}`);
