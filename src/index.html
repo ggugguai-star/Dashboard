@@ -1008,6 +1008,28 @@ input[type=range].sf-slider::-webkit-slider-thumb:hover { transform: scale(1.2);
 }
 #dashboard.widget-grid-editing .widget-move-zone { z-index: 6; }
 
+/* 위젯 삭제(롱프레스) 오버레이 */
+.widget-del-overlay {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(40,35,90,0.10);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  border-radius: inherit;
+  animation: wdelIn var(--dur, .24s) var(--ease-soft, ease) both;
+}
+@keyframes wdelIn { from { opacity: 0; } to { opacity: 1; } }
+.widget-del-btn {
+  border: 0; cursor: pointer; color: #fff;
+  padding: 13px 26px; border-radius: 999px;
+  font-size: 15px; font-weight: 700; font-family: var(--font-sans, sans-serif);
+  background: var(--danger, #f26d6d);
+  box-shadow: 0 10px 28px rgba(242,109,109,0.45);
+  transition: transform var(--dur-fast, .16s) var(--ease-soft, ease);
+}
+.widget-del-btn:hover { transform: scale(1.05); }
+.widget-del-btn:active { transform: scale(0.95); }
+.widget-cell.widget-delete-pending { outline: 2px solid var(--danger, #f26d6d); outline-offset: -2px; }
+
 /* ── 크기 조절 존 ── */
 .widget-corner-zone {
   position: absolute;
@@ -9275,6 +9297,79 @@ async function deleteWidgetById(widgetId, { confirm: askConfirm = true } = {}){
   await saveState(_widgetGridState, { immediate: true });
   showToast('🗑 위젯이 삭제됐어요');
 }
+
+/* [기능2] 위젯 롱프레스 → 큰 삭제 버튼 → 바깥 클릭/ESC 취소 (iOS식)
+   - 기존 드래그/제스처 코드는 건드리지 않음. 독립 리스너로 동작.
+   - 이동 바(.widget-move-zone)·리사이즈·버튼·입력 위에서는 롱프레스를 시작하지 않음. */
+(function _initWidgetLongPressDelete(){
+  if (window.__wLpBound) return;
+  window.__wLpBound = true;
+  let pendingId = null, timer = null, start = null;
+  const LP_MS = 550, MOVE_TOL = 10;
+
+  function clearPending(){
+    if (pendingId){
+      document.querySelector(`.widget-cell[data-widget-id="${pendingId}"]`)
+        ?.classList.remove('widget-delete-pending');
+    }
+    pendingId = null;
+    document.querySelectorAll('.widget-del-overlay').forEach((el) => el.remove());
+  }
+  function showPending(id){
+    clearPending();
+    const mount = document.getElementById('widgetGridMount');
+    const cell = mount?.querySelector(`.widget-cell[data-widget-id="${id}"]`);
+    if (!cell) return;
+    pendingId = id;
+    cell.classList.add('widget-delete-pending');
+    const ov = document.createElement('div');
+    ov.className = 'widget-del-overlay';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'widget-del-btn';
+    btn.textContent = '🗑 삭제';
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const del = pendingId;
+      clearPending();
+      if (del) void deleteWidgetById(del, { confirm: false });
+    });
+    ov.appendChild(btn);
+    cell.appendChild(ov);
+  }
+
+  document.addEventListener('pointerdown', (e) => {
+    // 활성 상태에서 바깥(오버레이/해당 위젯 외) 클릭 → 취소
+    if (pendingId){
+      const inOverlay = !!e.target.closest('.widget-del-overlay');
+      const sameCell = e.target.closest('.widget-cell')?.dataset.widgetId === pendingId;
+      if (!inOverlay && !sameCell) clearPending();
+    }
+    // 롱프레스 감지 시작 (그리드 위젯 본문에서만)
+    if (e.button !== 0) return;
+    const mount = document.getElementById('widgetGridMount');
+    const cell = e.target.closest('.widget-cell');
+    if (!mount || !cell || !mount.contains(cell)) return;
+    if (e.target.closest('.widget-move-zone, .widget-corner-zone, button, a, input, textarea, select, label, [role="button"], .nb, .ch-nav, .widget-action-btn, .widget-del-overlay')) return;
+    const id = cell.dataset.widgetId;
+    if (!id) return;
+    start = { x: e.clientX, y: e.clientY };
+    clearTimeout(timer);
+    timer = setTimeout(() => showPending(id), LP_MS);
+  }, true);
+
+  document.addEventListener('pointermove', (e) => {
+    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > MOVE_TOL){
+      clearTimeout(timer); start = null;
+    }
+  }, true);
+  const endLp = () => { clearTimeout(timer); start = null; };
+  document.addEventListener('pointerup', endLp, true);
+  document.addEventListener('pointercancel', endLp, true);
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pendingId) clearPending();
+  });
+})();
 
 async function fetchCalendarListCached(){
   return fetchCached(
