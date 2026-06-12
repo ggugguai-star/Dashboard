@@ -688,10 +688,12 @@ export async function tasksGetDefaultList() {
  * @returns {Promise<object>}
  */
 export async function tasksListTasks(listId) {
-  return _apiFetch(
+  const json = await _apiFetch(
     `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(listId)}/tasks` +
     `?maxResults=100&showCompleted=true&showHidden=false`
   );
+  if (json.error) return json;
+  return { items: json.items ?? [] };
 }
 
 /**

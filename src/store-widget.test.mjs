@@ -11,6 +11,7 @@ import {
   addWidget,
   removeWidget,
   updateWidgetSource,
+  normalizeWidgetLayout,
 } from './store.js';
 
 describe('generateWidgetId', () => {
@@ -107,5 +108,25 @@ describe('createWidget', () => {
     assert.match(w.id, /^ai-\d+$/);
     assert.equal(w.config.model, 'gemini-2.5-flash-lite');
     assert.equal(w.config.activeChatId, null);
+  });
+});
+
+describe('normalizeWidgetLayout', () => {
+  it('preserves saved x/y when layout is valid', () => {
+    const base = createEmptyState();
+    base.widgets = [
+      {
+        id: 'clk-1', type: 'clock', x: 3, y: 2, w: 2, h: 2,
+        minW: 2, minH: 2, config: { tz: 'Asia/Seoul', format24: true },
+      },
+      {
+        id: 'note-1', type: 'sticky', x: 7, y: 2, w: 2, h: 2,
+        minW: 2, minH: 2, text: '',
+      },
+    ];
+    const next = normalizeWidgetLayout(base);
+    assert.equal(next.widgets[0].x, 3);
+    assert.equal(next.widgets[0].y, 2);
+    assert.equal(next.widgets[1].x, 7);
   });
 });

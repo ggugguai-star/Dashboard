@@ -302,6 +302,24 @@ function queryActiveCatBodies() {
     .filter((body) => !isHiddenCatLayoutNode(body.closest('.cat-panel')));
 }
 
+function queryActiveCatPanels() {
+  return [...document.querySelectorAll('.cat-panel')]
+    .filter((panel) => !isHiddenCatLayoutNode(panel));
+}
+
+/** WebView2/Tauri OS 드래그: elementFromPoint 대신 패널 전체 rect 히트 */
+function findCatAtDropPoint(clientX, clientY) {
+  const panels = queryActiveCatPanels();
+  for (let i = panels.length - 1; i >= 0; i--) {
+    const panel = panels[i];
+    const r = panel.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      return catFromPanelElement(panel);
+    }
+  }
+  return null;
+}
+
 function catFromPanelElement(panel) {
   if (!panel) return null;
   const idx = parseInt(panel.dataset.catIdx, 10);
@@ -346,6 +364,15 @@ function findGoogleFileDropTarget(clientX, clientY) {
     if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
       const cat = catFromBodyElement(body);
       if (cat) return { kind: 'body', bodyEl: body, cat };
+    }
+  }
+
+  for (const panel of queryActiveCatPanels()) {
+    const r = panel.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      const cat = catFromPanelElement(panel);
+      const bodyEl = panel.querySelector('.cp-body');
+      if (cat && bodyEl) return { kind: 'body', bodyEl, cat };
     }
   }
   return null;
@@ -2602,7 +2629,7 @@ async function driveRefresh(type){
   await loadDriveImages(type, id);
 }
 
-/* ── 동기화 버튼 (실제 Google Calendar 연동) ── */
+/* ── 동기화 버튼 (Google Calendar · Drive · Tasks · Workspace · 날씨) ── */
 async function doSync(){
   const btn = document.getElementById('btnSync');
   if (!btn) return;
@@ -2617,7 +2644,14 @@ async function doSync(){
     }
 
     await syncAllCalendarWidgets();
+    await syncAllDriveWidgets();
+    await syncAllGWorkspaceWidgetsAll();
+    await syncGoogleTasks(false);
+    await fetchAllWeatherWidgets();
     showToast('✅ 동기화 완료');
+  } catch (e) {
+    console.warn('[doSync]', e);
+    showToast('❌ 동기화 중 오류가 발생했어요');
   } finally {
     btn.classList.remove('spinning');
   }
@@ -4260,12 +4294,19 @@ function renderTodoListForWidget(widgetId){
     bell.innerHTML = '🔔';
     bell.onclick = (e) => { e.stopPropagation(); openAlarmMiniPopup(item.id, bell, widgetId); };
 
+    const badge = document.createElement('span');
+    badge.className = 'todo-g-badge';
+    badge.title = item.taskId ? 'Google Tasks 연동됨' : '';
+    badge.textContent = 'G';
+    badge.style.display = item.taskId ? '' : 'none';
+
     const del = document.createElement('button');
     del.className = 'todo-del';
     del.innerHTML = '×';
     del.onclick = (e) => { e.stopPropagation(); deleteTodoItemForWidget(widgetId, item.id); };
     el.appendChild(chk);
     el.appendChild(txt);
+    el.appendChild(badge);
     el.appendChild(bell);
     el.appendChild(del);
     list.appendChild(el);
@@ -4286,8 +4327,17 @@ async function addTodoItemForWidget(widgetId){
   const text = inp.value.trim();
   if (!text) return;
   if (!Array.isArray(w.items)) w.items = [];
-  w.items.push({ id: Date.now(), text, done: false, alarmDT: '' });
+  const newItem = { id: Date.now(), text, done: false, alarmDT: '' };
+  w.items.push(newItem);
   inp.value = '';
+  const listId = _todoWidgetListId(w);
+  if (listId) {
+    const result = await tasksCreateTask(listId, { title: text });
+    if (result?.id) {
+      newItem.taskId = result.id;
+      newItem.taskListId = listId;
+    }
+  }
   renderTodoListForWidget(widgetId);
   await saveState(_widgetGridState, { immediate: true });
 }
@@ -4300,11 +4350,20 @@ function toggleTodoItemForWidget(widgetId, itemId){
   item.done = !item.done;
   renderTodoListForWidget(widgetId);
   void saveState(_widgetGridState);
+  if (item.taskId && item.taskListId) {
+    tasksPatchTask(item.taskListId, item.taskId, {
+      status: item.done ? 'completed' : 'needsAction',
+    }).catch(() => {});
+  }
 }
 
 function deleteTodoItemForWidget(widgetId, itemId){
   const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
   if (!w?.items) return;
+  const item = w.items.find((t) => t.id === itemId);
+  if (item?.taskId && item.taskListId) {
+    tasksDeleteTask(item.taskListId, item.taskId).catch(() => {});
+  }
   w.items = w.items.filter((t) => t.id !== itemId);
   renderTodoListForWidget(widgetId);
   void saveState(_widgetGridState);
@@ -4313,6 +4372,11 @@ function deleteTodoItemForWidget(widgetId, itemId){
 function clearDoneTodosForWidget(widgetId){
   const w = _widgetGridState?.widgets?.find((x) => x.id === widgetId);
   if (!w?.items) return;
+  w.items.filter((t) => t.done).forEach((item) => {
+    if (item.taskId && item.taskListId) {
+      tasksDeleteTask(item.taskListId, item.taskId).catch(() => {});
+    }
+  });
   w.items = w.items.filter((t) => !t.done);
   renderTodoListForWidget(widgetId);
   void saveState(_widgetGridState);
@@ -5078,6 +5142,7 @@ async function initWidgetGrid(){
     void syncAllCalendarWidgets();
     void syncAllDriveWidgets();
     void syncAllGWorkspaceWidgetsAll();
+    void initGoogleTasksSync();
   } catch (e) {
     console.warn('[WidgetGrid] init failed:', e);
     showToast('❌ 위젯 그리드를 불러오지 못했습니다');
@@ -5119,7 +5184,7 @@ async function checkGoogleAuth(){
   if (status.authenticated) {
     syncCalendarSilent();
     reloadDriveImages();
-    initGoogleTasksSync();  // Tasks 동기화 버튼 활성화 + 초기 동기화
+    _showTasksSyncBtn();
   }
 }
 
@@ -5127,6 +5192,7 @@ async function checkGoogleAuth(){
    Google Tasks 연동
 ════════════════════════════════════════ */
 async function initGoogleTasksSync(){
+  if (!await isAuthenticated()) return;
   // 저장된 목록 ID 복원 또는 API 조회
   _gtasksListId = localStorage.getItem('gtasksListId') || null;
   if(!_gtasksListId){
@@ -5135,13 +5201,12 @@ async function initGoogleTasksSync(){
       _gtasksListId = res.id;
       localStorage.setItem('gtasksListId', _gtasksListId);
     } else {
-      // 어떤 에러든 버튼은 표시 (클릭 시 명확한 안내)
       _showTasksSyncBtn();
       return;
     }
   }
   _showTasksSyncBtn();
-  // 앱 시작 시 조용히 한 번 동기화
+  if (!_widgetGridState) return;
   await syncGoogleTasks(true);
 }
 
@@ -5150,6 +5215,11 @@ function _showTasksSyncBtn(){
     btn.style.display = '';
     btn.title = 'Google Tasks 동기화';
   });
+}
+
+function _todoWidgetListId(widget){
+  const src = widget?.source || {};
+  return src.taskListId || src.tasksListId || _gtasksListId || null;
 }
 
 async function syncGoogleTasks(silent){
@@ -5177,8 +5247,19 @@ async function syncGoogleTasks(silent){
   syncBtns.forEach((b) => b.classList.add('syncing'));
 
   const todoWidgets = (_widgetGridState?.widgets || []).filter((w) => w.type === 'todo');
-  const listIds = new Set(todoWidgets.map((w) => w.source?.tasksListId || _gtasksListId).filter(Boolean));
-  if (!listIds.size) listIds.add(_gtasksListId);
+  if (!todoWidgets.length) {
+    _gtasksSyncing = false;
+    syncBtns.forEach((b) => b.classList.remove('syncing'));
+    if (!silent) showToast('⚠️ 메모 · 할 일 위젯이 없어요');
+    return;
+  }
+  const listIds = new Set(todoWidgets.map((w) => _todoWidgetListId(w)).filter(Boolean));
+  if (!listIds.size) {
+    _gtasksSyncing = false;
+    syncBtns.forEach((b) => b.classList.remove('syncing'));
+    if (!silent) showToast('❌ Google Tasks 목록을 찾을 수 없어요');
+    return;
+  }
 
   const tasksByList = new Map();
   for (const listId of listIds) {
@@ -5197,7 +5278,8 @@ async function syncGoogleTasks(silent){
   }
 
   for (const w of todoWidgets) {
-    const listId = w.source?.tasksListId || _gtasksListId;
+    const listId = _todoWidgetListId(w);
+    if (!listId) continue;
     const googleTasks = tasksByList.get(listId) || [];
     const gtMap = {};
     googleTasks.forEach((t) => { gtMap[t.id] = t; });
@@ -5659,11 +5741,16 @@ let _dragSrc = null; // { cat, item }
 
 /* Tauri 네이티브 파일 드롭 — hover 표시용 */
 let _fileDropHoverBody = null;
+let _fileDropHoverPanel = null;
 
 function clearFileDropHover() {
   if (_fileDropHoverBody) {
     _fileDropHoverBody.classList.remove('body-drop-over');
     _fileDropHoverBody = null;
+  }
+  if (_fileDropHoverPanel) {
+    _fileDropHoverPanel.classList.remove('panel-file-drop-over');
+    _fileDropHoverPanel = null;
   }
 }
 
@@ -5684,12 +5771,7 @@ async function dropPositionToLogical(position) {
 }
 
 function catFromDropPoint(x, y) {
-  const el = document.elementFromPoint(x, y);
-  const panel = el?.closest?.('.cat-panel');
-  if (!panel) return null;
-  const idx = parseInt(panel.dataset.catIdx, 10);
-  if (Number.isNaN(idx) || idx < 0 || idx >= CATS.length) return null;
-  return CATS[idx];
+  return findCatAtDropPoint(x, y);
 }
 
 function setFileDropHover(cat) {
@@ -5698,6 +5780,10 @@ function setFileDropHover(cat) {
   const idx = CATS.indexOf(cat);
   const panel = document.querySelector(`.cat-panel[data-cat-idx="${idx}"]`);
   const body = panel?.querySelector('.cp-body');
+  if (panel) {
+    panel.classList.add('panel-file-drop-over');
+    _fileDropHoverPanel = panel;
+  }
   if (body) {
     body.classList.add('body-drop-over');
     _fileDropHoverBody = body;

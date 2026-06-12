@@ -2022,6 +2022,7 @@ body.item-reorder-active .item{cursor:grabbing !important}
 .item.drag-above{border-top:2px solid #7c3aed !important;border-radius:0 0 11px 11px}
 .item.drag-below{border-bottom:2px solid #7c3aed !important;border-radius:11px 11px 0 0}
 .cp-body.body-drop-over{background:rgba(196,181,253,0.10);outline:1.5px dashed rgba(124,58,237,0.35);outline-offset:-4px;border-radius:10px}
+.cat-panel.panel-file-drop-over{outline:1.5px dashed rgba(124,58,237,0.45);outline-offset:-2px}
 .item-ico{
   font-size:14px;flex-shrink:0;
   display:inline-flex;align-items:center;justify-content:center;line-height:0;min-width:20px;

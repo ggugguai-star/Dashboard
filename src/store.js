@@ -480,10 +480,14 @@ export function normalizeWidgetLayout(state, { force = false } = {}) {
     || layoutHasOverlap(widgets)
     || isLegacySingleColumnLayout(widgets);
   const packed = needsPack ? autoPackWidgets(widgets) : widgets;
-  // 항상 compactLayout으로 위쪽 빈 공간 제거
-  const layout = compactLayout(packed.map((w) => ({
-    i: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: w.minW, minH: w.minH,
-  })));
+  // 유효한 저장 배치는 그대로 보존 — compactHorizontal 은 x 좌표를 왼쪽으로 당겨 재시작 시 위치가 틀어진다
+  const layout = needsPack
+    ? compactLayout(packed.map((w) => ({
+      i: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: w.minW, minH: w.minH,
+    })))
+    : packed.map((w) => ({
+      i: w.id, x: w.x ?? 0, y: w.y ?? 0, w: w.w, h: w.h, minW: w.minW, minH: w.minH,
+    }));
   next.widgets = packed.map((w) => {
     const pos = layout.find((el) => el.i === w.id);
     return pos ? { ...w, x: pos.x, y: pos.y } : w;
